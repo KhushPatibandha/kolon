@@ -1,0 +1,40 @@
+fun main() {
+    const a: int = 100
+    const b: int = 100
+    var bo: bool = true
+    println(!bo)
+    println(a + b)
+    println(a - b)
+    println(a * b)
+    println(a / b)
+    println(a % b)
+    println(a != b)
+    println(a == b)
+
+    a++
+    b--
+    a += 10
+    b -= 10
+    a *= 10
+    b /= 10
+    a %= 10;
+   
+    ? . & |
+ 
+    for: (var i: int = 0, i <= 10, i++) {
+        println(i)
+    }
+    // will go from 0 to 9 (inclusive)
+    for(var i: int in 0..10) {
+        println(i)
+    } 
+
+    a = 10
+    b = 20
+    if: (a == 10 && b == 20) {
+        println("a is 10 and b is 20")
+    }
+    if: (a == 10 || b == 20) {
+        println("a is 10 or b is 20")
+    } 
+}
