@@ -8,6 +8,7 @@ import (
 
 func Test2(t *testing.T) {
 	input := `
+    // No accurate representation of Kolon
     fun main() {
         var age: int = 10
         var ok: bool = canVote(10)

@@ -9,6 +9,7 @@ import (
 func Test1(t *testing.T) {
 	input := `
     fun main() {
+        // No accurate representation of Kolon
         // this should not print
         var someString: string = "hey"
         var someChar: char = 'c'

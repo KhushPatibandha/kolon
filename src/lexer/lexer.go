@@ -7,14 +7,14 @@ import (
 	"strconv"
 )
 
-type regexHandler func(lex *lexer, regex *regexp.Regexp)
+type regexHandler func(lex *Lexer, regex *regexp.Regexp)
 
 type regexPattern struct {
 	regex   *regexp.Regexp
 	handler regexHandler
 }
 
-type lexer struct {
+type Lexer struct {
 	patterns []regexPattern
 	Tokens   []Token
 	source   string
@@ -41,8 +41,8 @@ func Tokenizer(source string) []Token {
 	return lexer.Tokens
 }
 
-func createLexer(source string) *lexer {
-	return &lexer{
+func createLexer(source string) *Lexer {
+	return &Lexer{
 		position: 0,
 		source:   source,
 		Tokens:   make([]Token, 0),
@@ -52,6 +52,8 @@ func createLexer(source string) *lexer {
 			{regexp.MustCompile(`\s+`), skipHandler},
 			{regexp.MustCompile(`\/\/.*`), skipHandler},
 
+			{regexp.MustCompile(`else\s+if`), identifierHandler},
+
 			{regexp.MustCompile(`print\s*\((.*?)\)`), printHandler},
 			{regexp.MustCompile(`println\s*\((.*?)\)`), printlnHandler},
 
@@ -59,6 +61,7 @@ func createLexer(source string) *lexer {
 
 			{regexp.MustCompile(`[0-9]+[lL]`), intLongHandler(LONG)},
 			{regexp.MustCompile(`[0-9]+\.[0-9]+[dD]`), floatDoubleHandler(DOUBLE)},
+			{regexp.MustCompile(`[0-9]+\.[0-9]+[eE][+-]?[0-9]+`), floatDoubleHandler(FLOAT)},
 			{regexp.MustCompile(`[0-9]+\.[0-9]+`), floatDoubleHandler(FLOAT)},
 			{regexp.MustCompile(`[0-9]+`), intLongHandler(INT)},
 
@@ -113,44 +116,41 @@ func createLexer(source string) *lexer {
 	}
 }
 
-func skipHandler(lexer *lexer, regex *regexp.Regexp) {
-	lexer.advanceN(regex.FindStringIndex(lexer.remainder())[1])
+func skipHandler(Lexer *Lexer, regex *regexp.Regexp) {
+	Lexer.advanceN(regex.FindStringIndex(Lexer.remainder())[1])
 }
 
 func defaultHandler(k TokenKind, v string) regexHandler {
-	return func(lex *lexer, regex *regexp.Regexp) {
+	return func(lex *Lexer, regex *regexp.Regexp) {
 		lex.push(GetNewToken(k, v))
 		lex.advanceN(len(v))
 	}
 }
 
-func printHandler(lex *lexer, regex *regexp.Regexp) {
+func printHandler(lex *Lexer, regex *regexp.Regexp) {
 	match := regex.FindStringSubmatch(lex.remainder())
 	lex.push(GetNewToken(PRINT, match[1]))
 	lex.advanceN(len(match[0]))
 }
 
-func printlnHandler(lex *lexer, regex *regexp.Regexp) {
+func printlnHandler(lex *Lexer, regex *regexp.Regexp) {
 	match := regex.FindStringSubmatch(lex.remainder())
 	lex.push(GetNewToken(PRINTLN, match[1]))
 	lex.advanceN(len(match[0]))
 }
 
 func floatDoubleHandler(_ TokenKind) regexHandler {
-	return func(lex *lexer, regex *regexp.Regexp) {
+	return func(lex *Lexer, regex *regexp.Regexp) {
 		string := regex.FindString(lex.remainder())
 		if string[len(string)-1] == 'd' || string[len(string)-1] == 'D' {
 			lex.push(GetNewToken(DOUBLE, string))
 		} else {
-			const maxFloat32 = 3.402823466e+38
-			const minFloat32 = -3.402823466e+38
-
 			value, err := strconv.ParseFloat(string, 64)
 			if err != nil {
 				panic(fmt.Sprintf("Number Handler Error: %v", err))
 			}
 
-			if value <= maxFloat32 && value >= minFloat32 {
+			if value <= math.MaxFloat32 && value >= -math.MaxFloat32 {
 				lex.push(GetNewToken(FLOAT, string))
 			} else {
 				lex.push(GetNewToken(DOUBLE, string))
@@ -161,7 +161,7 @@ func floatDoubleHandler(_ TokenKind) regexHandler {
 }
 
 func intLongHandler(k TokenKind) regexHandler {
-	return func(lex *lexer, regex *regexp.Regexp) {
+	return func(lex *Lexer, regex *regexp.Regexp) {
 		string := regex.FindString(lex.remainder())
 		if string[len(string)-1] == 'l' || string[len(string)-1] == 'L' {
 			lex.push(GetNewToken(LONG, string))
@@ -182,13 +182,14 @@ func intLongHandler(k TokenKind) regexHandler {
 }
 
 func stringHandler(k TokenKind) regexHandler {
-	return func(lex *lexer, regex *regexp.Regexp) {
-		lex.push(GetNewToken(k, regex.FindString(lex.remainder())))
-		lex.advanceN(len(regex.FindString(lex.remainder())))
+	return func(lex *Lexer, regex *regexp.Regexp) {
+		match := regex.FindString(lex.remainder())
+		lex.push(GetNewToken(k, match))
+		lex.advanceN(len(match))
 	}
 }
 
-func identifierHandler(lex *lexer, regex *regexp.Regexp) {
+func identifierHandler(lex *Lexer, regex *regexp.Regexp) {
 	value := regex.FindString(lex.remainder())
 	var kind, ok = reservedWords[value]
 	if ok {
@@ -199,18 +200,18 @@ func identifierHandler(lex *lexer, regex *regexp.Regexp) {
 	lex.advanceN(len(value))
 }
 
-func (lexer *lexer) advanceN(n int) {
-	lexer.position += n
+func (Lexer *Lexer) advanceN(n int) {
+	Lexer.position += n
 }
 
-func (lexer *lexer) remainder() string {
-	return lexer.source[lexer.position:]
+func (Lexer *Lexer) remainder() string {
+	return Lexer.source[Lexer.position:]
 }
 
-func (lexer *lexer) push(token Token) {
-	lexer.Tokens = append(lexer.Tokens, token)
+func (Lexer *Lexer) push(token Token) {
+	Lexer.Tokens = append(Lexer.Tokens, token)
 }
 
-func (lexer *lexer) atEOF() bool {
-	return lexer.position >= len(lexer.source)
+func (Lexer *Lexer) atEOF() bool {
+	return Lexer.position >= len(Lexer.source)
 }

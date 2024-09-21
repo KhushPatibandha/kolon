@@ -66,14 +66,15 @@ const (
 	AND_AND // PERF:
 	OR_OR   // PERF:
 
-	IN     // PERF:
-	VAR    // PERF:
-	CONST  // PERF:
-	FUN    // PERF:
-	IF     // PERF:
-	ELSE   // PERF:
-	FOR    // PERF:
-	RETURN // PERF:
+	IN      // PERF:
+	VAR     // PERF:
+	CONST   // PERF:
+	FUN     // PERF:
+	IF      // PERF:
+	ELSE    // PERF:
+	ELSE_IF // PERF:
+	FOR     // PERF:
+	RETURN  // PERF:
 
 	// TODO: Can't parse these yet.
 	IMPORT
@@ -90,6 +91,7 @@ var reservedWords = map[string]TokenKind{
 	"if":      IF,
 	"else":    ELSE,
 	"for":     FOR,
+	"else if": ELSE_IF,
 	"println": PRINTLN,
 	"print":   PRINT,
 	"true":    BOOL,
@@ -236,6 +238,8 @@ func TokenKindString(tKind TokenKind) string {
 		return "IF"
 	case ELSE:
 		return "ELSE"
+	case ELSE_IF:
+		return "ELSE_IF"
 	case FOR:
 		return "FOR"
 	// case EXPONENT:

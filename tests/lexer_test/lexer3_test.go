@@ -8,6 +8,7 @@ import (
 
 func Test3(t *testing.T) {
 	input := `
+    // No accurate representation of Kolon
     // package main
     
     // import {
