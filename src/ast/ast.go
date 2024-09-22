@@ -60,7 +60,7 @@ type FunctionReturnType struct {
 func (frt *FunctionReturnType) TokenValue() string { return frt.ReturnType.Token.Value }
 
 // -----------------------------------------------------------------------------
-// For Function Body
+// For Body (function, if, else, else if, for) -- Basically everything with {...}
 // -----------------------------------------------------------------------------
 type FunctionBody struct {
 	Token      lexer.Token // '{' token
@@ -82,7 +82,7 @@ func (i *Identifier) expressionNode()    {}
 func (i *Identifier) TokenValue() string { return i.Token.Value }
 
 // -----------------------------------------------------------------------------
-// For Var Statement
+// For Var AND Const Statement
 // -----------------------------------------------------------------------------
 type VarStatement struct {
 	Token lexer.Token
@@ -120,4 +120,40 @@ func (f *Function) statementNode()     {}
 func (f *Function) TokenValue() string { return f.Token.Value }
 
 // -----------------------------------------------------------------------------
+// For If Statement
+// -----------------------------------------------------------------------------
+type IfStatement struct {
+	Token lexer.Token
+	Value Expression
+	Body  *FunctionBody
+}
+
+func (ifs *IfStatement) statementNode()     {}
+func (ifs *IfStatement) TokenValue() string { return ifs.Token.Value }
+
+// -----------------------------------------------------------------------------
+// For Else Statement
+// -----------------------------------------------------------------------------
+type ElseStatement struct {
+	Token lexer.Token
+	Body  *FunctionBody
+}
+
+func (el *ElseStatement) statementNode()     {}
+func (el *ElseStatement) TokenValue() string { return el.Token.Value }
+
+// -----------------------------------------------------------------------------
+// For Else If Statement
+// -----------------------------------------------------------------------------
+type ElseIfStatement struct {
+	Token lexer.Token
+	Value Expression
+	Body  *FunctionBody
+}
+
+func (eis *ElseIfStatement) statementNode()     {}
+func (eis *ElseIfStatement) TokenValue() string { return eis.Token.Value }
+
+// -----------------------------------------------------------------------------
+// for loop statement left.
 // -----------------------------------------------------------------------------

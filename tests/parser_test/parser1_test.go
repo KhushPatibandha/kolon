@@ -13,6 +13,8 @@ func Test1(t *testing.T) {
         var x: int = 10;
         var y: int = 100;
         var foobar: int = 10000;
+        const age: int = 100;
+        const heh: string = "hello";
     `
 
 	tokens := lexer.Tokenizer(input)
@@ -23,8 +25,8 @@ func Test1(t *testing.T) {
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
-	if len(program.Statements) != 3 {
-		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
+	if len(program.Statements) != 5 {
+		t.Fatalf("program.Statements does not contain 5 statements. got=%d", len(program.Statements))
 	}
 
 	tests := []struct {
@@ -34,6 +36,8 @@ func Test1(t *testing.T) {
 		{"x", "int"},
 		{"y", "int"},
 		{"foobar", "int"},
+		{"age", "int"},
+		{"heh", "string"},
 	}
 
 	for i, tt := range tests {
@@ -45,8 +49,8 @@ func Test1(t *testing.T) {
 }
 
 func testVarStatement(t *testing.T, s ast.Statement, identifier string, typeOfvar string) bool {
-	if s.TokenValue() != "var" {
-		t.Errorf("s.TokenValue not 'var'. got=%q", s.TokenValue())
+	if s.TokenValue() != "var" && s.TokenValue() != "const" {
+		t.Errorf("s.TokenValue not 'var' || 'const'. got=%q", s.TokenValue())
 		return false
 	}
 

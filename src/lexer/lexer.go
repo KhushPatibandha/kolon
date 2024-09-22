@@ -116,8 +116,8 @@ func createLexer(source string) *Lexer {
 	}
 }
 
-func skipHandler(Lexer *Lexer, regex *regexp.Regexp) {
-	Lexer.advanceN(regex.FindStringIndex(Lexer.remainder())[1])
+func skipHandler(lexer *Lexer, regex *regexp.Regexp) {
+	lexer.advanceN(regex.FindStringIndex(lexer.remainder())[1])
 }
 
 func defaultHandler(k TokenKind, v string) regexHandler {
@@ -200,18 +200,18 @@ func identifierHandler(lex *Lexer, regex *regexp.Regexp) {
 	lex.advanceN(len(value))
 }
 
-func (Lexer *Lexer) advanceN(n int) {
-	Lexer.position += n
+func (lexer *Lexer) advanceN(n int) {
+	lexer.position += n
 }
 
-func (Lexer *Lexer) remainder() string {
-	return Lexer.source[Lexer.position:]
+func (lexer *Lexer) remainder() string {
+	return lexer.source[lexer.position:]
 }
 
-func (Lexer *Lexer) push(token Token) {
-	Lexer.Tokens = append(Lexer.Tokens, token)
+func (lexer *Lexer) push(token Token) {
+	lexer.Tokens = append(lexer.Tokens, token)
 }
 
-func (Lexer *Lexer) atEOF() bool {
-	return Lexer.position >= len(Lexer.source)
+func (lexer *Lexer) atEOF() bool {
+	return lexer.position >= len(lexer.source)
 }

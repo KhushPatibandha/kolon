@@ -21,16 +21,6 @@ func New(tokens []lexer.Token) *Parser {
 	return p
 }
 
-func (p *Parser) nextToken() {
-	p.currentToken = p.peekToken
-	if p.tokenPointer >= len(p.tokens) {
-		p.peekToken = lexer.Token{Kind: lexer.EOF}
-	} else {
-		p.peekToken = p.tokens[p.tokenPointer]
-	}
-	p.tokenPointer++
-}
-
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
@@ -48,15 +38,26 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.currentToken.Kind {
 	case lexer.VAR:
 		return p.parseVarStatement()
+	case lexer.CONST:
+		return p.parseVarStatement()
 	case lexer.RETURN:
 		return p.parseReturnStatement()
 	case lexer.FUN:
 		return p.parseFunctionStatement()
+	case lexer.IF:
+		return p.parseIfStatement()
+	case lexer.ELSE:
+		return p.parseElseStatement()
+	case lexer.ELSE_IF:
+		return p.parseElseIfStatement()
 	default:
 		return nil
 	}
 }
 
+// -----------------------------------------------------------------------------
+// Parsing Functions
+// -----------------------------------------------------------------------------
 func (p *Parser) parseFunctionStatement() *ast.Function {
 	stmt := &ast.Function{Token: p.currentToken}
 
@@ -85,6 +86,9 @@ func (p *Parser) parseFunctionStatement() *ast.Function {
 	return stmt
 }
 
+// -----------------------------------------------------------------------------
+// Parsing Function Body
+// -----------------------------------------------------------------------------
 func (p *Parser) parseFunctionBody() *ast.FunctionBody {
 	block := &ast.FunctionBody{Token: p.currentToken}
 	block.Statements = []ast.Statement{}
@@ -100,6 +104,9 @@ func (p *Parser) parseFunctionBody() *ast.FunctionBody {
 	return block
 }
 
+// -----------------------------------------------------------------------------
+// Parsing Function Return Types
+// -----------------------------------------------------------------------------
 func (p *Parser) parseFunctionReturnTypes() []*ast.FunctionReturnType {
 	var listToReturn []*ast.FunctionReturnType
 
@@ -128,6 +135,9 @@ func (p *Parser) parseFunctionReturnTypes() []*ast.FunctionReturnType {
 	return listToReturn
 }
 
+// -----------------------------------------------------------------------------
+// Parsing Function Parameters
+// -----------------------------------------------------------------------------
 func (p *Parser) parseFunctionParameters() []*ast.FunctionParameters {
 	var listToReturn []*ast.FunctionParameters
 
@@ -163,6 +173,9 @@ func (p *Parser) parseFunctionParameters() []*ast.FunctionParameters {
 	return listToReturn
 }
 
+// -----------------------------------------------------------------------------
+// Parsing Return Statements
+// -----------------------------------------------------------------------------
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	stmt := &ast.ReturnStatement{Token: p.currentToken}
 
@@ -173,6 +186,9 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	return stmt
 }
 
+// -----------------------------------------------------------------------------
+// Parsing Var and Const Statements
+// -----------------------------------------------------------------------------
 func (p *Parser) parseVarStatement() *ast.VarStatement {
 	stmt := &ast.VarStatement{Token: p.currentToken}
 
@@ -201,6 +217,113 @@ func (p *Parser) parseVarStatement() *ast.VarStatement {
 	return stmt
 }
 
+// -----------------------------------------------------------------------------
+// Parsing If statements
+// -----------------------------------------------------------------------------
+func (p *Parser) parseIfStatement() *ast.IfStatement {
+	stmt := &ast.IfStatement{Token: p.currentToken}
+
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil
+	}
+	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
+		return nil
+	}
+
+	// Skiping for now. TODO: Implement this
+	for !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
+		p.nextToken()
+	}
+
+	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
+		return nil
+	}
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil
+	}
+	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
+		return nil
+	}
+
+	stmt.Body = p.parseFunctionBody()
+	return stmt
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Else Statements
+// -----------------------------------------------------------------------------
+func (p *Parser) parseElseStatement() *ast.ElseStatement {
+	stmt := &ast.ElseStatement{Token: p.currentToken}
+
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil
+	}
+	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
+		return nil
+	}
+
+	stmt.Body = p.parseFunctionBody()
+
+	return stmt
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Else If Statements
+// -----------------------------------------------------------------------------
+func (p *Parser) parseElseIfStatement() *ast.ElseIfStatement {
+	stmt := &ast.ElseIfStatement{Token: p.currentToken}
+
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil
+	}
+	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
+		return nil
+	}
+
+	// Skiping for now. TODO: Implement this
+	for !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
+		p.nextToken()
+	}
+
+	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
+		return nil
+	}
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil
+	}
+	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
+		return nil
+	}
+
+	stmt.Body = p.parseFunctionBody()
+
+	return stmt
+}
+
+// -----------------------------------------------------------------------------
+// Helper Methods
+// -----------------------------------------------------------------------------
+
+func (p *Parser) nextToken() {
+	p.currentToken = p.peekToken
+	if p.tokenPointer >= len(p.tokens) {
+		p.peekToken = lexer.Token{Kind: lexer.EOF}
+	} else {
+		p.peekToken = p.tokens[p.tokenPointer]
+	}
+	p.tokenPointer++
+}
+
+func (p *Parser) expectedPeekToken(kind lexer.TokenKind) bool {
+	if p.peekTokenIsOk(kind) {
+		p.nextToken()
+		return true
+	} else {
+		p.peekError(kind)
+		return false
+	}
+}
+
 func (p *Parser) currTokenIsOk(kind lexer.TokenKind) bool {
 	return p.currentToken.Kind == kind
 }
@@ -216,14 +339,4 @@ func (p *Parser) Errors() []string {
 func (p *Parser) peekError(kind lexer.TokenKind) {
 	msg := fmt.Sprintf("expected next token to be %s, got %s instead", lexer.TokenKindString(kind), lexer.TokenKindString(p.peekToken.Kind))
 	p.errors = append(p.errors, msg)
-}
-
-func (p *Parser) expectedPeekToken(kind lexer.TokenKind) bool {
-	if p.peekTokenIsOk(kind) {
-		p.nextToken()
-		return true
-	} else {
-		p.peekError(kind)
-		return false
-	}
 }

@@ -1,9 +1,40 @@
-if: (a < b): {
-    // statements
-} else if: (a > b): {
-    // statements
-} else: {
-    // statements
-}
+//if: (a < b): {
+//    // statements
+//} else if: (a > b): {
+//    // statements
+//} else: {
+//    // statements
+//}
+//
+//var someDouble: double = 3.141592653589793
 
-var someDouble: double = 3.141592653589793
+//for: (var i: int = 0; i < n; i++): {
+//    // statements
+//}
+//
+//for: (var i: int in 0..10): {
+//    // statements
+//}
+//
+//var x: int = 10;
+//var y: int = 100;
+//var foobar: int = 10000;
+//const age: int = 100
+//const heh: string = "hello"
+
+fun: main() {
+        var a: int = 10;
+        var b: int = 20;
+        var c: int = 30;
+
+        if: (a > b): {
+            var d: int = 40;
+        } else if: (b > c): {
+            var e: int = 50;
+        } else: {
+            var f: int = 60;
+        }
+    }
+    fun: add(a: int, b: int): (int) {
+        return a + b;
+    }
