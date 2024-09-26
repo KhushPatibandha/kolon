@@ -1,9 +1,14 @@
 package ast
 
-import "github.com/KhushPatibandha/Kolon/src/lexer"
+import (
+	"bytes"
+
+	"github.com/KhushPatibandha/Kolon/src/lexer"
+)
 
 type Node interface {
 	TokenValue() string
+	String() string
 }
 
 type Statement interface {
@@ -28,47 +33,75 @@ func (p *Program) TokenValue() string {
 	}
 }
 
+func (p *Program) String() string {
+	var out bytes.Buffer
+	for _, s := range p.Statements {
+		out.WriteString(s.String())
+	}
+	return out.String()
+}
+
 // -----------------------------------------------------------------------------
-// For Type (int, string, char, long, float, double, bool)
+// For Integer
 // -----------------------------------------------------------------------------
-type Type struct {
+
+type IntegerValue struct {
+	Token lexer.Token
+	Value int64
+}
+
+func (iv *IntegerValue) expressionNode()    {}
+func (iv *IntegerValue) TokenValue() string { return iv.Token.Value }
+func (iv *IntegerValue) String() string     { return iv.Token.Value }
+
+// -----------------------------------------------------------------------------
+// For Float
+// -----------------------------------------------------------------------------
+
+type FloatValue struct {
+	Token lexer.Token
+	Value float64
+}
+
+func (fv *FloatValue) expressionNode()    {}
+func (fv *FloatValue) TokenValue() string { return fv.Token.Value }
+func (fv *FloatValue) String() string     { return fv.Token.Value }
+
+// -----------------------------------------------------------------------------
+// For String
+// -----------------------------------------------------------------------------
+type StringValue struct {
 	Token lexer.Token
 	Value string
 }
 
-func (t *Type) TokenValue() string { return t.Token.Value }
+func (sv *StringValue) expressionNode()    {}
+func (sv *StringValue) TokenValue() string { return sv.Token.Value }
+func (sv *StringValue) String() string     { return sv.Token.Value }
 
 // -----------------------------------------------------------------------------
-// For Function Parameters
+// For Boolean
 // -----------------------------------------------------------------------------
-type FunctionParameters struct {
-	// Token         lexer.Token
-	ParameterName *Identifier
-	ParameterType *Type
+type BooleanValue struct {
+	Token lexer.Token
+	Value bool
 }
 
-func (fp *FunctionParameters) TokenValue() string { return fp.ParameterName.Token.Value }
+func (bv *BooleanValue) expressionNode()    {}
+func (bv *BooleanValue) TokenValue() string { return bv.Token.Value }
+func (bv *BooleanValue) String() string     { return bv.Token.Value }
 
 // -----------------------------------------------------------------------------
-// For Functions Return Type
+// For char
 // -----------------------------------------------------------------------------
-type FunctionReturnType struct {
-	// Token      lexer.Token
-	ReturnType *Type
+type CharValue struct {
+	Token lexer.Token
+	Value string
 }
 
-func (frt *FunctionReturnType) TokenValue() string { return frt.ReturnType.Token.Value }
-
-// -----------------------------------------------------------------------------
-// For Body (function, if, else, else if, for) -- Basically everything with {...}
-// -----------------------------------------------------------------------------
-type FunctionBody struct {
-	Token      lexer.Token // '{' token
-	Statements []Statement
-}
-
-func (fb *FunctionBody) statementNode()     {}
-func (fb *FunctionBody) TokenValue() string { return fb.Token.Value }
+func (cv *CharValue) expressionNode()    {}
+func (cv *CharValue) TokenValue() string { return cv.Token.Value }
+func (cv *CharValue) String() string     { return cv.Token.Value }
 
 // -----------------------------------------------------------------------------
 // For Identifier
@@ -80,6 +113,66 @@ type Identifier struct {
 
 func (i *Identifier) expressionNode()    {}
 func (i *Identifier) TokenValue() string { return i.Token.Value }
+func (i *Identifier) String() string     { return i.Value }
+
+// -----------------------------------------------------------------------------
+// For Type (int, string, char, float, bool)
+// -----------------------------------------------------------------------------
+type Type struct {
+	Token lexer.Token
+	Value string
+}
+
+func (t *Type) TokenValue() string { return t.Token.Value }
+func (t *Type) String() string     { return t.Value }
+
+// -----------------------------------------------------------------------------
+// For Function Parameters
+// -----------------------------------------------------------------------------
+type FunctionParameters struct {
+	// Token         lexer.Token
+	ParameterName *Identifier
+	ParameterType *Type
+}
+
+func (fp *FunctionParameters) TokenValue() string { return fp.ParameterName.Token.Value }
+func (fp *FunctionParameters) String() string {
+	var out bytes.Buffer
+	out.WriteString(fp.ParameterName.String())
+	out.WriteString(": ")
+	out.WriteString(fp.ParameterType.String())
+	return out.String()
+}
+
+// -----------------------------------------------------------------------------
+// For Functions Return Type
+// -----------------------------------------------------------------------------
+type FunctionReturnType struct {
+	// Token      lexer.Token
+	ReturnType *Type
+}
+
+func (frt *FunctionReturnType) TokenValue() string { return frt.ReturnType.Token.Value }
+func (frt *FunctionReturnType) String() string     { return frt.ReturnType.String() }
+
+// -----------------------------------------------------------------------------
+// For Body (function, if, else, else if, for) -- Basically everything with {...}
+// -----------------------------------------------------------------------------
+type FunctionBody struct {
+	Token      lexer.Token // '{' token
+	Statements []Statement
+}
+
+func (fb *FunctionBody) statementNode()     {}
+func (fb *FunctionBody) TokenValue() string { return fb.Token.Value }
+func (fb *FunctionBody) String() string {
+	var out bytes.Buffer
+
+	for _, s := range fb.Statements {
+		out.WriteString(s.String())
+	}
+	return out.String()
+}
 
 // -----------------------------------------------------------------------------
 // For Var AND Const Statement
@@ -93,17 +186,55 @@ type VarStatement struct {
 
 func (vr *VarStatement) statementNode()     {}
 func (vr *VarStatement) TokenValue() string { return vr.Token.Value }
+func (vr *VarStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(vr.TokenValue() + " ")
+	out.WriteString(vr.Name.String())
+	out.WriteString(": ")
+	out.WriteString(vr.Type.String())
+	out.WriteString(" = ")
+
+	if vr.Value != nil {
+		out.WriteString(vr.Value.String())
+	}
+	out.WriteString(";")
+	return out.String()
+}
 
 // -----------------------------------------------------------------------------
 // For Return Statement
 // -----------------------------------------------------------------------------
 type ReturnStatement struct {
 	Token lexer.Token
-	Value Expression
+	Value []Expression
 }
 
 func (r *ReturnStatement) statementNode()     {}
 func (r *ReturnStatement) TokenValue() string { return r.Token.Value }
+func (r *ReturnStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(r.TokenValue() + ": ")
+
+	if len(r.Value) > 1 {
+		out.WriteString("(")
+	}
+
+	for i, val := range r.Value {
+		out.WriteString(val.String())
+		if i != len(r.Value)-1 {
+			out.WriteString(", ")
+		}
+	}
+
+	if len(r.Value) > 1 {
+		out.WriteString(")")
+	}
+
+	out.WriteString(";")
+	return out.String()
+}
 
 // -----------------------------------------------------------------------------
 // For Functions
@@ -118,6 +249,36 @@ type Function struct {
 
 func (f *Function) statementNode()     {}
 func (f *Function) TokenValue() string { return f.Token.Value }
+func (f *Function) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(f.TokenValue() + ": ")
+	out.WriteString(f.Name.String() + "(")
+	for i, param := range f.Parameters {
+		out.WriteString(param.String())
+		if i != len(f.Parameters)-1 {
+			out.WriteString(", ")
+		}
+	}
+	out.WriteString(")")
+
+	if f.ReturnType != nil {
+		out.WriteString(": (")
+		for i, param := range f.ReturnType {
+			out.WriteString(param.String())
+			if i != len(f.ReturnType)-1 {
+				out.WriteString(", ")
+			}
+		}
+		out.WriteString(")")
+	}
+
+	out.WriteString(" {")
+	out.WriteString(f.Body.String())
+	out.WriteString("}")
+
+	return out.String()
+}
 
 // -----------------------------------------------------------------------------
 // For If Statement
@@ -130,6 +291,18 @@ type IfStatement struct {
 
 func (ifs *IfStatement) statementNode()     {}
 func (ifs *IfStatement) TokenValue() string { return ifs.Token.Value }
+func (ifs *IfStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(ifs.TokenValue() + ": ")
+	out.WriteString("(")
+	out.WriteString(ifs.Value.String())
+	out.WriteString("): ")
+	out.WriteString("{")
+	out.WriteString(ifs.Body.String())
+	out.WriteString("}")
+	return out.String()
+}
 
 // -----------------------------------------------------------------------------
 // For Else Statement
@@ -141,6 +314,14 @@ type ElseStatement struct {
 
 func (el *ElseStatement) statementNode()     {}
 func (el *ElseStatement) TokenValue() string { return el.Token.Value }
+func (el *ElseStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(el.TokenValue() + ": {")
+	out.WriteString(el.Body.String())
+	out.WriteString("}")
+	return out.String()
+}
 
 // -----------------------------------------------------------------------------
 // For Else If Statement
@@ -153,7 +334,81 @@ type ElseIfStatement struct {
 
 func (eis *ElseIfStatement) statementNode()     {}
 func (eis *ElseIfStatement) TokenValue() string { return eis.Token.Value }
+func (eis *ElseIfStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(eis.TokenValue() + ": ")
+	out.WriteString("(")
+	out.WriteString(eis.Value.String())
+	out.WriteString("): {")
+	out.WriteString(eis.Body.String())
+	out.WriteString("}")
+	return out.String()
+}
 
 // -----------------------------------------------------------------------------
 // for loop statement left.
 // -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+// For Expression Statement
+// -----------------------------------------------------------------------------
+
+type ExpressionStatement struct {
+	Token      lexer.Token
+	Expression Expression
+}
+
+func (es *ExpressionStatement) statementNode()     {}
+func (es *ExpressionStatement) TokenValue() string { return es.Token.Value }
+func (es *ExpressionStatement) String() string {
+	if es.Expression != nil {
+		return es.Expression.String()
+	}
+	return ""
+}
+
+// -----------------------------------------------------------------------------
+// For Prefix Expression
+// -----------------------------------------------------------------------------
+type PrefixExpression struct {
+	Token    lexer.Token
+	Operator string
+	Right    Expression
+}
+
+func (pe *PrefixExpression) expressionNode()    {}
+func (pe *PrefixExpression) TokenValue() string { return pe.Token.Value }
+func (pe *PrefixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(pe.Operator)
+	out.WriteString(pe.Right.String())
+	out.WriteString(")")
+	return out.String()
+}
+
+// -----------------------------------------------------------------------------
+// For Infix Expression
+// -----------------------------------------------------------------------------
+type InfixExpression struct {
+	Token    lexer.Token
+	Left     Expression
+	Operator string
+	Right    Expression
+}
+
+func (ie *InfixExpression) expressionNode()    {}
+func (ie *InfixExpression) TokenValue() string { return ie.Token.Value }
+func (ie *InfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(ie.Left.String())
+	out.WriteString(" " + ie.Operator + " ")
+	out.WriteString(ie.Right.String())
+	out.WriteString(")")
+
+	return out.String()
+}

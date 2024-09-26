@@ -2,7 +2,6 @@ package lexer
 
 import (
 	"fmt"
-	"math"
 	"regexp"
 	"strconv"
 )
@@ -59,11 +58,8 @@ func createLexer(source string) *Lexer {
 
 			{regexp.MustCompile(`[a-zA-Z_][a-zA-Z0-9_]*`), identifierHandler},
 
-			{regexp.MustCompile(`[0-9]+[lL]`), intLongHandler(LONG)},
-			{regexp.MustCompile(`[0-9]+\.[0-9]+[dD]`), floatDoubleHandler(DOUBLE)},
-			{regexp.MustCompile(`[0-9]+\.[0-9]+[eE][+-]?[0-9]+`), floatDoubleHandler(FLOAT)},
-			{regexp.MustCompile(`[0-9]+\.[0-9]+`), floatDoubleHandler(FLOAT)},
-			{regexp.MustCompile(`[0-9]+`), intLongHandler(INT)},
+			{regexp.MustCompile(`\d+\.\d+`), floatHandler(FLOAT)},
+			{regexp.MustCompile(`\d+`), intHandler(INT)},
 
 			{regexp.MustCompile(`"[^"]*"`), stringHandler(STRING)},
 			{regexp.MustCompile(`'[^']'`), stringHandler(CHAR)},
@@ -139,45 +135,31 @@ func printlnHandler(lex *Lexer, regex *regexp.Regexp) {
 	lex.advanceN(len(match[0]))
 }
 
-func floatDoubleHandler(_ TokenKind) regexHandler {
+func floatHandler(k TokenKind) regexHandler {
 	return func(lex *Lexer, regex *regexp.Regexp) {
-		string := regex.FindString(lex.remainder())
-		if string[len(string)-1] == 'd' || string[len(string)-1] == 'D' {
-			lex.push(GetNewToken(DOUBLE, string))
-		} else {
-			value, err := strconv.ParseFloat(string, 64)
-			if err != nil {
-				panic(fmt.Sprintf("Number Handler Error: %v", err))
-			}
-
-			if value <= math.MaxFloat32 && value >= -math.MaxFloat32 {
-				lex.push(GetNewToken(FLOAT, string))
-			} else {
-				lex.push(GetNewToken(DOUBLE, string))
-			}
+		matchedString := regex.FindString(lex.remainder())
+		_, err := strconv.ParseFloat(matchedString, 64)
+		if err != nil {
+			panic(fmt.Sprintf("Number Handler Error: %v", err))
 		}
-		lex.advanceN(len(string))
+		lex.push(GetNewToken(k, matchedString))
+		lex.advanceN(len(matchedString))
 	}
 }
 
-func intLongHandler(k TokenKind) regexHandler {
+func intHandler(k TokenKind) regexHandler {
 	return func(lex *Lexer, regex *regexp.Regexp) {
-		string := regex.FindString(lex.remainder())
-		if string[len(string)-1] == 'l' || string[len(string)-1] == 'L' {
-			lex.push(GetNewToken(LONG, string))
+		matchedString := regex.FindString(lex.remainder())
+		if _, err := strconv.ParseInt(matchedString, 10, 64); err == nil {
+			lex.push(GetNewToken(k, matchedString))
 		} else {
-			number, err := strconv.ParseInt(string, 10, 64)
-			if err != nil {
+			if _, err := strconv.ParseUint(matchedString, 10, 64); err == nil {
+				lex.push(GetNewToken(k, matchedString))
+			} else {
 				panic(fmt.Sprintf("Number Handler Error: %v", err))
 			}
-
-			if number <= math.MaxInt32 && number >= math.MinInt32 {
-				lex.push(GetNewToken(k, string))
-			} else {
-				lex.push(GetNewToken(LONG, string))
-			}
 		}
-		lex.advanceN(len(string))
+		lex.advanceN(len(matchedString))
 	}
 }
 

@@ -9,9 +9,7 @@ const (
 	STRING                      // PERF:
 	CHAR                        // PERF:
 	INT                         // PERF:
-	LONG                        // PERF:
 	FLOAT                       // FIX: look into precision
-	DOUBLE                      // FIX: look into precision
 	BOOL                        // PERF:
 	IDENTIFIER                  // PERF:
 	// ENUM
@@ -102,9 +100,7 @@ var reservedWords = map[string]TokenKind{
 	"string":  TYPE,
 	"char":    TYPE,
 	"int":     TYPE,
-	"long":    TYPE,
 	"float":   TYPE,
-	"double":  TYPE,
 	"bool":    TYPE,
 	"package": PACKAGE,
 	"struct":  STRUCT,
@@ -121,7 +117,7 @@ type Token struct {
 }
 
 func (token Token) Help() {
-	if token.Kind == STRING || token.Kind == INT || token.Kind == BOOL || token.Kind == CHAR || token.Kind == LONG || token.Kind == FLOAT || token.Kind == DOUBLE || token.Kind == IDENTIFIER || token.Kind == TYPE || token.Kind == PRINT || token.Kind == PRINTLN || token.Kind == PACKAGE || token.Kind == STRUCT || token.Kind == IMPORT || token.Kind == FROM {
+	if token.Kind == STRING || token.Kind == INT || token.Kind == BOOL || token.Kind == CHAR || token.Kind == FLOAT || token.Kind == IDENTIFIER || token.Kind == TYPE || token.Kind == PRINT || token.Kind == PRINTLN || token.Kind == PACKAGE || token.Kind == STRUCT || token.Kind == IMPORT || token.Kind == FROM {
 		fmt.Printf("%s(%s)\n", TokenKindString(token.Kind), token.Value)
 	} else {
 		fmt.Printf("%s()\n", TokenKindString(token.Kind))
@@ -142,12 +138,8 @@ func TokenKindString(tKind TokenKind) string {
 		return "CHAR"
 	case INT:
 		return "INT"
-	case LONG:
-		return "LONG"
 	case FLOAT:
 		return "FLOAT"
-	case DOUBLE:
-		return "DOUBLE"
 	case BOOL:
 		return "BOOL"
 		// case ENUM:

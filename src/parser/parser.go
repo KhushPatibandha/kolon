@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
@@ -13,11 +14,93 @@ type Parser struct {
 	currentToken lexer.Token
 	peekToken    lexer.Token
 	errors       []string
+
+	prefixParseFns  map[lexer.TokenKind]prefixParseFn
+	infixParseFns   map[lexer.TokenKind]infixParseFn
+	postfixParseFns map[lexer.TokenKind]postfixParseFn
+}
+
+type (
+	prefixParseFn  func() ast.Expression
+	infixParseFn   func(ast.Expression) ast.Expression
+	postfixParseFn func(ast.Expression) ast.Expression
+)
+
+const (
+	_ int = iota
+	LOWEST
+	DOUBLEEQUALS
+	LOGICALORAND
+	BITWISEORAND
+	LESSGREATER
+	SUM
+	PRODUCT
+	PREFIX
+	CALL
+	// ASSIGN
+)
+
+var precedences = map[lexer.TokenKind]int{
+	lexer.DOUBLE_EQUAL:       DOUBLEEQUALS,
+	lexer.NOT_EQUAL:          DOUBLEEQUALS,
+	lexer.LESS_THAN_EQUAL:    LESSGREATER,
+	lexer.GREATER_THAN_EQUAL: LESSGREATER,
+	lexer.LESS_THAN:          LESSGREATER,
+	lexer.GREATER_THAN:       LESSGREATER,
+	lexer.PLUS:               SUM,
+	lexer.DASH:               SUM,
+	lexer.SLASH:              PRODUCT,
+	lexer.STAR:               PRODUCT,
+	lexer.PERCENT:            PRODUCT,
+	lexer.AND_AND:            LOGICALORAND,
+	lexer.OR_OR:              LOGICALORAND,
+	lexer.AND:                BITWISEORAND,
+	lexer.OR:                 BITWISEORAND,
+	// lexer.EQUAL_ASSIGN:       ASSIGN,
+	// lexer.PLUS_EQUAL:         ASSIGN,
+	// lexer.MINUS_EQUAL:        ASSIGN,
+	// lexer.STAR_EQUAL:         ASSIGN,
+	// lexer.SLASH_EQUAL:        ASSIGN,
+	// lexer.PERCENT_EQUAL:      ASSIGN,
 }
 
 func New(tokens []lexer.Token) *Parser {
 	p := &Parser{errors: []string{}, peekToken: tokens[0], tokens: tokens, tokenPointer: 1}
 	p.nextToken()
+
+	p.prefixParseFns = make(map[lexer.TokenKind]prefixParseFn)
+	p.addPrefix(lexer.IDENTIFIER, p.parseIdentifier)
+	p.addPrefix(lexer.INT, p.parseIntegerValue)
+	p.addPrefix(lexer.FLOAT, p.parseFloatValue)
+	p.addPrefix(lexer.BOOL, p.parseBooleanValue)
+	p.addPrefix(lexer.STRING, p.parseStringValue)
+	p.addPrefix(lexer.CHAR, p.parseCharValue)
+	p.addPrefix(lexer.NOT, p.parsePrefixExpression)
+	p.addPrefix(lexer.DASH, p.parsePrefixExpression)
+
+	p.infixParseFns = make(map[lexer.TokenKind]infixParseFn)
+	p.addInfix(lexer.PLUS, p.parseInfixExpression)
+	p.addInfix(lexer.DASH, p.parseInfixExpression)
+	p.addInfix(lexer.SLASH, p.parseInfixExpression)
+	p.addInfix(lexer.STAR, p.parseInfixExpression)
+	p.addInfix(lexer.PERCENT, p.parseInfixExpression)
+	p.addInfix(lexer.DOUBLE_EQUAL, p.parseInfixExpression)
+	p.addInfix(lexer.NOT_EQUAL, p.parseInfixExpression)
+	p.addInfix(lexer.LESS_THAN_EQUAL, p.parseInfixExpression)
+	p.addInfix(lexer.GREATER_THAN_EQUAL, p.parseInfixExpression)
+	p.addInfix(lexer.LESS_THAN, p.parseInfixExpression)
+	p.addInfix(lexer.GREATER_THAN, p.parseInfixExpression)
+	p.addInfix(lexer.AND_AND, p.parseInfixExpression)
+	p.addInfix(lexer.OR_OR, p.parseInfixExpression)
+	p.addInfix(lexer.AND, p.parseInfixExpression)
+	p.addInfix(lexer.OR, p.parseInfixExpression)
+	// p.addInfix(lexer.EQUAL_ASSIGN, p.parseInfixExpression)
+	// p.addInfix(lexer.PLUS_EQUAL, p.parseInfixExpression)
+	// p.addInfix(lexer.MINUS_EQUAL, p.parseInfixExpression)
+	// p.addInfix(lexer.STAR_EQUAL, p.parseInfixExpression)
+	// p.addInfix(lexer.SLASH_EQUAL, p.parseInfixExpression)
+	// p.addInfix(lexer.PERCENT_EQUAL, p.parseInfixExpression)
+
 	return p
 }
 
@@ -26,9 +109,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 	program.Statements = []ast.Statement{}
 	for p.currentToken.Kind != lexer.EOF {
 		stmt := p.parseStatement()
-		if stmt != nil {
-			program.Statements = append(program.Statements, stmt)
-		}
+		program.Statements = append(program.Statements, stmt)
 		p.nextToken()
 	}
 	return program
@@ -51,8 +132,106 @@ func (p *Parser) parseStatement() ast.Statement {
 	case lexer.ELSE_IF:
 		return p.parseElseIfStatement()
 	default:
+		return p.parseExpressionStatement()
+	}
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefix := p.prefixParseFns[p.currentToken.Kind]
+	if prefix == nil {
+		p.noPrefixParseFnError(p.currentToken.Kind)
 		return nil
 	}
+	leftExp := prefix()
+
+	for !p.peekTokenIsOk(lexer.SEMI_COLON) && precedence < p.peekPrecedence() {
+		infix := p.infixParseFns[p.peekToken.Kind]
+		if infix == nil {
+			return leftExp
+		}
+		p.nextToken()
+		leftExp = infix(leftExp)
+	}
+
+	return leftExp
+}
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	expression := &ast.PrefixExpression{
+		Token:    p.currentToken,
+		Operator: p.currentToken.Value,
+	}
+	p.nextToken()
+	expression.Right = p.parseExpression(PREFIX)
+	return expression
+}
+
+func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
+	expression := &ast.InfixExpression{
+		Token:    p.currentToken,
+		Operator: p.currentToken.Value,
+		Left:     left,
+	}
+
+	precedence := p.currentPrecedence()
+	p.nextToken()
+	expression.Right = p.parseExpression(precedence)
+	return expression
+}
+
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	stmt := &ast.ExpressionStatement{Token: p.currentToken}
+
+	stmt.Expression = p.parseExpression(LOWEST)
+	if p.peekTokenIsOk(lexer.SEMI_COLON) {
+		p.nextToken()
+	}
+
+	return stmt
+}
+
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Value}
+}
+
+func (p *Parser) parseIntegerValue() ast.Expression {
+	intVal := &ast.IntegerValue{Token: p.currentToken}
+	value, err := strconv.ParseInt(p.currentToken.Value, 0, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as integer", p.currentToken.Value)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	intVal.Value = value
+	return intVal
+}
+
+func (p *Parser) parseFloatValue() ast.Expression {
+	floatVal := &ast.FloatValue{Token: p.currentToken}
+	value, err := strconv.ParseFloat(p.currentToken.Value, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as float", p.currentToken.Value)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	floatVal.Value = value
+	return floatVal
+}
+
+func (p *Parser) parseBooleanValue() ast.Expression {
+	val := p.currentToken.Value
+	if val == "true" {
+		return &ast.BooleanValue{Token: p.currentToken, Value: true}
+	}
+	return &ast.BooleanValue{Token: p.currentToken, Value: false}
+}
+
+func (p *Parser) parseStringValue() ast.Expression {
+	return &ast.StringValue{Token: p.currentToken, Value: p.currentToken.Value}
+}
+
+func (p *Parser) parseCharValue() ast.Expression {
+	return &ast.CharValue{Token: p.currentToken, Value: p.currentToken.Value}
 }
 
 // -----------------------------------------------------------------------------
@@ -96,9 +275,7 @@ func (p *Parser) parseFunctionBody() *ast.FunctionBody {
 
 	for p.currentToken.Kind != lexer.CLOSE_CURLY_BRACKET && p.currentToken.Kind != lexer.EOF {
 		stmt := p.parseStatement()
-		if stmt != nil {
-			block.Statements = append(block.Statements, stmt)
-		}
+		block.Statements = append(block.Statements, stmt)
 		p.nextToken()
 	}
 	return block
@@ -179,10 +356,36 @@ func (p *Parser) parseFunctionParameters() []*ast.FunctionParameters {
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	stmt := &ast.ReturnStatement{Token: p.currentToken}
 
-	// Skiping for now TODO: Implement this
-	for !p.currTokenIsOk(lexer.SEMI_COLON) {
-		p.nextToken()
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil
 	}
+
+	// We have multiple return values
+	if p.peekTokenIsOk(lexer.OPEN_BRACKET) {
+		if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
+			return nil
+		}
+
+		// Skiping for now TODO: Implement this
+		for !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
+			p.nextToken()
+		}
+		if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
+			return nil
+		}
+	} else {
+		// only 1 return value
+
+		// Skiping for now TODO: Implement this
+		for !p.peekTokenIsOk(lexer.SEMI_COLON) {
+			p.nextToken()
+		}
+	}
+
+	if !p.expectedPeekToken(lexer.SEMI_COLON) {
+		return nil
+	}
+
 	return stmt
 }
 
@@ -339,4 +542,35 @@ func (p *Parser) Errors() []string {
 func (p *Parser) peekError(kind lexer.TokenKind) {
 	msg := fmt.Sprintf("expected next token to be %s, got %s instead", lexer.TokenKindString(kind), lexer.TokenKindString(p.peekToken.Kind))
 	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) addPrefix(tokenKind lexer.TokenKind, fn prefixParseFn) {
+	p.prefixParseFns[tokenKind] = fn
+}
+
+func (p *Parser) addInfix(tokenKind lexer.TokenKind, fn infixParseFn) {
+	p.infixParseFns[tokenKind] = fn
+}
+
+func (p *Parser) addPostfix(tokenKind lexer.TokenKind, fn postfixParseFn) {
+	p.postfixParseFns[tokenKind] = fn
+}
+
+func (p *Parser) noPrefixParseFnError(t lexer.TokenKind) {
+	msg := fmt.Sprintf("No prefix parse function for %s found", lexer.TokenKindString(t))
+	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) peekPrecedence() int {
+	if p, ok := precedences[p.peekToken.Kind]; ok {
+		return p
+	}
+	return LOWEST
+}
+
+func (p *Parser) currentPrecedence() int {
+	if p, ok := precedences[p.currentToken.Kind]; ok {
+		return p
+	}
+	return LOWEST
 }
