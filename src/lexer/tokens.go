@@ -9,7 +9,7 @@ const (
 	STRING                      // PERF:
 	CHAR                        // PERF:
 	INT                         // PERF:
-	FLOAT                       // FIX: look into precision
+	FLOAT                       // PERF:
 	BOOL                        // PERF:
 	IDENTIFIER                  // PERF:
 	// ENUM

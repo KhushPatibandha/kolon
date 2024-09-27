@@ -412,3 +412,25 @@ func (ie *InfixExpression) String() string {
 
 	return out.String()
 }
+
+// -----------------------------------------------------------------------------
+// For Postfix Expression
+// -----------------------------------------------------------------------------
+type PostfixExpression struct {
+	Token    lexer.Token
+	Operator string
+	Left     Expression
+}
+
+func (poe *PostfixExpression) statementNode()     {}
+func (poe *PostfixExpression) expressionNode()    {}
+func (poe *PostfixExpression) TokenValue() string { return poe.Token.Value }
+func (poe *PostfixExpression) String() string {
+	var out bytes.Buffer
+
+	out.WriteString("(")
+	out.WriteString(poe.Left.String())
+	out.WriteString(poe.Operator)
+	out.WriteString(");")
+	return out.String()
+}

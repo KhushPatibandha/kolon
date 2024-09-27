@@ -47,5 +47,27 @@
 //var s: string = "hello"
 //
 
-!5;
--15;
+//!5;
+//-15;
+
+fun: main() {
+    var a: int = 10;
+    a++;
+    a--;
+    var b: int = 20;
+
+    if (a > b) {
+        var c: int = add(a, b);
+    } else {
+        var d: int = sub(a, b);
+    }
+}
+
+fun: add(a: int, b: int): (int) {
+    return: a + b;
+}
+
+fun: sub(a: int, b: int): (int) {
+    return: a - b;
+}
+

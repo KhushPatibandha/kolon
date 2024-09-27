@@ -36,6 +36,7 @@ const (
 	SUM
 	PRODUCT
 	PREFIX
+	POSTFIX
 	CALL
 	// ASSIGN
 )
@@ -56,6 +57,8 @@ var precedences = map[lexer.TokenKind]int{
 	lexer.OR_OR:              LOGICALORAND,
 	lexer.AND:                BITWISEORAND,
 	lexer.OR:                 BITWISEORAND,
+	lexer.PLUS_PLUS:          POSTFIX,
+	lexer.MINUS_MINUS:        POSTFIX,
 	// lexer.EQUAL_ASSIGN:       ASSIGN,
 	// lexer.PLUS_EQUAL:         ASSIGN,
 	// lexer.MINUS_EQUAL:        ASSIGN,
@@ -77,6 +80,7 @@ func New(tokens []lexer.Token) *Parser {
 	p.addPrefix(lexer.CHAR, p.parseCharValue)
 	p.addPrefix(lexer.NOT, p.parsePrefixExpression)
 	p.addPrefix(lexer.DASH, p.parsePrefixExpression)
+	p.addPrefix(lexer.OPEN_BRACKET, p.parseGroupedExpression)
 
 	p.infixParseFns = make(map[lexer.TokenKind]infixParseFn)
 	p.addInfix(lexer.PLUS, p.parseInfixExpression)
@@ -100,6 +104,10 @@ func New(tokens []lexer.Token) *Parser {
 	// p.addInfix(lexer.STAR_EQUAL, p.parseInfixExpression)
 	// p.addInfix(lexer.SLASH_EQUAL, p.parseInfixExpression)
 	// p.addInfix(lexer.PERCENT_EQUAL, p.parseInfixExpression)
+
+	p.postfixParseFns = make(map[lexer.TokenKind]postfixParseFn)
+	p.addPostfix(lexer.PLUS_PLUS, p.parsePostfixExpression)
+	p.addPostfix(lexer.MINUS_MINUS, p.parsePostfixExpression)
 
 	return p
 }
@@ -145,6 +153,18 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	leftExp := prefix()
 
 	for !p.peekTokenIsOk(lexer.SEMI_COLON) && precedence < p.peekPrecedence() {
+
+		if p.postfixParseFns[p.peekToken.Kind] != nil {
+			postfix := p.postfixParseFns[p.peekToken.Kind]
+			if postfix == nil {
+				p.noPostfixParseFnError(p.peekToken.Kind)
+				return nil
+			}
+			p.nextToken()
+			leftExp = postfix(leftExp)
+			continue
+		}
+
 		infix := p.infixParseFns[p.peekToken.Kind]
 		if infix == nil {
 			return leftExp
@@ -154,6 +174,15 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	}
 
 	return leftExp
+}
+
+func (p *Parser) parseGroupedExpression() ast.Expression {
+	p.nextToken()
+	exp := p.parseExpression(LOWEST)
+	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
+		return nil
+	}
+	return exp
 }
 
 func (p *Parser) parsePrefixExpression() ast.Expression {
@@ -176,6 +205,17 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	precedence := p.currentPrecedence()
 	p.nextToken()
 	expression.Right = p.parseExpression(precedence)
+	return expression
+}
+
+func (p *Parser) parsePostfixExpression(left ast.Expression) ast.Expression {
+	expression := &ast.PostfixExpression{
+		Token:    p.currentToken,
+		Operator: p.currentToken.Value,
+		Left:     left,
+	}
+
+	p.nextToken()
 	return expression
 }
 
@@ -366,20 +406,21 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 			return nil
 		}
 
-		// Skiping for now TODO: Implement this
 		for !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
+			if p.peekTokenIsOk(lexer.COMMA) {
+				p.nextToken()
+			}
 			p.nextToken()
+			stmt.Value = append(stmt.Value, p.parseExpression(LOWEST))
 		}
+
 		if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
 			return nil
 		}
 	} else {
 		// only 1 return value
-
-		// Skiping for now TODO: Implement this
-		for !p.peekTokenIsOk(lexer.SEMI_COLON) {
-			p.nextToken()
-		}
+		p.nextToken()
+		stmt.Value = append(stmt.Value, p.parseExpression(LOWEST))
 	}
 
 	if !p.expectedPeekToken(lexer.SEMI_COLON) {
@@ -409,13 +450,15 @@ func (p *Parser) parseVarStatement() *ast.VarStatement {
 	}
 	stmt.Type = &ast.Type{Token: p.currentToken, Value: p.currentToken.Value}
 
-	if !p.expectedPeekToken(lexer.EQUAL_ASSIGN) {
-		return nil
+	if p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
+		p.nextToken()
+
+		p.nextToken()
+		stmt.Value = p.parseExpression(LOWEST)
 	}
 
-	// Skiping for now TODO: Implement this
-	for !p.currTokenIsOk(lexer.SEMI_COLON) {
-		p.nextToken()
+	if !p.expectedPeekToken(lexer.SEMI_COLON) {
+		return nil
 	}
 	return stmt
 }
@@ -433,14 +476,8 @@ func (p *Parser) parseIfStatement() *ast.IfStatement {
 		return nil
 	}
 
-	// Skiping for now. TODO: Implement this
-	for !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
-		p.nextToken()
-	}
+	stmt.Value = p.parseGroupedExpression()
 
-	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
-		return nil
-	}
 	if !p.expectedPeekToken(lexer.COLON) {
 		return nil
 	}
@@ -483,14 +520,8 @@ func (p *Parser) parseElseIfStatement() *ast.ElseIfStatement {
 		return nil
 	}
 
-	// Skiping for now. TODO: Implement this
-	for !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
-		p.nextToken()
-	}
+	stmt.Value = p.parseGroupedExpression()
 
-	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
-		return nil
-	}
 	if !p.expectedPeekToken(lexer.COLON) {
 		return nil
 	}
@@ -558,6 +589,11 @@ func (p *Parser) addPostfix(tokenKind lexer.TokenKind, fn postfixParseFn) {
 
 func (p *Parser) noPrefixParseFnError(t lexer.TokenKind) {
 	msg := fmt.Sprintf("No prefix parse function for %s found", lexer.TokenKindString(t))
+	p.errors = append(p.errors, msg)
+}
+
+func (p *Parser) noPostfixParseFnError(t lexer.TokenKind) {
+	msg := fmt.Sprintf("No postfix parse function for %s found", lexer.TokenKindString(t))
 	p.errors = append(p.errors, msg)
 }
 

@@ -392,3 +392,149 @@ func Test16(t *testing.T) {
 		t.Errorf("Expected: fun: main() {var a: int = 10;var b: int = 20;var c: int = 30;if: ((a > b)): {var d: int = 40;} else if: ((b > c)): {var e: int = 50;} else: {var f: int = 60;}}fun: add(a: int, b: int): (int, bool) {return: ((a + b), true);}")
 	}
 }
+
+func Test18(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.Function{
+				Token: lexer.Token{Kind: lexer.FUN, Value: "fun"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "main"},
+					Value: "main",
+				},
+				Parameters: []*ast.FunctionParameters{},
+				ReturnType: nil,
+				Body: &ast.FunctionBody{
+					Statements: []ast.Statement{
+						&ast.VarStatement{
+							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+							Name: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Value: "a",
+							},
+							Type: &ast.Type{
+								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Value: "int",
+							},
+							Value: &ast.IntegerValue{
+								Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+								Value: 10,
+							},
+						},
+						&ast.PostfixExpression{
+							Token:    lexer.Token{Kind: lexer.PLUS_PLUS, Value: "++"},
+							Operator: "++",
+							Left: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Value: "a",
+							},
+						},
+						&ast.PostfixExpression{
+							Token:    lexer.Token{Kind: lexer.MINUS_MINUS, Value: "--"},
+							Operator: "--",
+							Left: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Value: "a",
+							},
+						},
+						&ast.VarStatement{
+							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+							Name: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+								Value: "b",
+							},
+							Type: &ast.Type{
+								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Value: "int",
+							},
+							Value: &ast.IntegerValue{
+								Token: lexer.Token{Kind: lexer.INT, Value: "20"},
+								Value: 20,
+							},
+						},
+						&ast.IfStatement{
+							Token: lexer.Token{Kind: lexer.IF, Value: "if"},
+							Value: &ast.InfixExpression{
+								Token: lexer.Token{Kind: lexer.GREATER_THAN, Value: ">"},
+								Left: &ast.Identifier{
+									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+									Value: "a",
+								},
+								Operator: ">",
+								Right: &ast.Identifier{
+									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+									Value: "b",
+								},
+							},
+							Body: &ast.FunctionBody{
+								Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+								Statements: []ast.Statement{
+									&ast.VarStatement{
+										Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+										Name: &ast.Identifier{
+											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+											Value: "c",
+										},
+										Type: &ast.Type{
+											Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+											Value: "int",
+										},
+										Value: &ast.InfixExpression{
+											Token: lexer.Token{Kind: lexer.PLUS, Value: "+"},
+											Left: &ast.Identifier{
+												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+												Value: "a",
+											},
+											Operator: "+",
+											Right: &ast.Identifier{
+												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+												Value: "b",
+											},
+										},
+									},
+								},
+							},
+						},
+						&ast.ElseStatement{
+							Token: lexer.Token{Kind: lexer.ELSE, Value: "else"},
+							Body: &ast.FunctionBody{
+								Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+								Statements: []ast.Statement{
+									&ast.VarStatement{
+										Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+										Name: &ast.Identifier{
+											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
+											Value: "d",
+										},
+										Type: &ast.Type{
+											Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+											Value: "int",
+										},
+										Value: &ast.InfixExpression{
+											Token: lexer.Token{Kind: lexer.DASH, Value: "-"},
+											Left: &ast.Identifier{
+												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+												Value: "a",
+											},
+											Operator: "-",
+											Right: &ast.Identifier{
+												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+												Value: "b",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// TODO: parse call expressions
+	if program.String() != "fun: main() {var a: int = 10;(a++);(a--);var b: int = 20;if: ((a > b)): {var c: int = (a + b);}else: {var d: int = (a - b);}}" {
+		t.Errorf("program.String() wrong. got=%q", program.String())
+		t.Errorf("Expected: fun: main() {var a: int = 10;(a++);(a--);var b: int = 20;if: ((a > b)): {var c: int = (a + b);}else: {var d: int = (a - b);}}")
+	}
+}
