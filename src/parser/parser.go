@@ -141,6 +141,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseElseStatement()
 	case lexer.ELSE_IF:
 		return p.parseElseIfStatement()
+	case lexer.FOR:
+		return p.parseForLoop()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -245,6 +247,7 @@ func (p *Parser) parsePostfixExpression(left ast.Expression) ast.Expression {
 		Token:    p.currentToken,
 		Operator: p.currentToken.Value,
 		Left:     left,
+		IsStmt:   p.peekTokenIsOk(lexer.SEMI_COLON),
 	}
 
 	p.nextToken()
@@ -569,6 +572,39 @@ func (p *Parser) parseElseIfStatement() *ast.ElseIfStatement {
 // -----------------------------------------------------------------------------
 // Parsing For Loop
 // -----------------------------------------------------------------------------
+func (p *Parser) parseForLoop() *ast.ForLoopStatement {
+	stmt := &ast.ForLoopStatement{Token: p.currentToken}
+
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil
+	}
+	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
+		return nil
+	}
+
+	stmt.Left = p.parseVarStatement()
+	p.nextToken()
+
+	stmt.Middle = p.parseExpression(LOWEST).(*ast.InfixExpression)
+
+	p.nextToken()
+	p.nextToken()
+
+	stmt.Right = p.parseExpression(LOWEST).(*ast.PostfixExpression)
+
+	if !p.currTokenIsOk(lexer.CLOSE_BRACKET) {
+		return nil
+	}
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil
+	}
+	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
+		return nil
+	}
+	stmt.Body = p.parseFunctionBody()
+
+	return stmt
+}
 
 // -----------------------------------------------------------------------------
 // Helper Methods

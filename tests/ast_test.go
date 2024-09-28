@@ -428,6 +428,7 @@ func Test18(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
+							IsStmt: true,
 						},
 						&ast.PostfixExpression{
 							Token:    lexer.Token{Kind: lexer.MINUS_MINUS, Value: "--"},
@@ -436,6 +437,7 @@ func Test18(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
+							IsStmt: true,
 						},
 						&ast.VarStatement{
 							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
@@ -779,9 +781,109 @@ func Test22(t *testing.T) {
 	}
 }
 
-/*
-for: (var i: int = 0; i < 10; i++): {
-            var a: int = 5;
-        }
+func Test23(t *testing.T) {
 
-*/
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "x"},
+					Value: "x",
+				},
+				Type: &ast.Type{
+					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Value: "int",
+				},
+				Value: &ast.IntegerValue{
+					Token: lexer.Token{Kind: lexer.INT, Value: "5"},
+					Value: 5,
+				},
+			},
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "s"},
+					Value: "s",
+				},
+				Type: &ast.Type{
+					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Value: "int",
+				},
+				Value: &ast.PostfixExpression{
+					Token:    lexer.Token{Kind: lexer.PLUS_PLUS, Value: "++"},
+					Operator: "++",
+					Left: &ast.Identifier{
+						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "x"},
+						Value: "x",
+					},
+					IsStmt: false,
+				},
+			},
+			&ast.ForLoopStatement{
+				Token: lexer.Token{Kind: lexer.FOR, Value: "for"},
+				Left: &ast.VarStatement{
+					Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+					Name: &ast.Identifier{
+						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "i"},
+						Value: "i",
+					},
+					Type: &ast.Type{
+						Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Value: "int",
+					},
+					Value: &ast.IntegerValue{
+						Token: lexer.Token{Kind: lexer.INT, Value: "0"},
+						Value: 0,
+					},
+				},
+				Middle: &ast.InfixExpression{
+					Token: lexer.Token{Kind: lexer.LESS_THAN, Value: "<"},
+					Left: &ast.Identifier{
+						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "i"},
+						Value: "i",
+					},
+					Operator: "<",
+					Right: &ast.IntegerValue{
+						Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+						Value: 10,
+					},
+				},
+				Right: &ast.PostfixExpression{
+					Token:    lexer.Token{Kind: lexer.PLUS_PLUS, Value: "++"},
+					Operator: "++",
+					Left: &ast.Identifier{
+						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "i"},
+						Value: "i",
+					},
+					IsStmt: false,
+				},
+				Body: &ast.FunctionBody{
+					Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+					Statements: []ast.Statement{
+						&ast.VarStatement{
+							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+							Name: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Value: "a",
+							},
+							Type: &ast.Type{
+								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Value: "int",
+							},
+							Value: &ast.IntegerValue{
+								Token: lexer.Token{Kind: lexer.INT, Value: "5"},
+								Value: 5,
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if program.String() != "var x: int = 5;var s: int = (x++);for: (var i: int = 0; (i < 10); (i++)): {var a: int = 5;}" {
+		t.Errorf("program.String() wrong. got=%q", program.String())
+		t.Errorf("Expected: for: (var i: int = 0; (i < 10); (i++)): {var a: int = 5;}")
+	}
+}

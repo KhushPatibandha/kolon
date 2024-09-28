@@ -350,6 +350,30 @@ func (eis *ElseIfStatement) String() string {
 // -----------------------------------------------------------------------------
 // for loop statement left.
 // -----------------------------------------------------------------------------
+type ForLoopStatement struct {
+	Token  lexer.Token
+	Left   *VarStatement
+	Middle *InfixExpression
+	Right  *PostfixExpression
+	Body   *FunctionBody
+}
+
+func (fls *ForLoopStatement) statementNode()     {}
+func (fls *ForLoopStatement) TokenValue() string { return fls.Token.Value }
+func (fls *ForLoopStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(fls.TokenValue() + ": (")
+	out.WriteString(fls.Left.String() + " ")
+	out.WriteString(fls.Middle.String())
+	out.WriteString("; ")
+	out.WriteString(fls.Right.String())
+	out.WriteString("): {")
+	out.WriteString(fls.Body.String())
+	out.WriteString("}")
+
+	return out.String()
+}
 
 // -----------------------------------------------------------------------------
 // For Expression Statement
@@ -420,6 +444,7 @@ type PostfixExpression struct {
 	Token    lexer.Token
 	Operator string
 	Left     Expression
+	IsStmt   bool
 }
 
 func (poe *PostfixExpression) statementNode()     {}
@@ -431,7 +456,11 @@ func (poe *PostfixExpression) String() string {
 	out.WriteString("(")
 	out.WriteString(poe.Left.String())
 	out.WriteString(poe.Operator)
-	out.WriteString(");") // TODO: fix this
+	out.WriteString(")")
+
+	if poe.IsStmt {
+		out.WriteString(";")
+	}
 
 	return out.String()
 }

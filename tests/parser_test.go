@@ -726,6 +726,34 @@ func Test20(t *testing.T) {
 	testInfixExpression(t, callExp.Args[2], 4, "+", 5)
 }
 
+func Test24(t *testing.T) {
+	input := `
+    a++;
+    a--;
+    `
+	l := lexer.Tokenizer(input)
+	p := parser.New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 2 {
+		t.Fatalf("program.Statements does not contain 2 statements. got=%d", len(program.Statements))
+	}
+
+	for _, stmt := range program.Statements {
+		postfixExp, ok := stmt.(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)
+		}
+
+		if postfixExp.String() != "(a++);" && postfixExp.String() != "(a--);" {
+			t.Fatalf("postfixExp.String() not %s. got=%s", "(a++);", postfixExp.String())
+		}
+
+		fmt.Println(postfixExp.String())
+	}
+}
+
 func testVarStatement(t *testing.T, s ast.Statement, identifier string, typeOfvar string) bool {
 	if s.TokenValue() != "var" && s.TokenValue() != "const" {
 		t.Errorf("s.TokenValue not 'var' || 'const'. got=%q", s.TokenValue())

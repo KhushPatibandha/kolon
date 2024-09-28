@@ -8,13 +8,13 @@
 //
 //var someDouble: double = 3.141592653589793
 
-for: (var i: int = 0; i < n; i++): {
-    // statements
-}
-
-for: (var i: int in 0..10): {
-    // statements
-}
+//for: (var i: int = 0; i < n; i++): {
+//    // statements
+//}
+//
+//for: (var i: int in 0..10): {
+//    // statements
+//}
 //
 //var x: int = 10;
 //var y: int = 100;
@@ -71,3 +71,5 @@ for: (var i: int in 0..10): {
 //    return: a - b;
 //}
 //
+
+fun: main() {var a: int = 10;(a++);(a--);var b: int = 20;if: ((a > b)): {var c: int = (a + b);}else: {var d: int = (a - b);}}
