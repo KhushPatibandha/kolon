@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"strings"
 
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
@@ -193,9 +194,9 @@ func (vr *VarStatement) String() string {
 	out.WriteString(vr.Name.String())
 	out.WriteString(": ")
 	out.WriteString(vr.Type.String())
-	out.WriteString(" = ")
 
 	if vr.Value != nil {
+		out.WriteString(" = ")
 		out.WriteString(vr.Value.String())
 	}
 	out.WriteString(";")
@@ -353,7 +354,6 @@ func (eis *ElseIfStatement) String() string {
 // -----------------------------------------------------------------------------
 // For Expression Statement
 // -----------------------------------------------------------------------------
-
 type ExpressionStatement struct {
 	Token      lexer.Token
 	Expression Expression
@@ -431,6 +431,34 @@ func (poe *PostfixExpression) String() string {
 	out.WriteString("(")
 	out.WriteString(poe.Left.String())
 	out.WriteString(poe.Operator)
-	out.WriteString(");")
+	out.WriteString(");") // TODO: fix this
+
+	return out.String()
+}
+
+// -----------------------------------------------------------------------------
+// For Call Expression
+// -----------------------------------------------------------------------------
+type CallExpression struct {
+	Token lexer.Token
+	Name  Expression
+	Args  []Expression
+}
+
+func (ce *CallExpression) expressionNode()    {}
+func (ce *CallExpression) TokenValue() string { return ce.Token.Value }
+func (ce *CallExpression) String() string {
+	var out bytes.Buffer
+
+	args := []string{}
+	for _, a := range ce.Args {
+		args = append(args, a.String())
+	}
+
+	out.WriteString(ce.Name.String())
+	out.WriteString("(")
+	out.WriteString(strings.Join(args, ", "))
+	out.WriteString(")")
+
 	return out.String()
 }

@@ -486,6 +486,18 @@ func Test13(t *testing.T) {
 		expected string
 	}{
 		{
+			"a + add(b * c) + d",
+			"((a + add((b * c))) + d)",
+		},
+		{
+			"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+			"add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+		},
+		{
+			"add(a + b + c * d / f + g)",
+			"add((((a + b) + ((c * d) / f)) + g))",
+		},
+		{
 			"1 + (2 + 3) + 4",
 			"((1 + (2 + 3)) + 4)",
 		},
@@ -677,6 +689,41 @@ func Test19(t *testing.T) {
 		}
 	}
 
+}
+
+func Test20(t *testing.T) {
+	input := "add(1, 2*3, 4 + 5)"
+
+	l := lexer.Tokenizer(input)
+	p := parser.New(l)
+	program := p.ParseProgram()
+	checkParserErrors(t, p)
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
+	}
+
+	stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+	}
+
+	callExp, ok := stmt.Expression.(*ast.CallExpression)
+	if !ok {
+		t.Fatalf("stmt.Expression is not ast.CallExpression. got=%T", stmt.Expression)
+	}
+
+	if !testIdentifier(t, callExp.Name, "add") {
+		return
+	}
+
+	if len(callExp.Args) != 3 {
+		t.Fatalf("wrong length of arguments. got=%d", len(callExp.Args))
+	}
+
+	testValueExpression(t, callExp.Args[0], 1)
+	testInfixExpression(t, callExp.Args[1], 2, "*", 3)
+	testInfixExpression(t, callExp.Args[2], 4, "+", 5)
 }
 
 func testVarStatement(t *testing.T, s ast.Statement, identifier string, typeOfvar string) bool {

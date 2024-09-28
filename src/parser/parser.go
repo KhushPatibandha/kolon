@@ -59,6 +59,7 @@ var precedences = map[lexer.TokenKind]int{
 	lexer.OR:                 BITWISEORAND,
 	lexer.PLUS_PLUS:          POSTFIX,
 	lexer.MINUS_MINUS:        POSTFIX,
+	lexer.OPEN_BRACKET:       CALL,
 	// lexer.EQUAL_ASSIGN:       ASSIGN,
 	// lexer.PLUS_EQUAL:         ASSIGN,
 	// lexer.MINUS_EQUAL:        ASSIGN,
@@ -98,6 +99,7 @@ func New(tokens []lexer.Token) *Parser {
 	p.addInfix(lexer.OR_OR, p.parseInfixExpression)
 	p.addInfix(lexer.AND, p.parseInfixExpression)
 	p.addInfix(lexer.OR, p.parseInfixExpression)
+	p.addInfix(lexer.OPEN_BRACKET, p.parseCallExpression)
 	// p.addInfix(lexer.EQUAL_ASSIGN, p.parseInfixExpression)
 	// p.addInfix(lexer.PLUS_EQUAL, p.parseInfixExpression)
 	// p.addInfix(lexer.MINUS_EQUAL, p.parseInfixExpression)
@@ -174,6 +176,36 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	}
 
 	return leftExp
+}
+
+func (p *Parser) parseCallExpression(left ast.Expression) ast.Expression {
+	exp := &ast.CallExpression{Token: p.currentToken, Name: left}
+	exp.Args = p.parseCallArgs()
+	return exp
+}
+
+func (p *Parser) parseCallArgs() []ast.Expression {
+	var args []ast.Expression
+
+	if p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
+		p.nextToken()
+		return args
+	}
+
+	p.nextToken()
+	args = append(args, p.parseExpression(LOWEST))
+
+	for p.peekTokenIsOk(lexer.COMMA) {
+		p.nextToken()
+		p.nextToken()
+		args = append(args, p.parseExpression(LOWEST))
+	}
+
+	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
+		return nil
+	}
+
+	return args
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {
@@ -533,6 +565,10 @@ func (p *Parser) parseElseIfStatement() *ast.ElseIfStatement {
 
 	return stmt
 }
+
+// -----------------------------------------------------------------------------
+// Parsing For Loop
+// -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
 // Helper Methods
