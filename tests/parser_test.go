@@ -750,7 +750,7 @@ func Test24(t *testing.T) {
 			t.Fatalf("postfixExp.String() not %s. got=%s", "(a++);", postfixExp.String())
 		}
 
-		fmt.Println(postfixExp.String())
+		// fmt.Println(postfixExp.String())
 	}
 }
 
