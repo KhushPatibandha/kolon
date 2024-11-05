@@ -285,9 +285,11 @@ func (f *Function) String() string {
 // For If Statement
 // -----------------------------------------------------------------------------
 type IfStatement struct {
-	Token lexer.Token
-	Value Expression
-	Body  *FunctionBody
+	Token       lexer.Token
+	Value       Expression
+	Body        *FunctionBody
+	MultiConseq []*ElseIfStatement
+	Consequence *ElseStatement
 }
 
 func (ifs *IfStatement) statementNode()     {}
@@ -302,6 +304,17 @@ func (ifs *IfStatement) String() string {
 	out.WriteString("{")
 	out.WriteString(ifs.Body.String())
 	out.WriteString("}")
+
+	if ifs.MultiConseq != nil {
+		for i := 0; i < len(ifs.MultiConseq); i++ {
+			out.WriteString(ifs.MultiConseq[i].String())
+		}
+	}
+
+	if ifs.Consequence != nil {
+		out.WriteString(ifs.Consequence.String())
+	}
+
 	return out.String()
 }
 

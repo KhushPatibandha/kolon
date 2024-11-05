@@ -137,10 +137,6 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseFunctionStatement()
 	case lexer.IF:
 		return p.parseIfStatement()
-	case lexer.ELSE:
-		return p.parseElseStatement()
-	case lexer.ELSE_IF:
-		return p.parseElseIfStatement()
 	case lexer.FOR:
 		return p.parseForLoop()
 	default:
@@ -521,50 +517,59 @@ func (p *Parser) parseIfStatement() *ast.IfStatement {
 	}
 
 	stmt.Body = p.parseFunctionBody()
-	return stmt
-}
 
-// -----------------------------------------------------------------------------
-// Parsing Else Statements
-// -----------------------------------------------------------------------------
-func (p *Parser) parseElseStatement() *ast.ElseStatement {
-	stmt := &ast.ElseStatement{Token: p.currentToken}
+	// -----------------------------------------------------------------------------
+	// Parsing Else If Statements
+	// -----------------------------------------------------------------------------
+	var elseIfList []*ast.ElseIfStatement
+	if p.peekTokenIsOk(lexer.ELSE_IF) {
+		for p.peekTokenIsOk(lexer.ELSE_IF) {
+			p.nextToken()
+			elseIfStmt := &ast.ElseIfStatement{Token: p.currentToken}
 
-	if !p.expectedPeekToken(lexer.COLON) {
-		return nil
-	}
-	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
-		return nil
-	}
+			if !p.expectedPeekToken(lexer.COLON) {
+				return nil
+			}
+			if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
+				return nil
+			}
 
-	stmt.Body = p.parseFunctionBody()
+			elseIfStmt.Value = p.parseGroupedExpression()
 
-	return stmt
-}
+			if !p.expectedPeekToken(lexer.COLON) {
+				return nil
+			}
+			if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
+				return nil
+			}
 
-// -----------------------------------------------------------------------------
-// Parsing Else If Statements
-// -----------------------------------------------------------------------------
-func (p *Parser) parseElseIfStatement() *ast.ElseIfStatement {
-	stmt := &ast.ElseIfStatement{Token: p.currentToken}
+			elseIfStmt.Body = p.parseFunctionBody()
 
-	if !p.expectedPeekToken(lexer.COLON) {
-		return nil
-	}
-	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
-		return nil
-	}
-
-	stmt.Value = p.parseGroupedExpression()
-
-	if !p.expectedPeekToken(lexer.COLON) {
-		return nil
-	}
-	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
-		return nil
+			elseIfList = append(elseIfList, elseIfStmt)
+		}
+		stmt.MultiConseq = elseIfList
+	} else {
+		stmt.MultiConseq = nil
 	}
 
-	stmt.Body = p.parseFunctionBody()
+	// -----------------------------------------------------------------------------
+	// Parsing Else Statements
+	// -----------------------------------------------------------------------------
+	if p.peekTokenIsOk(lexer.ELSE) {
+		p.nextToken()
+		elseStmt := &ast.ElseStatement{Token: p.currentToken}
+
+		if !p.expectedPeekToken(lexer.COLON) {
+			return nil
+		}
+		if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
+			return nil
+		}
+		elseStmt.Body = p.parseFunctionBody()
+		stmt.Consequence = elseStmt
+	} else {
+		stmt.Consequence = nil
+	}
 
 	return stmt
 }

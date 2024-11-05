@@ -254,60 +254,62 @@ func Test16(t *testing.T) {
 									},
 								},
 							},
-						},
-						&ast.ElseIfStatement{
-							Token: lexer.Token{Kind: lexer.ELSE_IF, Value: "else if"},
-							Value: &ast.InfixExpression{
-								Token: lexer.Token{Kind: lexer.GREATER_THAN, Value: ">"},
-								Left: &ast.Identifier{
-									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
-									Value: "b",
-								},
-								Operator: ">",
-								Right: &ast.Identifier{
-									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
-									Value: "c",
-								},
-							},
-							Body: &ast.FunctionBody{
-								Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
-								Statements: []ast.Statement{
-									&ast.VarStatement{
-										Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
-										Name: &ast.Identifier{
-											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "e"},
-											Value: "e",
+							MultiConseq: []*ast.ElseIfStatement{
+								{
+									Token: lexer.Token{Kind: lexer.ELSE_IF, Value: "else if"},
+									Value: &ast.InfixExpression{
+										Token: lexer.Token{Kind: lexer.GREATER_THAN, Value: ">"},
+										Left: &ast.Identifier{
+											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+											Value: "b",
 										},
-										Type: &ast.Type{
-											Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-											Value: "int",
+										Operator: ">",
+										Right: &ast.Identifier{
+											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+											Value: "c",
 										},
-										Value: &ast.IntegerValue{
-											Token: lexer.Token{Kind: lexer.INT, Value: "50"},
-											Value: 50,
+									},
+									Body: &ast.FunctionBody{
+										Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+										Statements: []ast.Statement{
+											&ast.VarStatement{
+												Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+												Name: &ast.Identifier{
+													Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "e"},
+													Value: "e",
+												},
+												Type: &ast.Type{
+													Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+													Value: "int",
+												},
+												Value: &ast.IntegerValue{
+													Token: lexer.Token{Kind: lexer.INT, Value: "50"},
+													Value: 50,
+												},
+											},
 										},
 									},
 								},
 							},
-						},
-						&ast.ElseStatement{
-							Token: lexer.Token{Kind: lexer.ELSE, Value: "else"},
-							Body: &ast.FunctionBody{
-								Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
-								Statements: []ast.Statement{
-									&ast.VarStatement{
-										Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
-										Name: &ast.Identifier{
-											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "f"},
-											Value: "f",
-										},
-										Type: &ast.Type{
-											Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-											Value: "int",
-										},
-										Value: &ast.IntegerValue{
-											Token: lexer.Token{Kind: lexer.INT, Value: "60"},
-											Value: 60,
+							Consequence: &ast.ElseStatement{
+								Token: lexer.Token{Kind: lexer.ELSE, Value: "else"},
+								Body: &ast.FunctionBody{
+									Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+									Statements: []ast.Statement{
+										&ast.VarStatement{
+											Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+											Name: &ast.Identifier{
+												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "f"},
+												Value: "f",
+											},
+											Type: &ast.Type{
+												Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+												Value: "int",
+											},
+											Value: &ast.IntegerValue{
+												Token: lexer.Token{Kind: lexer.INT, Value: "60"},
+												Value: 60,
+											},
 										},
 									},
 								},
@@ -496,32 +498,33 @@ func Test18(t *testing.T) {
 									},
 								},
 							},
-						},
-						&ast.ElseStatement{
-							Token: lexer.Token{Kind: lexer.ELSE, Value: "else"},
-							Body: &ast.FunctionBody{
-								Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
-								Statements: []ast.Statement{
-									&ast.VarStatement{
-										Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
-										Name: &ast.Identifier{
-											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
-											Value: "d",
-										},
-										Type: &ast.Type{
-											Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-											Value: "int",
-										},
-										Value: &ast.InfixExpression{
-											Token: lexer.Token{Kind: lexer.DASH, Value: "-"},
-											Left: &ast.Identifier{
-												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
-												Value: "a",
+							MultiConseq: nil,
+							Consequence: &ast.ElseStatement{
+								Token: lexer.Token{Kind: lexer.ELSE, Value: "else"},
+								Body: &ast.FunctionBody{
+									Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+									Statements: []ast.Statement{
+										&ast.VarStatement{
+											Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+											Name: &ast.Identifier{
+												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
+												Value: "d",
 											},
-											Operator: "-",
-											Right: &ast.Identifier{
-												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
-												Value: "b",
+											Type: &ast.Type{
+												Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+												Value: "int",
+											},
+											Value: &ast.InfixExpression{
+												Token: lexer.Token{Kind: lexer.DASH, Value: "-"},
+												Left: &ast.Identifier{
+													Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+													Value: "a",
+												},
+												Operator: "-",
+												Right: &ast.Identifier{
+													Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+													Value: "b",
+												},
 											},
 										},
 									},
@@ -541,7 +544,6 @@ func Test18(t *testing.T) {
 }
 
 func Test21(t *testing.T) {
-
 	program := &ast.Program{
 		Statements: []ast.Statement{
 			&ast.Function{
@@ -608,7 +610,6 @@ func Test21(t *testing.T) {
 }
 
 func Test22(t *testing.T) {
-
 	program := &ast.Program{
 		Statements: []ast.Statement{
 			&ast.Function{
@@ -782,7 +783,6 @@ func Test22(t *testing.T) {
 }
 
 func Test23(t *testing.T) {
-
 	program := &ast.Program{
 		Statements: []ast.Statement{
 			&ast.VarStatement{

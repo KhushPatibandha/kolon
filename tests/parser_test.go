@@ -163,41 +163,18 @@ func Test7(t *testing.T) {
 	if !ok {
 		t.Fatalf("program.Statements[0] is not *ast.Function. got=%T", program.Statements[0])
 	}
-	if len(fun1.Body.Statements) != 6 {
-		t.Fatalf("expected 6 statements in function body, got %d", len(fun1.Body.Statements))
+	if len(fun1.Body.Statements) != 4 {
+		t.Fatalf("expected 4 statements in function body, got %d", len(fun1.Body.Statements))
 	}
 
-	fun1VarStmt1, ok := fun1.Body.Statements[0].(*ast.VarStatement)
-	if !ok {
-		t.Fatalf("function.Body.Statements[0] is not *ast.VarStatement. got=%T", fun1.Body.Statements[0])
+	if !testVarStatement(t, fun1.Body.Statements[0], "a", "int") {
+		return
 	}
-	if fun1VarStmt1.Name.Value != "a" {
-		t.Fatalf("expected variable name 'a', got %s", fun1VarStmt1.Name.Value)
+	if !testVarStatement(t, fun1.Body.Statements[1], "b", "int") {
+		return
 	}
-	if fun1VarStmt1.Type.Value != "int" {
-		t.Fatalf("expected variable type 'int', got %s", fun1VarStmt1.Type.Value)
-	}
-
-	fun1VarStmt2, ok := fun1.Body.Statements[1].(*ast.VarStatement)
-	if !ok {
-		t.Fatalf("function.Body.Statements[1] is not *ast.VarStatement. got=%T", fun1.Body.Statements[1])
-	}
-	if fun1VarStmt2.Name.Value != "b" {
-		t.Fatalf("expected variable name 'b', got %s", fun1VarStmt2.Name.Value)
-	}
-	if fun1VarStmt2.Type.Value != "int" {
-		t.Fatalf("expected variable type 'int', got %s", fun1VarStmt2.Type.Value)
-	}
-
-	fun1VarStmt3, ok := fun1.Body.Statements[2].(*ast.VarStatement)
-	if !ok {
-		t.Fatalf("function.Body.Statements[2] is not *ast.VarStatement. got=%T", fun1.Body.Statements[2])
-	}
-	if fun1VarStmt3.Name.Value != "c" {
-		t.Fatalf("expected variable name 'c', got %s", fun1VarStmt3.Name.Value)
-	}
-	if fun1VarStmt3.Type.Value != "int" {
-		t.Fatalf("expected variable type 'int', got %s", fun1VarStmt3.Type.Value)
+	if !testVarStatement(t, fun1.Body.Statements[2], "c", "int") {
+		return
 	}
 
 	fun1IfStmt, ok := fun1.Body.Statements[3].(*ast.IfStatement)
@@ -207,39 +184,24 @@ func Test7(t *testing.T) {
 	if fun1IfStmt.Token.Value != "if" {
 		t.Fatalf("expected if statement, got %s", fun1IfStmt.Token.Value)
 	}
-	if fun1IfStmt.Body.Statements[0].(*ast.VarStatement).Name.Value != "d" {
-		t.Fatalf("expected variable name 'd', got %s", fun1IfStmt.Body.Statements[0].(*ast.VarStatement).Name.Value)
-	}
-	if fun1IfStmt.Body.Statements[0].(*ast.VarStatement).Type.Value != "int" {
-		t.Fatalf("expected variable type 'int', got %s", fun1IfStmt.Body.Statements[0].(*ast.VarStatement).Type.Value)
+	if !testVarStatement(t, fun1IfStmt.Body.Statements[0], "d", "int") {
+		return
 	}
 
-	fun1ElseIfStmt, ok := fun1.Body.Statements[4].(*ast.ElseIfStatement)
-	if !ok {
-		t.Fatalf("function.Body.Statements[4] is not *ast.IfStatement. got=%T", fun1.Body.Statements[4])
-	}
+	fun1ElseIfStmt := fun1IfStmt.MultiConseq[0]
 	if fun1ElseIfStmt.Token.Value != "else if" {
 		t.Fatalf("expected else if statement, got %s", fun1ElseIfStmt.Token.Value)
 	}
-	if fun1ElseIfStmt.Body.Statements[0].(*ast.VarStatement).Name.Value != "e" {
-		t.Fatalf("expected variable name 'e', got %s", fun1ElseIfStmt.Body.Statements[0].(*ast.VarStatement).Name.Value)
-	}
-	if fun1ElseIfStmt.Body.Statements[0].(*ast.VarStatement).Type.Value != "int" {
-		t.Fatalf("expected variable type 'int', got %s", fun1ElseIfStmt.Body.Statements[0].(*ast.VarStatement).Type.Value)
+	if !testVarStatement(t, fun1ElseIfStmt.Body.Statements[0], "e", "int") {
+		return
 	}
 
-	fun1ElseStmt, ok := fun1.Body.Statements[5].(*ast.ElseStatement)
-	if !ok {
-		t.Fatalf("function.Body.Statements[5] is not *ast.IfStatement. got=%T", fun1.Body.Statements[5])
-	}
+	fun1ElseStmt := fun1IfStmt.Consequence
 	if fun1ElseStmt.Token.Value != "else" {
 		t.Fatalf("expected else statement, got %s", fun1ElseStmt.Token.Value)
 	}
-	if fun1ElseStmt.Body.Statements[0].(*ast.VarStatement).Name.Value != "f" {
-		t.Fatalf("expected variable name 'f', got %s", fun1ElseStmt.Body.Statements[0].(*ast.VarStatement).Name.Value)
-	}
-	if fun1ElseStmt.Body.Statements[0].(*ast.VarStatement).Type.Value != "int" {
-		t.Fatalf("expected variable type 'int', got %s", fun1ElseStmt.Body.Statements[0].(*ast.VarStatement).Type.Value)
+	if !testVarStatement(t, fun1ElseStmt.Body.Statements[0], "f", "int") {
+		return
 	}
 
 	fun2, ok := program.Statements[1].(*ast.Function)
@@ -272,8 +234,8 @@ func Test8(t *testing.T) {
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
-	if len(program.Statements) != 2 {
-		t.Fatalf("program.Statements does not contain 2 statements. got=%d", len(program.Statements))
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
 	}
 
 	ifStmt, ok := program.Statements[0].(*ast.IfStatement)
@@ -283,33 +245,16 @@ func Test8(t *testing.T) {
 	if len(ifStmt.Body.Statements) != 1 {
 		t.Fatalf("consequence is not 1 statements. got=%d\n", len(ifStmt.Body.Statements))
 	}
-	ifStmtVarStmt, ok := ifStmt.Body.Statements[0].(*ast.VarStatement)
-	if !ok {
-		t.Fatalf("stmt is not *ast.VarStatement. got=%T", ifStmt.Body.Statements[0])
-	}
-	if ifStmtVarStmt.Name.Value != "a" {
-		t.Fatalf("varStmt.Name.Value not 'a'. got=%q", ifStmtVarStmt.Name.Value)
-	}
-	if ifStmtVarStmt.Type.Value != "int" {
-		t.Fatalf("varStmt.Type.Value not 'int'. got=%q", ifStmtVarStmt.Type.Value)
+	if !testVarStatement(t, ifStmt.Body.Statements[0], "a", "int") {
+		return
 	}
 
-	elseStmt, ok := program.Statements[1].(*ast.ElseStatement)
-	if !ok {
-		t.Fatalf("program.Statements[1] is not *ast.ElseStatement. got=%T", program.Statements[1])
-	}
+	elseStmt := ifStmt.Consequence
 	if len(elseStmt.Body.Statements) != 1 {
 		t.Fatalf("consequence is not 1 statements. got=%d\n", len(elseStmt.Body.Statements))
 	}
-	elseStmtVarStmt, ok := elseStmt.Body.Statements[0].(*ast.VarStatement)
-	if !ok {
-		t.Fatalf("stmt is not *ast.VarStatement. got=%T", elseStmt.Body.Statements[0])
-	}
-	if elseStmtVarStmt.Name.Value != "b" {
-		t.Fatalf("varStmt.Name.Value not 'b'. got=%q", elseStmtVarStmt.Name.Value)
-	}
-	if elseStmtVarStmt.Type.Value != "int" {
-		t.Fatalf("varStmt.Type.Value not 'int'. got=%q", elseStmtVarStmt.Type.Value)
+	if !testVarStatement(t, elseStmt.Body.Statements[0], "b", "int") {
+		return
 	}
 }
 
@@ -688,7 +633,6 @@ func Test19(t *testing.T) {
 			return
 		}
 	}
-
 }
 
 func Test20(t *testing.T) {
