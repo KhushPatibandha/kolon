@@ -32,6 +32,44 @@ func Eval(node ast.Node) (object.Object, bool) {
 			return FALSE, false
 		}
 	case *ast.PrefixExpression:
+		if postfix, ok := node.Right.(*ast.PostfixExpression); ok {
+			left, err := Eval(postfix.Left)
+			if err {
+				return nil, true
+			}
+			operator := postfix.Operator
+			res, err := evalPostfixExpression(operator, left)
+			if err {
+				return nil, true
+			}
+
+			var resVal interface{}
+
+			switch {
+			case res.Type() == object.INTEGER_OBJ:
+				resVal = res.(*object.Integer).Value
+			case res.Type() == object.FLOAT_OBJ:
+				resVal = res.(*object.Float).Value
+			default:
+				return nil, true
+			}
+
+			switch val := resVal.(type) {
+			case int64:
+				if operator == "++" {
+					return evalPrefixExpression(node.Operator, &object.Integer{Value: val - 2})
+				} else {
+					return evalPrefixExpression(node.Operator, &object.Integer{Value: val + 2})
+				}
+			case float64:
+				if operator == "++" {
+					return evalPrefixExpression(node.Operator, &object.Float{Value: val - 2})
+				} else {
+					return evalPrefixExpression(node.Operator, &object.Float{Value: val + 2})
+				}
+			}
+		}
+
 		right, err := Eval(node.Right)
 		if err {
 			return nil, true
@@ -47,6 +85,12 @@ func Eval(node ast.Node) (object.Object, bool) {
 			return nil, true
 		}
 		return evalInfixExpression(node.Operator, left, right)
+	case *ast.PostfixExpression:
+		left, err := Eval(node.Left)
+		if err {
+			return nil, true
+		}
+		return evalPostfixExpression(node.Operator, left)
 	}
 	return nil, false
 }
@@ -98,6 +142,43 @@ func evalBangOperatorExpression(right object.Object) (object.Object, bool) {
 		return NULL, true
 	default:
 		return FALSE, false
+	}
+}
+
+func evalPostfixExpression(operator string, left object.Object) (object.Object, bool) {
+	switch {
+	case left.Type() == object.INTEGER_OBJ:
+		return evalIntegerPostfixExpression(operator, left)
+	case left.Type() == object.FLOAT_OBJ:
+		return evalFloatPostfixExpression(operator, left)
+	default:
+		return NULL, true
+	}
+}
+
+func evalFloatPostfixExpression(operator string, left object.Object) (object.Object, bool) {
+	leftVal := left.(*object.Float).Value
+
+	switch operator {
+	case "++":
+		return &object.Float{Value: leftVal + 1}, false
+	case "--":
+		return &object.Float{Value: leftVal - 1}, false
+	default:
+		return nil, false
+	}
+}
+
+func evalIntegerPostfixExpression(operator string, left object.Object) (object.Object, bool) {
+	leftVal := left.(*object.Integer).Value
+
+	switch operator {
+	case "++":
+		return &object.Integer{Value: leftVal + 1}, false
+	case "--":
+		return &object.Integer{Value: leftVal - 1}, false
+	default:
+		return NULL, true
 	}
 }
 

@@ -33,6 +33,8 @@ func Test25(t *testing.T) {
 		{"10 % 3", 1},
 		{"2 & 3", 2},
 		{"2 | 3", 3},
+		{"5++", 6},
+		{"5--", 4},
 	}
 
 	for _, tt := range tests {
@@ -282,6 +284,42 @@ func Test31(t *testing.T) {
 		}
 		if tt.object.Type() == object.FLOAT_OBJ {
 			testFloatObject(t, evaluated, tt.object.(*object.Float).Value)
+		}
+	}
+}
+
+func Test32(t *testing.T) {
+	postfixTest := []struct {
+		input    string
+		object   object.Object
+		expected bool
+	}{
+		{"5++", &object.Integer{Value: 6}, false},
+		{"5--", &object.Integer{Value: 4}, false},
+		{"-5--", &object.Integer{Value: -6}, false},
+		{"-5++", &object.Integer{Value: -4}, false},
+		{"10.1++", &object.Float{Value: 11.1}, false},
+		{"10.1--", &object.Float{Value: 9.1}, false},
+		{"-10.1--", &object.Float{Value: -11.1}, false},
+		{"-10.1++", &object.Float{Value: -9.1}, false},
+	}
+
+	for _, tt := range postfixTest {
+		evaluated, err := testEval(tt.input)
+		if tt.expected {
+			if !err {
+				t.Errorf("Error not raised for %s", tt.input)
+			}
+			if tt.object != evaluator.NULL && evaluated != tt.object {
+				t.Errorf("Error not raised for %s", tt.input)
+			}
+			continue
+		}
+		if err {
+			t.Errorf("Error evaluating %s", tt.input)
+		}
+		if tt.object.Type() == object.INTEGER_OBJ {
+			testIntegerObject(t, evaluated, tt.object.(*object.Integer).Value)
 		}
 	}
 }
