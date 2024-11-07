@@ -393,6 +393,79 @@ func Test33(t *testing.T) {
 	}
 }
 
+func Test34(t *testing.T) {
+	returnStmtTests := []struct {
+		input          string
+		expectedOutput []object.Object
+		hasErr         bool
+	}{
+		{"return: true;", []object.Object{evaluator.TRUE}, false},
+		{"return: (true, false, true);", []object.Object{evaluator.TRUE, evaluator.FALSE, evaluator.TRUE}, false},
+		{"return: 10;", []object.Object{&object.Integer{Value: 10}}, false},
+		{"return: (10, 20, 1 < 2, true != true, 1 + 1, 4.1);", []object.Object{&object.Integer{Value: 10}, &object.Integer{Value: 20}, evaluator.TRUE, evaluator.FALSE, &object.Integer{Value: 2}, &object.Float{Value: 4.1}}, false},
+		{"return: \"Hello\";", []object.Object{&object.String{Value: "\"Hello\""}}, false},
+		{"return: 'c';", []object.Object{&object.Char{Value: "'c'"}}, false},
+		{"return: (\"Hello\", 'h', true, \"World\");", []object.Object{&object.String{Value: "\"Hello\""}, &object.Char{Value: "'h'"}, evaluator.TRUE, &object.String{Value: "\"World\""}}, false},
+		{"return: 10; 9;", []object.Object{&object.Integer{Value: 10}}, false},
+		{"return: 2 * 5; 9;", []object.Object{&object.Integer{Value: 10}}, false},
+		{"9; return: 2 * 5; 9;", []object.Object{&object.Integer{Value: 10}}, false},
+		{
+			`if: (10 > 1): {
+                if: (10 > 1): {
+                    return: 10;
+                }
+                return: 1;
+            }`, []object.Object{&object.Integer{Value: 10}}, false,
+		},
+		{
+			`if: (10 > 1): {
+                if: (10 > 1): {
+                    return: (10, true, "Hello", 'w', 1.1);
+                }
+                return: (1, false, "World", 'h', 10.1);
+            }`, []object.Object{&object.Integer{Value: 10}, evaluator.TRUE, &object.String{Value: "\"Hello\""}, &object.Char{Value: "'w'"}, &object.Float{Value: 1.1}}, false,
+		},
+	}
+
+	for _, tt := range returnStmtTests {
+		evaluated, hasErr, err := testEval(tt.input)
+		if hasErr != tt.hasErr {
+			t.Error("expected error and recived error not matching")
+		}
+		if err != nil {
+			t.Error(err.Error())
+		}
+
+		if !hasErr {
+			returnValue, ok := evaluated.(*object.ReturnValue)
+			if !ok {
+				t.Errorf("Expected Return Object. got=%T", evaluated)
+			}
+
+			if len(returnValue.Value) != len(tt.expectedOutput) {
+				t.Fatalf("Expected %d values in ReturnValue, got=%d", len(tt.expectedOutput), len(returnValue.Value))
+			}
+
+			for i, expected := range tt.expectedOutput {
+				actual := returnValue.Value[i]
+
+				switch expected := expected.(type) {
+				case *object.Boolean:
+					testBooleanObject(t, actual, expected.Value)
+				case *object.Integer:
+					testIntegerObject(t, actual, expected.Value)
+				case *object.Float:
+					testFloatObject(t, actual, expected.Value)
+				case *object.String:
+					testStringObject(t, actual, expected.Value)
+				case *object.Char:
+					testCharObject(t, actual, expected.Value)
+				}
+			}
+		}
+	}
+}
+
 func testEval(input string) (object.Object, bool, error) {
 	l := lexer.Tokenizer(input)
 	p := parser.New(l)
@@ -451,6 +524,32 @@ func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
 	}
 	if result.Value != expected {
 		t.Errorf("object has wrong value. got=%t, want=%t", result.Value, expected)
+		return false
+	}
+	return true
+}
+
+func testStringObject(t *testing.T, obj object.Object, expected string) bool {
+	result, ok := obj.(*object.String)
+	if !ok {
+		t.Errorf("Object is not a String. got=%T (%+v)", obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("Object has worng value. got=%s, want=%s", result.Value, expected)
+		return false
+	}
+	return true
+}
+
+func testCharObject(t *testing.T, obj object.Object, expected string) bool {
+	result, ok := obj.(*object.Char)
+	if !ok {
+		t.Errorf("Object is not a Char. got=%T (%+v)", obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("Object has worng value. got=%s, want=%s", result.Value, expected)
 		return false
 	}
 	return true

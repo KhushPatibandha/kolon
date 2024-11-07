@@ -1,16 +1,20 @@
 package object
 
-import "fmt"
+import (
+	"bytes"
+	"fmt"
+)
 
 type ObjectType string
 
 const (
-	INTEGER_OBJ = "INTEGER"
-	BOOLEAN_OBJ = "BOOLEAN"
-	STRING_OBJ  = "STRING"
-	FLOAT_OBJ   = "FLOAT"
-	CHAR_OBJ    = "CHARACTER"
-	NULL_OBJ    = "NULL"
+	INTEGER_OBJ      = "INTEGER"
+	BOOLEAN_OBJ      = "BOOLEAN"
+	STRING_OBJ       = "STRING"
+	FLOAT_OBJ        = "FLOAT"
+	CHAR_OBJ         = "CHARACTER"
+	NULL_OBJ         = "NULL"
+	RETURN_VALUE_OBJ = "RETURN_VALUE"
 )
 
 type Object interface {
@@ -57,3 +61,21 @@ type Null struct{}
 
 func (n *Null) Inspect() string  { return "null" }
 func (n *Null) Type() ObjectType { return NULL_OBJ }
+
+type ReturnValue struct {
+	Value []Object
+}
+
+func (rv *ReturnValue) Inspect() string {
+	var out bytes.Buffer
+
+	for i := 0; i < len(rv.Value); i++ {
+		out.WriteString(rv.Value[i].Inspect())
+		if i != len(rv.Value)-1 {
+			out.WriteString(", ")
+		}
+	}
+
+	return out.String()
+}
+func (rv *ReturnValue) Type() ObjectType { return RETURN_VALUE_OBJ }

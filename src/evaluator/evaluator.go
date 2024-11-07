@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/object"
@@ -97,6 +98,18 @@ func Eval(node ast.Node) (object.Object, bool, error) {
 		return evalStatements(node.Statements)
 	case *ast.IfStatement:
 		return evalIfStatements(node)
+	case *ast.ReturnStatement:
+		var val []object.Object
+
+		for i := 0; i < len(node.Value); i++ {
+			rsObj, hasErr, err := evalReturnValue(node, i)
+			if err != nil {
+				return NULL, hasErr, err
+			}
+			val = append(val, rsObj)
+		}
+
+		return &object.ReturnValue{Value: val}, false, nil
 	}
 	return nil, true, errors.New("No Eval function for given node type. got: " + string(node.String()))
 }
@@ -107,8 +120,22 @@ func evalStatements(stmts []ast.Statement) (object.Object, bool, error) {
 	var err error
 	for _, statement := range stmts {
 		result, hasErr, err = Eval(statement)
+
+		if result != nil && result.Type() == object.RETURN_VALUE_OBJ {
+			return result, hasErr, err
+		}
 	}
 	return result, hasErr, err
+}
+
+func evalReturnValue(rs *ast.ReturnStatement, idx int) (object.Object, bool, error) {
+	currNode := rs.Value[idx]
+	switch currNode.(type) {
+	case *ast.IntegerValue, *ast.FloatValue, *ast.BooleanValue, *ast.StringValue, *ast.CharValue, *ast.PrefixExpression, *ast.PostfixExpression, *ast.InfixExpression:
+		return Eval(currNode)
+	default:
+		return NULL, true, errors.New("Can Only return expressions and datatypes. got: " + fmt.Sprintf("%T", currNode))
+	}
 }
 
 func evalIfStatements(node *ast.IfStatement) (object.Object, bool, error) {
