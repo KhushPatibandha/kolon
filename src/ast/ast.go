@@ -479,6 +479,24 @@ func (poe *PostfixExpression) String() string {
 }
 
 // -----------------------------------------------------------------------------
+// For Assignment Expression, Operator (=, +=, -=, *=, /=, %=)
+// -----------------------------------------------------------------------------
+type AssignmentExpression struct {
+	Token    lexer.Token
+	Left     *Identifier
+	Operator string
+	Right    Expression
+}
+
+func (ae *AssignmentExpression) expressionNode()    {}
+func (ae *AssignmentExpression) TokenValue() string { return ae.Token.Value }
+func (ae *AssignmentExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString(ae.Left.String() + " " + ae.Operator + " " + ae.Right.String() + ";")
+	return out.String()
+}
+
+// -----------------------------------------------------------------------------
 // For Call Expression
 // -----------------------------------------------------------------------------
 type CallExpression struct {

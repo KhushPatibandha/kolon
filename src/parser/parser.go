@@ -29,6 +29,7 @@ type (
 const (
 	_ int = iota
 	LOWEST
+	ASSIGN
 	DOUBLEEQUALS
 	LOGICALORAND
 	BITWISEORAND
@@ -38,7 +39,6 @@ const (
 	PREFIX
 	POSTFIX
 	CALL
-	// ASSIGN
 )
 
 var precedences = map[lexer.TokenKind]int{
@@ -60,12 +60,12 @@ var precedences = map[lexer.TokenKind]int{
 	lexer.PLUS_PLUS:          POSTFIX,
 	lexer.MINUS_MINUS:        POSTFIX,
 	lexer.OPEN_BRACKET:       CALL,
-	// lexer.EQUAL_ASSIGN:       ASSIGN,
-	// lexer.PLUS_EQUAL:         ASSIGN,
-	// lexer.MINUS_EQUAL:        ASSIGN,
-	// lexer.STAR_EQUAL:         ASSIGN,
-	// lexer.SLASH_EQUAL:        ASSIGN,
-	// lexer.PERCENT_EQUAL:      ASSIGN,
+	lexer.EQUAL_ASSIGN:       ASSIGN,
+	lexer.PLUS_EQUAL:         ASSIGN,
+	lexer.MINUS_EQUAL:        ASSIGN,
+	lexer.STAR_EQUAL:         ASSIGN,
+	lexer.SLASH_EQUAL:        ASSIGN,
+	lexer.PERCENT_EQUAL:      ASSIGN,
 }
 
 func New(tokens []lexer.Token) *Parser {
@@ -100,12 +100,12 @@ func New(tokens []lexer.Token) *Parser {
 	p.addInfix(lexer.AND, p.parseInfixExpression)
 	p.addInfix(lexer.OR, p.parseInfixExpression)
 	p.addInfix(lexer.OPEN_BRACKET, p.parseCallExpression)
-	// p.addInfix(lexer.EQUAL_ASSIGN, p.parseInfixExpression)
-	// p.addInfix(lexer.PLUS_EQUAL, p.parseInfixExpression)
-	// p.addInfix(lexer.MINUS_EQUAL, p.parseInfixExpression)
-	// p.addInfix(lexer.STAR_EQUAL, p.parseInfixExpression)
-	// p.addInfix(lexer.SLASH_EQUAL, p.parseInfixExpression)
-	// p.addInfix(lexer.PERCENT_EQUAL, p.parseInfixExpression)
+	p.addInfix(lexer.EQUAL_ASSIGN, p.parseAssignmentExpression)
+	p.addInfix(lexer.PLUS_EQUAL, p.parseAssignmentExpression)
+	p.addInfix(lexer.MINUS_EQUAL, p.parseAssignmentExpression)
+	p.addInfix(lexer.STAR_EQUAL, p.parseAssignmentExpression)
+	p.addInfix(lexer.SLASH_EQUAL, p.parseAssignmentExpression)
+	p.addInfix(lexer.PERCENT_EQUAL, p.parseAssignmentExpression)
 
 	p.postfixParseFns = make(map[lexer.TokenKind]postfixParseFn)
 	p.addPostfix(lexer.PLUS_PLUS, p.parsePostfixExpression)
@@ -204,6 +204,23 @@ func (p *Parser) parseCallArgs() []ast.Expression {
 	}
 
 	return args
+}
+
+func (p *Parser) parseAssignmentExpression(left ast.Expression) ast.Expression {
+	identifier, ok := left.(*ast.Identifier)
+	if !ok {
+		p.errors = append(p.errors, "Left side of assignment must be an identifier")
+		return nil
+	}
+	assignmentExpr := &ast.AssignmentExpression{
+		Token:    p.currentToken,
+		Left:     identifier,
+		Operator: p.currentToken.Value,
+	}
+
+	p.nextToken()
+	assignmentExpr.Right = p.parseExpression(LOWEST)
+	return assignmentExpr
 }
 
 func (p *Parser) parseGroupedExpression() ast.Expression {

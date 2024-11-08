@@ -381,12 +381,6 @@ func Test12(t *testing.T) {
 		{"true == true", true, "==", true},
 		{"true != false", true, "!=", false},
 		{"false == false", false, "==", false},
-		// {"5 = 5;", 5, "=", 5},
-		// {"5 += 5;", 5, "+=", 5},
-		// {"5 -= 5;", 5, "-=", 5},
-		// {"5 *= 5;", 5, "*=", 5},
-		// {"5 /= 5;", 5, "/=", 5},
-		// {"5 %= 5;", 5, "%=", 5},
 	}
 
 	for _, tt := range infixTests {
@@ -695,6 +689,54 @@ func Test24(t *testing.T) {
 		}
 
 		// fmt.Println(postfixExp.String())
+	}
+}
+
+func Test25(t *testing.T) {
+	assignmentTests := []struct {
+		input    string
+		left     string
+		operator string
+		right    interface{}
+	}{
+		{"a = 5;", "a", "=", 5},
+		{"a += 5;", "a", "+=", 5},
+		{"a -= 5;", "a", "-=", 5},
+		{"a *= 5;", "a", "*=", 5},
+		{"a /= 5;", "a", "/=", 5},
+		{"a %= 5;", "a", "%=", 5},
+	}
+
+	for _, tt := range assignmentTests {
+		tokens := lexer.Tokenizer(tt.input)
+		p := parser.New(tokens)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
+		}
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
+
+		exp, ok := stmt.Expression.(*ast.AssignmentExpression)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.AssignmentExpression. got=%T", stmt.Expression)
+		}
+
+		if !testValueExpression(t, exp.Left, tt.left) {
+			return
+		}
+
+		if exp.Operator != tt.operator {
+			t.Fatalf("exp.Operator is not '%s'. got=%s", tt.operator, exp.Operator)
+		}
+
+		if !testValueExpression(t, exp.Right, tt.right) {
+			return
+		}
 	}
 }
 
