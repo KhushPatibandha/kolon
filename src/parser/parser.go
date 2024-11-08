@@ -220,6 +220,9 @@ func (p *Parser) parseAssignmentExpression(left ast.Expression) ast.Expression {
 
 	p.nextToken()
 	assignmentExpr.Right = p.parseExpression(LOWEST)
+	if !p.expectedPeekToken(lexer.SEMI_COLON) {
+		return nil
+	}
 	return assignmentExpr
 }
 
