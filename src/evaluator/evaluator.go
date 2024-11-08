@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
+	"github.com/KhushPatibandha/Kolon/src/lexer"
 	"github.com/KhushPatibandha/Kolon/src/object"
 )
 
@@ -14,12 +15,12 @@ var (
 	FALSE = &object.Boolean{Value: false}
 )
 
-func Eval(node ast.Node) (object.Object, bool, error) {
+func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 	switch node := node.(type) {
 	case *ast.Program:
-		return evalStatements(node.Statements)
+		return evalStatements(node.Statements, env)
 	case *ast.ExpressionStatement:
-		return Eval(node.Expression)
+		return Eval(node.Expression, env)
 	case *ast.IntegerValue:
 		return &object.Integer{Value: node.Value}, false, nil
 	case *ast.FloatValue:
@@ -34,9 +35,11 @@ func Eval(node ast.Node) (object.Object, bool, error) {
 		} else {
 			return FALSE, false, nil
 		}
+	case *ast.Identifier:
+		return evalIdentifier(node, env)
 	case *ast.PrefixExpression:
 		if postfix, ok := node.Right.(*ast.PostfixExpression); ok {
-			left, hasErr, err := Eval(postfix.Left)
+			left, hasErr, err := Eval(postfix.Left, env)
 			if err != nil {
 				return left, hasErr, err
 			}
@@ -73,36 +76,36 @@ func Eval(node ast.Node) (object.Object, bool, error) {
 			}
 		}
 
-		right, hasErr, err := Eval(node.Right)
+		right, hasErr, err := Eval(node.Right, env)
 		if err != nil {
 			return right, hasErr, err
 		}
 		return evalPrefixExpression(node.Operator, right)
 	case *ast.InfixExpression:
-		left, hasErr, err := Eval(node.Left)
+		left, hasErr, err := Eval(node.Left, env)
 		if err != nil {
 			return left, hasErr, err
 		}
-		right, hasErr, err := Eval(node.Right)
+		right, hasErr, err := Eval(node.Right, env)
 		if err != nil {
 			return right, hasErr, err
 		}
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.PostfixExpression:
-		left, hasErr, err := Eval(node.Left)
+		left, hasErr, err := Eval(node.Left, env)
 		if err != nil {
 			return left, hasErr, err
 		}
 		return evalPostfixExpression(node.Operator, left)
 	case *ast.FunctionBody:
-		return evalStatements(node.Statements)
+		return evalStatements(node.Statements, env)
 	case *ast.IfStatement:
-		return evalIfStatements(node)
+		return evalIfStatements(node, env)
 	case *ast.ReturnStatement:
 		var val []object.Object
 
 		for i := 0; i < len(node.Value); i++ {
-			rsObj, hasErr, err := evalReturnValue(node, i)
+			rsObj, hasErr, err := evalReturnValue(node, i, env)
 			if err != nil {
 				return NULL, hasErr, err
 			}
@@ -110,16 +113,47 @@ func Eval(node ast.Node) (object.Object, bool, error) {
 		}
 
 		return &object.ReturnValue{Value: val}, false, nil
+	case *ast.VarStatement:
+		val, hasErr, err := Eval(node.Value, env)
+		if err != nil {
+			return val, hasErr, err
+		}
+
+		if node.Type.Value == "int" && val.Type() != object.INTEGER_OBJ {
+			return NULL, true, errors.New("Identifier declared as int but got: " + string(val.Type()))
+		} else if node.Type.Value == "string" && val.Type() != object.STRING_OBJ {
+			return NULL, true, errors.New("Identifier declared as string but got: " + string(val.Type()))
+		} else if node.Type.Value == "float" && val.Type() != object.FLOAT_OBJ {
+			return NULL, true, errors.New("Identifier declared as float but got: " + string(val.Type()))
+		} else if node.Type.Value == "char" && val.Type() != object.CHAR_OBJ {
+			return NULL, true, errors.New("Identifier declared as char but got: " + string(val.Type()))
+		} else if node.Type.Value == "bool" && val.Type() != object.BOOLEAN_OBJ {
+			return NULL, true, errors.New("Identifier declared as bool but got: " + string(val.Type()))
+		}
+
+		if node.Token.Kind == lexer.VAR {
+			env.Set(node.Name.Value, val, object.VAR)
+		} else if node.Token.Kind == lexer.CONST {
+			env.Set(node.Name.Value, val, object.CONST)
+		}
+
+		return val, false, nil
+	case *ast.AssignmentExpression:
+		return evalAssignmentExpression(node, env)
+	default:
+		return nil, true, fmt.Errorf("No Eval function for given node type. got: %T", node)
 	}
-	return nil, true, errors.New("No Eval function for given node type. got: " + string(node.String()))
 }
 
-func evalStatements(stmts []ast.Statement) (object.Object, bool, error) {
+func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Object, bool, error) {
 	var result object.Object
 	var hasErr bool
 	var err error
 	for _, statement := range stmts {
-		result, hasErr, err = Eval(statement)
+		result, hasErr, err = Eval(statement, env)
+		if err != nil {
+			return NULL, hasErr, err
+		}
 
 		if result != nil && result.Type() == object.RETURN_VALUE_OBJ {
 			return result, hasErr, err
@@ -128,18 +162,34 @@ func evalStatements(stmts []ast.Statement) (object.Object, bool, error) {
 	return result, hasErr, err
 }
 
-func evalReturnValue(rs *ast.ReturnStatement, idx int) (object.Object, bool, error) {
+func evalReturnValue(rs *ast.ReturnStatement, idx int, env *object.Environment) (object.Object, bool, error) {
 	currNode := rs.Value[idx]
 	switch currNode.(type) {
-	case *ast.IntegerValue, *ast.FloatValue, *ast.BooleanValue, *ast.StringValue, *ast.CharValue, *ast.PrefixExpression, *ast.PostfixExpression, *ast.InfixExpression:
-		return Eval(currNode)
+	case *ast.Identifier, *ast.IntegerValue, *ast.FloatValue, *ast.BooleanValue, *ast.StringValue, *ast.CharValue, *ast.PrefixExpression, *ast.PostfixExpression, *ast.InfixExpression:
+		return Eval(currNode, env)
 	default:
 		return NULL, true, errors.New("Can Only return expressions and datatypes. got: " + fmt.Sprintf("%T", currNode))
 	}
 }
 
-func evalIfStatements(node *ast.IfStatement) (object.Object, bool, error) {
-	condition, hasErr, err := Eval(node.Value)
+func evalIdentifier(node *ast.Identifier, env *object.Environment) (object.Object, bool, error) {
+	variable, hasErr, err := getIdentifierVariable(node, env)
+	if err != nil {
+		return NULL, hasErr, err
+	}
+	return variable.Value, false, nil
+}
+
+func getIdentifierVariable(node *ast.Identifier, env *object.Environment) (*object.Variable, bool, error) {
+	variable, ok := env.Get(node.Value)
+	if !ok {
+		return &object.Variable{Type: object.VAR, Value: NULL}, true, errors.New("Identifier not found: " + node.Value)
+	}
+	return variable, false, nil
+}
+
+func evalIfStatements(node *ast.IfStatement, env *object.Environment) (object.Object, bool, error) {
+	condition, hasErr, err := Eval(node.Value, env)
 	if err != nil {
 		return condition, hasErr, err
 	}
@@ -150,10 +200,10 @@ func evalIfStatements(node *ast.IfStatement) (object.Object, bool, error) {
 	}
 
 	if conditionRes {
-		return Eval(node.Body)
+		return Eval(node.Body, env)
 	} else if node.MultiConseq != nil {
 		for i := 0; i < len(node.MultiConseq); i++ {
-			resObj, hasErr, err := evalElseIfStatement(node.MultiConseq[i])
+			resObj, hasErr, err := evalElseIfStatement(node.MultiConseq[i], env)
 			if err != nil {
 				return resObj, hasErr, err
 			}
@@ -164,13 +214,13 @@ func evalIfStatements(node *ast.IfStatement) (object.Object, bool, error) {
 	}
 
 	if node.Consequence != nil {
-		return evalStatements(node.Consequence.Body.Statements)
+		return evalStatements(node.Consequence.Body.Statements, env)
 	}
 	return nil, false, nil
 }
 
-func evalElseIfStatement(node *ast.ElseIfStatement) (object.Object, bool, error) {
-	condition, hasErr, err := Eval(node.Value)
+func evalElseIfStatement(node *ast.ElseIfStatement, env *object.Environment) (object.Object, bool, error) {
+	condition, hasErr, err := Eval(node.Value, env)
 	if err != nil {
 		return condition, hasErr, err
 	}
@@ -179,7 +229,7 @@ func evalElseIfStatement(node *ast.ElseIfStatement) (object.Object, bool, error)
 		return NULL, hasErr, err
 	}
 	if conditionRes {
-		return Eval(node.Body)
+		return Eval(node.Body, env)
 	}
 	return nil, false, nil
 }
@@ -193,6 +243,89 @@ func execIf(obj object.Object) (bool, bool, error) {
 	default:
 		return false, true, errors.New("Conditions for 'if' and 'else if' statements must result in a boolean. got: " + string(obj.Type()))
 	}
+}
+
+func evalAssignmentExpression(node *ast.AssignmentExpression, env *object.Environment) (object.Object, bool, error) {
+	switch node.Operator {
+	case "=":
+		return evalAssignOp(node, env)
+	case "+=":
+		return evalSymbolAssignOp("+", node, env)
+	case "-=":
+		return evalSymbolAssignOp("-", node, env)
+	case "*=":
+		return evalSymbolAssignOp("*", node, env)
+	case "/=":
+		return evalSymbolAssignOp("/", node, env)
+	case "%=":
+		return evalSymbolAssignOp("%", node, env)
+	default:
+		return NULL, true, errors.New("Only (=, +=, -=, *=, /=, %=) assignment operators are supported. got: " + node.Operator)
+	}
+}
+
+func assignOpHelper(node *ast.AssignmentExpression, env *object.Environment) (object.Object, object.Object, bool, bool, error) {
+	leftSideVariable, hasErr, err := getIdentifierVariable(node.Left, env)
+	if err != nil {
+		return NULL, NULL, false, hasErr, err
+	}
+
+	// Check if the variable is a constant. if so, return error.
+	if leftSideVariable.Type == object.CONST {
+		return NULL, NULL, false, true, errors.New("Can't re-assign CONST variables. variable " + node.Left.Value + " is a constant.")
+	}
+
+	var isVar bool
+	if leftSideVariable.Type == object.VAR {
+		isVar = true
+	}
+
+	// If the variable is not constant, then evaluate the expression on the right.
+	rightSideObj, hasErr, err := Eval(node.Right, env)
+	if err != nil {
+		return NULL, NULL, isVar, hasErr, err
+	}
+
+	return leftSideVariable.Value, rightSideObj, isVar, false, nil
+}
+
+func evalSymbolAssignOp(operator string, node *ast.AssignmentExpression, env *object.Environment) (object.Object, bool, error) {
+	leftSideObj, rightSideObj, isVar, hasErr, err := assignOpHelper(node, env)
+	if err != nil {
+		return NULL, hasErr, err
+	}
+
+	// Only exception.
+	if leftSideObj.Type() == object.INTEGER_OBJ && rightSideObj.Type() == object.FLOAT_OBJ {
+		return NULL, true, errors.New("Can't convert types. Variable on the left is of type INT and variable on the right is of type FLOAT.")
+	}
+
+	if isVar {
+		resObj, hasErr, err := evalInfixExpression(operator, leftSideObj, rightSideObj)
+		if err != nil {
+			return resObj, hasErr, err
+		}
+		env.Update(node.Left.Value, resObj, object.VAR)
+		return resObj, false, nil
+	}
+	return NULL, true, errors.New("Something went wrong, in evalSymbolAssign.")
+}
+
+func evalAssignOp(node *ast.AssignmentExpression, env *object.Environment) (object.Object, bool, error) {
+	leftSideObj, rightSideObj, leftIsVar, hasErr, err := assignOpHelper(node, env)
+	if err != nil {
+		return NULL, hasErr, err
+	}
+
+	leftSideObjType := leftSideObj.Type()
+	rightSideObjType := rightSideObj.Type()
+	if leftIsVar {
+		if leftSideObjType == rightSideObjType {
+			env.Update(node.Left.Value, rightSideObj, object.VAR)
+			return rightSideObj, false, nil
+		}
+	}
+	return NULL, true, errors.New("Can't convert types. Either re-assign the variable or keep the current type. Original type: " + string(leftSideObjType) + " new assigned value's type: " + string(rightSideObjType))
 }
 
 func evalPrefixExpression(operator string, right object.Object) (object.Object, bool, error) {

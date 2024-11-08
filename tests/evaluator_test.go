@@ -9,7 +9,7 @@ import (
 	"github.com/KhushPatibandha/Kolon/src/parser"
 )
 
-func Test25(t *testing.T) {
+func Test27(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected int64
@@ -50,7 +50,7 @@ func Test25(t *testing.T) {
 	}
 }
 
-func Test26(t *testing.T) {
+func Test28(t *testing.T) {
 	tests := []struct {
 		input    string
 		expected bool
@@ -136,7 +136,7 @@ func Test26(t *testing.T) {
 	}
 }
 
-func Test27(t *testing.T) {
+func Test29(t *testing.T) {
 	test := []struct {
 		input    string
 		expected float64
@@ -177,7 +177,7 @@ func Test27(t *testing.T) {
 	}
 }
 
-func Test28(t *testing.T) {
+func Test30(t *testing.T) {
 	test := []struct {
 		input    string
 		expected string
@@ -207,7 +207,7 @@ func Test28(t *testing.T) {
 	}
 }
 
-func Test29(t *testing.T) {
+func Test31(t *testing.T) {
 	test := []struct {
 		input    string
 		expected string
@@ -234,7 +234,7 @@ func Test29(t *testing.T) {
 	}
 }
 
-func Test30(t *testing.T) {
+func Test32(t *testing.T) {
 	test := []struct {
 		input    string
 		expected bool
@@ -271,7 +271,7 @@ func Test30(t *testing.T) {
 	}
 }
 
-func Test31(t *testing.T) {
+func Test33(t *testing.T) {
 	tests := []struct {
 		input  string
 		object object.Object
@@ -308,7 +308,7 @@ func Test31(t *testing.T) {
 	}
 }
 
-func Test32(t *testing.T) {
+func Test34(t *testing.T) {
 	postfixTest := []struct {
 		input  string
 		object object.Object
@@ -351,7 +351,7 @@ func Test32(t *testing.T) {
 	}
 }
 
-func Test33(t *testing.T) {
+func Test35(t *testing.T) {
 	ifElseTests := []struct {
 		input    string
 		expected interface{}
@@ -393,7 +393,7 @@ func Test33(t *testing.T) {
 	}
 }
 
-func Test34(t *testing.T) {
+func Test36(t *testing.T) {
 	returnStmtTests := []struct {
 		input          string
 		expectedOutput []object.Object
@@ -466,12 +466,100 @@ func Test34(t *testing.T) {
 	}
 }
 
+func Test37(t *testing.T) {
+	varStmtTest := []struct {
+		input          string
+		expectedOutput []object.Object
+		hasErr         bool
+	}{
+		{"var a: int = 10; return: a;", []object.Object{&object.Integer{Value: 10}}, false},
+		{"var a: int = 5 * 5; return: a;", []object.Object{&object.Integer{Value: 25}}, false},
+		{"var a: int = 10; var b: int = a; return: b;", []object.Object{&object.Integer{Value: 10}}, false},
+		{"var a: int = 10; var b: int = a; b = 11; return: b;", []object.Object{&object.Integer{Value: 11}}, false},
+		{"var a: int = 10; var b: int = a; b = 11; b = b + 1; return: b;", []object.Object{&object.Integer{Value: 12}}, false},
+		{"var a: int = 10; var b: int = a; b = 11; a += b; return: a;", []object.Object{&object.Integer{Value: 21}}, false},
+		{"var a: int = 10; var b: int = a; b = 11; a -= b; return: a;", []object.Object{&object.Integer{Value: -1}}, false},
+		{"var a: int = 10; var b: int = a; var c: int = a + b + 5; return: c;", []object.Object{&object.Integer{Value: 25}}, false},
+		{"var a: int = 10; var b: float = 1.1; var c: float = a + b; return: c;", []object.Object{&object.Float{Value: 11.1}}, false},
+		{"var a: int = 10; var b: float = 1.1; b += a; return: b;", []object.Object{&object.Float{Value: 11.1}}, false},
+		{"var a: bool = true; return: a;", []object.Object{evaluator.TRUE}, false},
+		{"var a: string = \"Hello \"; var b: string = \"World!\"; var c: string = a + b; return: c;", []object.Object{&object.String{Value: "\"Hello World!\""}}, false},
+		{"var a: string = \"Hello \"; var b: string = \"World!\"; a += b; return: a;", []object.Object{&object.String{Value: "\"Hello World!\""}}, false},
+		{"var a: char = 'c'; var b: char = 'c'; var c: string = a + b; return: c;", []object.Object{&object.String{Value: "\"cc\""}}, false},
+		{"var a: char = 'c'; var b: char = 'c'; a += b; return: a;", []object.Object{&object.String{Value: "\"cc\""}}, false},
+	}
+
+	for _, tt := range varStmtTest {
+		// fmt.Println(i)
+		evaluated, hasErr, err := testEval(tt.input)
+		if hasErr != tt.hasErr {
+			t.Errorf("expected error an recived error not matching. got=%v expected=%v", hasErr, tt.hasErr)
+		}
+		if err != nil {
+			t.Error(err.Error())
+		}
+		if !hasErr {
+			returnValue, ok := evaluated.(*object.ReturnValue)
+			if !ok {
+				t.Errorf("Expected Return Object. got=%T", evaluated)
+			}
+			if len(returnValue.Value) != len(tt.expectedOutput) {
+				t.Fatalf("Expected %d values in ReturnValue, got=%d", len(tt.expectedOutput), len(returnValue.Value))
+			}
+
+			for i, expected := range tt.expectedOutput {
+				actual := returnValue.Value[i]
+
+				switch expected := expected.(type) {
+				case *object.Boolean:
+					testBooleanObject(t, actual, expected.Value)
+				case *object.Integer:
+					testIntegerObject(t, actual, expected.Value)
+				case *object.Float:
+					testFloatObject(t, actual, expected.Value)
+				case *object.String:
+					testStringObject(t, actual, expected.Value)
+				case *object.Char:
+					testCharObject(t, actual, expected.Value)
+				}
+
+			}
+		}
+	}
+}
+
+func Test38(t *testing.T) {
+	varStmtErrTest := []struct {
+		input          string
+		expectedOutput object.Object
+		hasErr         bool
+	}{
+		{"var a: string = 10; var b: int = a; var c: int = a + b + 5; return: c;", evaluator.NULL, true},
+		{"a = 10;", evaluator.NULL, true},
+		{"var a: int = 10; var b: float = 1.1; a += b; return: a;", &object.Float{Value: 11.1}, true},
+	}
+
+	for _, tt := range varStmtErrTest {
+		_, hasErr, err := testEval(tt.input)
+		if hasErr != tt.hasErr {
+			t.Error("expected error an recived error not matching")
+		}
+		if err == nil {
+			t.Error("All these test must throw an error")
+		}
+		// if err != nil {
+		// 	fmt.Println(err.Error())
+		// }
+	}
+}
+
 func testEval(input string) (object.Object, bool, error) {
 	l := lexer.Tokenizer(input)
 	p := parser.New(l)
 	program := p.ParseProgram()
+	env := object.NewEnvironment()
 
-	return evaluator.Eval(program)
+	return evaluator.Eval(program, env)
 }
 
 func testNil(t *testing.T, obj object.Object) bool {
