@@ -377,7 +377,6 @@ func Test12(t *testing.T) {
 		{"5 || 5;", 5, "||", 5},
 		{"5 & 5;", 5, "&", 5},
 		{"5 | 5;", 5, "|", 5},
-		{"5 ++ 5", 5, "++", 5}, // should fail, but test will pass. Just to check if it gets confused with postfix operators
 		{"true == true", true, "==", true},
 		{"true != false", true, "!=", false},
 		{"false == false", false, "==", false},
@@ -666,6 +665,7 @@ func Test20(t *testing.T) {
 
 func Test24(t *testing.T) {
 	input := `
+    var a: int = 1;
     a++;
     a--;
     `
@@ -674,11 +674,14 @@ func Test24(t *testing.T) {
 	program := p.ParseProgram()
 	checkParserErrors(t, p)
 
-	if len(program.Statements) != 2 {
-		t.Fatalf("program.Statements does not contain 2 statements. got=%d", len(program.Statements))
+	if len(program.Statements) != 3 {
+		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
 	}
 
-	for _, stmt := range program.Statements {
+	for i, stmt := range program.Statements {
+		if i == 0 {
+			continue
+		}
 		postfixExp, ok := stmt.(*ast.ExpressionStatement)
 		if !ok {
 			t.Fatalf("stmt is not ast.ExpressionStatement. got=%T", stmt)

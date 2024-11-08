@@ -9,11 +9,12 @@ import (
 )
 
 type Parser struct {
-	tokens       []lexer.Token
-	tokenPointer int
-	currentToken lexer.Token
-	peekToken    lexer.Token
-	errors       []string
+	tokens        []lexer.Token
+	tokenPointer  int
+	previousToken lexer.Token
+	currentToken  lexer.Token
+	peekToken     lexer.Token
+	errors        []string
 
 	prefixParseFns  map[lexer.TokenKind]prefixParseFn
 	infixParseFns   map[lexer.TokenKind]infixParseFn
@@ -23,7 +24,7 @@ type Parser struct {
 type (
 	prefixParseFn  func() ast.Expression
 	infixParseFn   func(ast.Expression) ast.Expression
-	postfixParseFn func(ast.Expression) ast.Expression
+	postfixParseFn func(ast.Expression, lexer.TokenKind) ast.Expression
 )
 
 const (
@@ -160,8 +161,9 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 				p.noPostfixParseFnError(p.peekToken.Kind)
 				return nil
 			}
+			previousOfLeft := p.previousToken.Kind
 			p.nextToken()
-			leftExp = postfix(leftExp)
+			leftExp = postfix(leftExp, previousOfLeft)
 			continue
 		}
 
@@ -258,15 +260,20 @@ func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
 	return expression
 }
 
-func (p *Parser) parsePostfixExpression(left ast.Expression) ast.Expression {
+func (p *Parser) parsePostfixExpression(left ast.Expression, previousOfLeft lexer.TokenKind) ast.Expression {
 	expression := &ast.PostfixExpression{
 		Token:    p.currentToken,
 		Operator: p.currentToken.Value,
 		Left:     left,
-		IsStmt:   p.peekTokenIsOk(lexer.SEMI_COLON),
 	}
 
-	p.nextToken()
+	if p.peekTokenIsOk(lexer.SEMI_COLON) && previousOfLeft == lexer.SEMI_COLON {
+		expression.IsStmt = true
+	} else {
+		expression.IsStmt = false
+	}
+
+	// p.nextToken()
 	return expression
 }
 
@@ -636,6 +643,7 @@ func (p *Parser) parseForLoop() *ast.ForLoopStatement {
 // -----------------------------------------------------------------------------
 
 func (p *Parser) nextToken() {
+	p.previousToken = p.currentToken
 	p.currentToken = p.peekToken
 	if p.tokenPointer >= len(p.tokens) {
 		p.peekToken = lexer.Token{Kind: lexer.EOF}
