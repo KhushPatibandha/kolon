@@ -272,7 +272,7 @@ func assignOpHelper(node *ast.AssignmentExpression, env *object.Environment) (ob
 
 	// Check if the variable is a constant. if so, return error.
 	if leftSideVariable.Type == object.CONST {
-		return NULL, NULL, false, true, errors.New("Can't re-assign CONST variables. variable " + node.Left.Value + " is a constant.")
+		return NULL, NULL, false, true, errors.New("Can't re-assign CONST variables. variable '" + node.Left.Value + "' is a constant.")
 	}
 
 	var isVar bool

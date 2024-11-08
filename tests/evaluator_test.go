@@ -473,6 +473,7 @@ func Test37(t *testing.T) {
 		hasErr         bool
 	}{
 		{"var a: int = 10; return: a;", []object.Object{&object.Integer{Value: 10}}, false},
+		{"var a: int = 10; var a: bool = true; return: a;", []object.Object{evaluator.TRUE}, false},
 		{"var a: int = 5 * 5; return: a;", []object.Object{&object.Integer{Value: 25}}, false},
 		{"var a: int = 10; var b: int = a; return: b;", []object.Object{&object.Integer{Value: 10}}, false},
 		{"var a: int = 10; var b: int = a; b = 11; return: b;", []object.Object{&object.Integer{Value: 11}}, false},
@@ -487,6 +488,12 @@ func Test37(t *testing.T) {
 		{"var a: string = \"Hello \"; var b: string = \"World!\"; a += b; return: a;", []object.Object{&object.String{Value: "\"Hello World!\""}}, false},
 		{"var a: char = 'c'; var b: char = 'c'; var c: string = a + b; return: c;", []object.Object{&object.String{Value: "\"cc\""}}, false},
 		{"var a: char = 'c'; var b: char = 'c'; a += b; return: a;", []object.Object{&object.String{Value: "\"cc\""}}, false},
+		{"const a: int = 1; return: a;", []object.Object{&object.Integer{Value: 1}}, false},
+		{"const a: float = 1.1; return: a;", []object.Object{&object.Float{Value: 1.1}}, false},
+		{"const a: bool = true; return: a;", []object.Object{evaluator.TRUE}, false},
+		{"const a: string = \"a\"; return: a;", []object.Object{&object.String{Value: "\"a\""}}, false},
+		{"const a: char = 'a'; return: a;", []object.Object{&object.Char{Value: "'a'"}}, false},
+		{"const a: int = 1; const a: bool = true; return: a;", []object.Object{evaluator.TRUE}, false},
 	}
 
 	for _, tt := range varStmtTest {
@@ -537,6 +544,7 @@ func Test38(t *testing.T) {
 		{"var a: string = 10; var b: int = a; var c: int = a + b + 5; return: c;", evaluator.NULL, true},
 		{"a = 10;", evaluator.NULL, true},
 		{"var a: int = 10; var b: float = 1.1; a += b; return: a;", &object.Float{Value: 11.1}, true},
+		{"const a: int = 1; a += 1; return: a;", &object.Integer{Value: 2}, true},
 	}
 
 	for _, tt := range varStmtErrTest {
