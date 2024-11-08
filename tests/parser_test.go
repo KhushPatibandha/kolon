@@ -700,11 +700,13 @@ func Test25(t *testing.T) {
 		right    interface{}
 	}{
 		{"a = 5;", "a", "=", 5},
+		{"a = 5.1;", "a", "=", 5.1},
 		{"a += 5;", "a", "+=", 5},
 		{"a -= 5;", "a", "-=", 5},
 		{"a *= 5;", "a", "*=", 5},
 		{"a /= 5;", "a", "/=", 5},
 		{"a %= 5;", "a", "%=", 5},
+		{"a = true;", "a", "=", true},
 	}
 
 	for _, tt := range assignmentTests {
@@ -738,6 +740,92 @@ func Test25(t *testing.T) {
 			return
 		}
 	}
+}
+
+func Test26(t *testing.T) {
+	assignTests := []struct {
+		input    string
+		left     string
+		operator string
+		right    interface{}
+	}{
+		{"a = \"Hello\";", "a", "=", "\"Hello\""},
+	}
+
+	for _, tt := range assignTests {
+		tokens := lexer.Tokenizer(tt.input)
+		p := parser.New(tokens)
+		program := p.ParseProgram()
+		checkParserErrors(t, p)
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
+		}
+		stmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("program.Statements[0] is not ast.ExpressionStatement. got=%T", program.Statements[0])
+		}
+
+		exp, ok := stmt.Expression.(*ast.AssignmentExpression)
+		if !ok {
+			t.Fatalf("stmt.Expression is not ast.AssignmentExpression. got=%T", stmt.Expression)
+		}
+
+		if !testValueExpression(t, exp.Left, tt.left) {
+			return
+		}
+
+		if exp.Operator != tt.operator {
+			t.Fatalf("exp.Operator is not '%s'. got=%s", tt.operator, exp.Operator)
+		}
+
+		switch v := tt.right.(type) {
+		case string:
+			if !testStringLiteral(t, exp.Right, v) {
+				return
+			}
+		}
+
+	}
+}
+
+func testFloatLiteral(t *testing.T, exp ast.Expression, value float64) bool {
+	f, ok := exp.(*ast.FloatValue)
+	if !ok {
+		t.Errorf("exp not *ast.FloatValue. got=%T", exp)
+		return false
+	}
+
+	if f.Value != value {
+		t.Errorf("f.Value not %f. got=%f", value, f.Value)
+		return false
+	}
+	if f.TokenValue() != fmt.Sprintf("%g", value) {
+		t.Errorf("f.TokenValue() not %f. got=%s", value, f.TokenValue())
+		return false
+	}
+
+	return true
+}
+
+func testStringLiteral(t *testing.T, exp ast.Expression, value string) bool {
+	str, ok := exp.(*ast.StringValue)
+	if !ok {
+		t.Errorf("exp not *ast.StringValue. got=%T", exp)
+		return false
+	}
+
+	if str.Value != value {
+		t.Errorf("str.Value not %s. got=%s", value, str.Value)
+		return false
+	}
+
+	if str.TokenValue() != value {
+		t.Errorf("str.TokenValue() not %s. got=%s", value, str.TokenValue())
+		return false
+	}
+
+	return true
 }
 
 func testVarStatement(t *testing.T, s ast.Statement, identifier string, typeOfvar string) bool {
@@ -776,6 +864,8 @@ func testValueExpression(t *testing.T, exp ast.Expression, expected interface{})
 		return testIntegerLiteral(t, exp, int64(v))
 	case int64:
 		return testIntegerLiteral(t, exp, v)
+	case float64:
+		return testFloatLiteral(t, exp, v)
 	case string:
 		return testIdentifier(t, exp, v)
 	case bool:

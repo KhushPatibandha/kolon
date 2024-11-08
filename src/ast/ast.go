@@ -2,6 +2,7 @@ package ast
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 
 	"github.com/KhushPatibandha/Kolon/src/lexer"
@@ -64,8 +65,10 @@ type FloatValue struct {
 	Value float64
 }
 
-func (fv *FloatValue) expressionNode()    {}
-func (fv *FloatValue) TokenValue() string { return fv.Token.Value }
+func (fv *FloatValue) expressionNode() {}
+
+// func (fv *FloatValue) TokenValue() string { return fv.Token.Value }
+func (fv *FloatValue) TokenValue() string { return fmt.Sprintf("%g", fv.Value) }
 func (fv *FloatValue) String() string     { return fv.Token.Value }
 
 // -----------------------------------------------------------------------------
