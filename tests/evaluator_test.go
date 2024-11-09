@@ -473,6 +473,12 @@ func Test37(t *testing.T) {
 		hasErr         bool
 	}{
 		{"var a: int = 10; return: a;", []object.Object{&object.Integer{Value: 10}}, false},
+		{"var a: int = 10; const b: int = a++; return: (a, b);", []object.Object{&object.Integer{Value: 10}, &object.Integer{Value: 11}}, false},
+		{"var a: int = 10; var b: int = a++; return: (a, b);", []object.Object{&object.Integer{Value: 10}, &object.Integer{Value: 11}}, false},
+		{"var a: int = 10; return: a + a;", []object.Object{&object.Integer{Value: 20}}, false},
+		{"var a: int = 10; a++; return: a;", []object.Object{&object.Integer{Value: 11}}, false},
+		{"var a: int = 10; return: (a++, a, true);", []object.Object{&object.Integer{Value: 11}, &object.Integer{Value: 10}, evaluator.TRUE}, false},
+		{"var a: int = 10; return: a++;", []object.Object{&object.Integer{Value: 11}}, false},
 		{"var a: int = 10; var a: bool = true; return: a;", []object.Object{evaluator.TRUE}, false},
 		{"var a: int = 5 * 5; return: a;", []object.Object{&object.Integer{Value: 25}}, false},
 		{"var a: int = 10; var b: int = a; return: b;", []object.Object{&object.Integer{Value: 10}}, false},
@@ -494,6 +500,16 @@ func Test37(t *testing.T) {
 		{"const a: string = \"a\"; return: a;", []object.Object{&object.String{Value: "\"a\""}}, false},
 		{"const a: char = 'a'; return: a;", []object.Object{&object.Char{Value: "'a'"}}, false},
 		{"const a: int = 1; const a: bool = true; return: a;", []object.Object{evaluator.TRUE}, false},
+		{"var a: int = 0; for: (var i: int = 0; i < 2; i++): { a++; } return: a;", []object.Object{&object.Integer{Value: 2}}, false},
+		{`
+		    var a: int = 1;
+		    var b: int = 1;
+		    for: (var i: int = 0; i < 3; i++): {
+		        a++;
+		        b += 2;
+		    }
+		    return: (a, b, a++, b++, a + b);
+		`, []object.Object{&object.Integer{Value: 4}, &object.Integer{Value: 7}, &object.Integer{Value: 5}, &object.Integer{Value: 8}, &object.Integer{Value: 11}}, false},
 	}
 
 	for _, tt := range varStmtTest {
@@ -532,6 +548,7 @@ func Test37(t *testing.T) {
 
 			}
 		}
+		// fmt.Println("Pass")
 	}
 }
 
@@ -545,6 +562,8 @@ func Test38(t *testing.T) {
 		{"a = 10;", evaluator.NULL, true},
 		{"var a: int = 10; var b: float = 1.1; a += b; return: a;", &object.Float{Value: 11.1}, true},
 		{"const a: int = 1; a += 1; return: a;", &object.Integer{Value: 2}, true},
+		{"var a: int = 10; r++; return: a;", &object.Integer{Value: 11}, true},
+		{"const a: int = 10; a++; return: a;", &object.Integer{Value: 11}, true},
 	}
 
 	for _, tt := range varStmtErrTest {

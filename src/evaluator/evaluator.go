@@ -96,7 +96,32 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		if err != nil {
 			return left, hasErr, err
 		}
-		return evalPostfixExpression(node.Operator, left)
+
+		resObj, hasErr, err := evalPostfixExpression(node.Operator, left)
+		if err != nil {
+			return resObj, hasErr, err
+		}
+
+		// will only update the identifier if the postfix is a stmt.
+		if node.IsStmt {
+			if id, ok := node.Left.(*ast.Identifier); ok {
+				idVariable, hasErr, err := getIdentifierVariable(id, env)
+				if err != nil {
+					return idVariable.Value, hasErr, err
+				}
+				var isVar bool
+				if idVariable.Type == object.VAR {
+					isVar = true
+				}
+				if isVar {
+					env.Update(id.Value, resObj, object.VAR)
+				} else {
+					return NULL, true, errors.New("trying to use postfix operation on const variable.")
+				}
+			}
+		}
+
+		return resObj, false, nil
 	case *ast.FunctionBody:
 		return evalStatements(node.Statements, env)
 	case *ast.IfStatement:
@@ -105,6 +130,7 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		var val []object.Object
 
 		for i := 0; i < len(node.Value); i++ {
+			// fmt.Println(node.Value[i])
 			rsObj, hasErr, err := evalReturnValue(node, i, env)
 			if err != nil {
 				return NULL, hasErr, err
@@ -140,6 +166,8 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		return val, false, nil
 	case *ast.AssignmentExpression:
 		return evalAssignmentExpression(node, env)
+	case *ast.ForLoopStatement:
+		return evalForLoop(node, env)
 	default:
 		return nil, true, fmt.Errorf("No Eval function for given node type. got: %T", node)
 	}
@@ -160,6 +188,61 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Obje
 		}
 	}
 	return result, hasErr, err
+}
+
+func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Object, bool, error) {
+	// Evaluate the VAR stmt in the for loop(.)
+	varStmtObj, hasErr, err := Eval(node.Left, env)
+	if err != nil {
+		return varStmtObj, hasErr, err
+	}
+
+	// Get the variable type to check for VAR or CONST
+	varVariable, hasErr, err := getIdentifierVariable(node.Left.Name, env)
+	if err != nil {
+		return NULL, hasErr, err
+	}
+	if varVariable.Type != object.VAR {
+		return NULL, true, errors.New("Can't use CONST to define variable in FOR loop condition")
+	}
+
+	// Check if the variable is INT or not
+	if varStmtObj.Type() != object.INTEGER_OBJ {
+		return NULL, true, errors.New("Can only define variable in FOR loop condition as INT.")
+	}
+
+	// Eval infix operation
+	infixObj, hasErr, err := Eval(node.Middle, env)
+	if err != nil {
+		return infixObj, hasErr, err
+	}
+	// this infix obj should always result in a boolean.
+	if infixObj.Type() != object.BOOLEAN_OBJ {
+		return NULL, true, errors.New("Infix operation of FOR loop condition should always result in a BOOLEAN.")
+	}
+
+	for infixObj == TRUE {
+		resStmtObj, hasErr, err := evalStatements(node.Body.Statements, env)
+		if err != nil {
+			return resStmtObj, hasErr, err
+		}
+
+		postfixObj, hasErr, err := Eval(node.Right, env)
+		if err != nil {
+			return postfixObj, hasErr, err
+		}
+
+		env.Update(node.Left.Name.Value, postfixObj, object.VAR)
+		infixObj, hasErr, err = Eval(node.Middle, env)
+		if err != nil {
+			return infixObj, hasErr, err
+		}
+		if infixObj == FALSE {
+			break
+		}
+	}
+
+	return nil, false, nil
 }
 
 func evalReturnValue(rs *ast.ReturnStatement, idx int, env *object.Environment) (object.Object, bool, error) {
