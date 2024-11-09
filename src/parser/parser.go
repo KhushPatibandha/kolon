@@ -267,7 +267,7 @@ func (p *Parser) parsePostfixExpression(left ast.Expression, previousOfLeft lexe
 		Left:     left,
 	}
 
-	if p.peekTokenIsOk(lexer.SEMI_COLON) && previousOfLeft == lexer.SEMI_COLON {
+	if p.peekTokenIsOk(lexer.SEMI_COLON) && previousOfLeft == lexer.SEMI_COLON || previousOfLeft == lexer.OPEN_CURLY_BRACKET {
 		expression.IsStmt = true
 	} else {
 		expression.IsStmt = false
@@ -614,6 +614,9 @@ func (p *Parser) parseForLoop() *ast.ForLoopStatement {
 		return nil
 	}
 
+	if !p.expectedPeekToken(lexer.VAR) {
+		return nil
+	}
 	stmt.Left = p.parseVarStatement()
 	p.nextToken()
 
@@ -624,7 +627,7 @@ func (p *Parser) parseForLoop() *ast.ForLoopStatement {
 
 	stmt.Right = p.parseExpression(LOWEST).(*ast.PostfixExpression)
 
-	if !p.currTokenIsOk(lexer.CLOSE_BRACKET) {
+	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
 		return nil
 	}
 	if !p.expectedPeekToken(lexer.COLON) {
