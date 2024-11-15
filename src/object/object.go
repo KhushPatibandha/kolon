@@ -3,6 +3,9 @@ package object
 import (
 	"bytes"
 	"fmt"
+	"strings"
+
+	"github.com/KhushPatibandha/Kolon/src/ast"
 )
 
 type ObjectType string
@@ -15,6 +18,7 @@ const (
 	CHAR_OBJ         = "CHARACTER"
 	NULL_OBJ         = "NULL"
 	RETURN_VALUE_OBJ = "RETURN_VALUE"
+	FUNCTION_OBJ     = "FUNCTION"
 )
 
 type Object interface {
@@ -79,3 +83,44 @@ func (rv *ReturnValue) Inspect() string {
 	return out.String()
 }
 func (rv *ReturnValue) Type() ObjectType { return RETURN_VALUE_OBJ }
+
+type Function struct {
+	Name       *ast.Identifier
+	Parameters []*ast.FunctionParameters
+	ReturnType []*ast.FunctionReturnType
+	Body       *ast.FunctionBody
+	Env        *Environment
+}
+
+func (f *Function) Inspect() string {
+	var out bytes.Buffer
+
+	params := []string{}
+	for _, p := range f.Parameters {
+		params = append(params, p.String())
+	}
+
+	returnTypes := []string{}
+	for _, r := range f.ReturnType {
+		returnTypes = append(returnTypes, r.String())
+	}
+
+	out.WriteString("fun: " + f.Name.Value + "(")
+
+	if len(f.Parameters) > 0 {
+		out.WriteString(strings.Join(params, ", "))
+	}
+
+	out.WriteString(")")
+
+	if f.ReturnType != nil {
+		out.WriteString(": (")
+		out.WriteString(strings.Join(returnTypes, ", "))
+		out.WriteString(")")
+	}
+
+	out.WriteString(" { " + f.Body.String() + " }")
+	return out.String()
+}
+
+func (f *Function) Type() ObjectType { return FUNCTION_OBJ }

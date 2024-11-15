@@ -8,6 +8,8 @@ import (
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
 
+var FunctionMap = make(map[*ast.Identifier]*ast.Function)
+
 type Parser struct {
 	tokens        []lexer.Token
 	tokenPointer  int
@@ -359,6 +361,8 @@ func (p *Parser) parseFunctionStatement() *ast.Function {
 		return nil
 	}
 	stmt.Body = p.parseFunctionBody()
+
+	FunctionMap[stmt.Name] = stmt
 
 	return stmt
 }

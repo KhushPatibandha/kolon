@@ -3,10 +3,12 @@ package evaluator
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 	"github.com/KhushPatibandha/Kolon/src/object"
+	"github.com/KhushPatibandha/Kolon/src/parser"
 )
 
 var (
@@ -123,10 +125,15 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 
 		return resObj, false, nil
 	case *ast.FunctionBody:
-		return evalStatements(node.Statements, env)
+		localEnv := object.NewEnclosedEnvironment(env)
+		return evalStatements(node.Statements, localEnv)
 	case *ast.IfStatement:
-		return evalIfStatements(node, env)
+		localEnv := object.NewEnclosedEnvironment(env)
+		return evalIfStatements(node, localEnv)
 	case *ast.ReturnStatement:
+		if node.Value == nil {
+			return &object.ReturnValue{Value: nil}, false, nil
+		}
 		var val []object.Object
 
 		for i := 0; i < len(node.Value); i++ {
@@ -167,7 +174,31 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 	case *ast.AssignmentExpression:
 		return evalAssignmentExpression(node, env)
 	case *ast.ForLoopStatement:
-		return evalForLoop(node, env)
+		localEnv := object.NewEnclosedEnvironment(env)
+		return evalForLoop(node, localEnv)
+	case *ast.Function:
+		// skip all the function execpt main
+		if node.Name.Value == "main" {
+			// add all the functions in the code from function map to the environment.
+			for key, value := range parser.FunctionMap {
+				newLocalEnv := object.NewEnclosedEnvironment(env)
+				env.Set(key.Value, &object.Function{Name: value.Name, Parameters: value.Parameters, ReturnType: value.ReturnType, Body: value.Body, Env: newLocalEnv}, object.FUNCTION)
+			}
+
+			// evaluate main function
+			return evalMainFunc(node, env)
+		}
+		return nil, false, nil
+	case *ast.CallExpression:
+		function, hasErr, err := Eval(node.Name, env)
+		if err != nil {
+			return function, hasErr, err
+		}
+		args, hasErr, err := evalCallArgs(node.Args, env)
+		if args == nil || err != nil {
+			return NULL, hasErr, err
+		}
+		return applyFunction(function, args)
 	default:
 		return nil, true, fmt.Errorf("No Eval function for given node type. got: %T", node)
 	}
@@ -188,6 +219,82 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Obje
 		}
 	}
 	return result, hasErr, err
+}
+
+func evalMainFunc(node *ast.Function, env *object.Environment) (object.Object, bool, error) {
+	resObj, hasErr, err := evalStatements(node.Body.Statements, env)
+	if err != nil {
+		return resObj, hasErr, err
+	}
+	if resObj.Type() == object.RETURN_VALUE_OBJ {
+		// It must be nil, because you cant return anything in main function.
+		if resObj.(*object.ReturnValue).Value != nil {
+			return NULL, true, errors.New("Can't return anything in main function.")
+		}
+	}
+	return nil, false, nil
+}
+
+func evalCallArgs(args []ast.Expression, env *object.Environment) ([]object.Object, bool, error) {
+	var res []object.Object
+	for _, e := range args {
+		evaluated, hasErr, err := Eval(e, env)
+		if err != nil {
+			return nil, hasErr, err
+		}
+		res = append(res, evaluated)
+	}
+	return res, false, nil
+}
+
+func applyFunction(fn object.Object, args []object.Object) (object.Object, bool, error) {
+	function, ok := fn.(*object.Function)
+	if !ok {
+		return NULL, true, errors.New("Not a function: " + string(fn.Type()))
+	}
+
+	for i, param := range function.Parameters {
+		function.Env.Set(param.ParameterName.Value, args[i], object.VAR)
+	}
+	evaluated, hasErr, err := Eval(function.Body, function.Env)
+	if err != nil {
+		return evaluated, hasErr, err
+	}
+
+	if returnValue, ok := evaluated.(*object.ReturnValue); ok {
+
+		// first check if the return type is nil or not. because you can still use return stmt without any return types defined in the function.
+		// just like how we can use return stmt in main function.
+		// in this case the return type param in function will be nil and the returnObj.Value will also be nil
+		if returnValue.Value == nil && function.ReturnType == nil {
+			return nil, false, nil
+		}
+
+		// check if you are returning the correct number of values.
+		if len(returnValue.Value) != len(function.ReturnType) {
+			return NULL, true, errors.New("Number of return values doesn't match.")
+		}
+
+		// check if the return types are correct.
+		for i, ret := range returnValue.Value {
+			if function.ReturnType[i].ReturnType.Value == "int" && ret.Type() != object.INTEGER_OBJ {
+				return NULL, true, errors.New("Return type doesn't match. Expected: int at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
+			} else if function.ReturnType[i].ReturnType.Value == "string" && ret.Type() != object.STRING_OBJ {
+				return NULL, true, errors.New("Return type doesn't match. Expected: string at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
+			} else if function.ReturnType[i].ReturnType.Value == "float" && ret.Type() != object.FLOAT_OBJ {
+				return NULL, true, errors.New("Return type doesn't match. Expected: float at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
+			} else if function.ReturnType[i].ReturnType.Value == "char" && ret.Type() != object.CHAR_OBJ {
+				return NULL, true, errors.New("Return type doesn't match. Expected: char at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
+			} else if function.ReturnType[i].ReturnType.Value == "bool" && ret.Type() != object.BOOLEAN_OBJ {
+				return NULL, true, errors.New("Return type doesn't match. Expected: bool at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
+			}
+		}
+
+		// TODO: fix this
+		return returnValue.Value[0], false, nil
+	}
+
+	return evaluated, false, nil
 }
 
 func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Object, bool, error) {

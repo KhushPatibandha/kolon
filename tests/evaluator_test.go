@@ -472,6 +472,11 @@ func Test37(t *testing.T) {
 		expectedOutput []object.Object
 		hasErr         bool
 	}{
+		{"var a: int; return: a;", []object.Object{&object.Integer{Value: 0}}, false},
+		{"var a: string; return: a;", []object.Object{&object.String{Value: ""}}, false},
+		{"var a: float; return: a;", []object.Object{&object.Float{Value: 0.0}}, false},
+		{"var a: char; return: a;", []object.Object{&object.Char{Value: ""}}, false},
+		{"var a: bool; return: a;", []object.Object{&object.Boolean{Value: false}}, false},
 		{"var a: int = 10; return: a;", []object.Object{&object.Integer{Value: 10}}, false},
 		{"var a: int = 10; const b: int = a++; return: (a, b);", []object.Object{&object.Integer{Value: 10}, &object.Integer{Value: 11}}, false},
 		{"var a: int = 10; var b: int = a++; return: (a, b);", []object.Object{&object.Integer{Value: 10}, &object.Integer{Value: 11}}, false},
@@ -510,6 +515,19 @@ func Test37(t *testing.T) {
 		    }
 		    return: (a, b, a++, b++, a + b);
 		`, []object.Object{&object.Integer{Value: 4}, &object.Integer{Value: 7}, &object.Integer{Value: 5}, &object.Integer{Value: 8}, &object.Integer{Value: 11}}, false},
+		{
+			`
+                var a: int = 1;
+                var b: int = 1;
+                for: (var i: int = 0; i < 3; i++): {
+                    for: (var j: int = 0; j < 3; j++): {
+                        a++;
+                        b += 2;
+                    }
+                }
+                return: (a, b, a++, b++, a + b);
+            `, []object.Object{&object.Integer{Value: 10}, &object.Integer{Value: 19}, &object.Integer{Value: 11}, &object.Integer{Value: 20}, &object.Integer{Value: 29}}, false,
+		},
 	}
 
 	for _, tt := range varStmtTest {
@@ -544,6 +562,10 @@ func Test37(t *testing.T) {
 					testStringObject(t, actual, expected.Value)
 				case *object.Char:
 					testCharObject(t, actual, expected.Value)
+				case *object.Null:
+					testNullObject(t, actual)
+				default:
+					testNil(t, actual)
 				}
 
 			}
@@ -564,6 +586,40 @@ func Test38(t *testing.T) {
 		{"const a: int = 1; a += 1; return: a;", &object.Integer{Value: 2}, true},
 		{"var a: int = 10; r++; return: a;", &object.Integer{Value: 11}, true},
 		{"const a: int = 10; a++; return: a;", &object.Integer{Value: 11}, true},
+		{`
+            if: (10 > 1): {
+                var a: int = 10;
+            }
+            return: a;
+        `, &object.Integer{Value: 10}, true},
+		{
+			`
+                if: (10 < 1): {
+                    var a: int = 10;
+                } else: {
+                    var b: int = 20;
+                }
+                return: b;
+            `, &object.Integer{Value: 20}, true,
+		},
+		{
+			`
+                if: (10 < 1): {
+                    var a: int = 10;
+                } else if: (1 < 2): {
+                    var c: int = 30;
+                } else: {
+                    var b: int = 20;
+                }
+                return: c;
+            `, &object.Integer{Value: 30}, true,
+		},
+		{`
+		    for: (var i: int = 0; i < 3; i++): {
+                var a: int = 10;
+		    }
+            return: a;
+        `, &object.Integer{Value: 10}, true},
 	}
 
 	for _, tt := range varStmtErrTest {
@@ -577,6 +633,48 @@ func Test38(t *testing.T) {
 		// if err != nil {
 		// 	fmt.Println(err.Error())
 		// }
+	}
+}
+
+func Test39(t *testing.T) {
+	testFunctions := []struct {
+		input    string
+		expected object.Object
+		hasErr   bool
+	}{
+		{"fun: main() { var a: int = 10; }", nil, false},
+		{"fun: main() { var a: int = 10; if: (a == 10): { return; } else: { a++; }}", nil, false},
+		{"fun: add(a: int, b: int): (int) { return: a + b; } fun: main() { var a: int = 10; if: (a == 10): { return; } else: { a++; }}", nil, false},
+		{"fun: add(a: int, b: int): (int) { return: a + b; } fun: main() { var a: int = add(5, 5); if: (a == 10): { return; } else: { a++; }}", nil, false},
+		{"fun: add(a: int, b: int): (int) { return: a + b; } fun: main() { var a: int = add(1, 5); if: (a == 10): { return; } else: { a++; } if: (a == 7): { return; }}", nil, false},
+	}
+
+	for _, tt := range testFunctions {
+		evaluated, hasErr, err := testEval(tt.input)
+		if hasErr != tt.hasErr {
+			t.Error("expected error an recived error not matching")
+		}
+		if err != nil {
+			t.Error(err.Error())
+		}
+		if !hasErr {
+			switch expected := tt.expected.(type) {
+			case *object.Boolean:
+				testBooleanObject(t, evaluated, expected.Value)
+			case *object.Integer:
+				testIntegerObject(t, evaluated, expected.Value)
+			case *object.Float:
+				testFloatObject(t, evaluated, expected.Value)
+			case *object.String:
+				testStringObject(t, evaluated, expected.Value)
+			case *object.Char:
+				testCharObject(t, evaluated, expected.Value)
+			case *object.Null:
+				testNullObject(t, evaluated)
+			default:
+				testNil(t, evaluated)
+			}
+		}
 	}
 }
 
@@ -597,13 +695,13 @@ func testNil(t *testing.T, obj object.Object) bool {
 	return true
 }
 
-// func testNullObject(t *testing.T, obj object.Object) bool {
-// 	if obj != evaluator.NULL {
-// 		t.Errorf("Object is not NULL. got=%T (%+v)", obj, obj)
-// 		return false
-// 	}
-// 	return true
-// }
+func testNullObject(t *testing.T, obj object.Object) bool {
+	if obj != evaluator.NULL {
+		t.Errorf("Object is not NULL. got=%T (%+v)", obj, obj)
+		return false
+	}
+	return true
+}
 
 func testFloatObject(t *testing.T, obj object.Object, expected float64) bool {
 	result, ok := obj.(*object.Float)
