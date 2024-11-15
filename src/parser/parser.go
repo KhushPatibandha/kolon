@@ -454,6 +454,12 @@ func (p *Parser) parseFunctionParameters() []*ast.FunctionParameters {
 func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	stmt := &ast.ReturnStatement{Token: p.currentToken}
 
+	if p.peekTokenIsOk(lexer.SEMI_COLON) {
+		stmt.Value = nil
+		p.nextToken()
+		return stmt
+	}
+
 	if !p.expectedPeekToken(lexer.COLON) {
 		return nil
 	}
@@ -513,6 +519,20 @@ func (p *Parser) parseVarStatement() *ast.VarStatement {
 
 		p.nextToken()
 		stmt.Value = p.parseExpression(LOWEST)
+	} else {
+		// If the value is not assigned, then the default value will be assigned
+		switch stmt.Type.Value {
+		case "int":
+			stmt.Value = &ast.IntegerValue{Token: lexer.Token{Kind: lexer.INT, Value: "0"}, Value: 0}
+		case "float":
+			stmt.Value = &ast.FloatValue{Token: lexer.Token{Kind: lexer.FLOAT, Value: "0.0"}, Value: 0.0}
+		case "bool":
+			stmt.Value = &ast.BooleanValue{Token: lexer.Token{Kind: lexer.BOOL, Value: "false"}, Value: false}
+		case "string":
+			stmt.Value = &ast.StringValue{Token: lexer.Token{Kind: lexer.STRING, Value: ""}, Value: ""}
+		case "char":
+			stmt.Value = &ast.CharValue{Token: lexer.Token{Kind: lexer.CHAR, Value: ""}, Value: ""}
+		}
 	}
 
 	if !p.expectedPeekToken(lexer.SEMI_COLON) {
