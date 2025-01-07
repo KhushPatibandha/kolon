@@ -44,6 +44,56 @@ func (p *Program) String() string {
 }
 
 // -----------------------------------------------------------------------------
+// For HashMap
+// -----------------------------------------------------------------------------
+type HashMap struct {
+	Token     lexer.Token // {
+	KeyType   *Type
+	ValueType *Type
+	Pairs     map[Expression]Expression
+}
+
+func (hm *HashMap) expressionNode()    {}
+func (hm *HashMap) TokenValue() string { return hm.Token.Value }
+func (hm *HashMap) String() string {
+	var out bytes.Buffer
+	pair := []string{}
+	for key, value := range hm.Pairs {
+		pair = append(pair, key.String()+": "+value.String())
+	}
+	out.WriteString("{")
+	out.WriteString(strings.Join(pair, ", "))
+	out.WriteString("}")
+	return out.String()
+}
+
+// -----------------------------------------------------------------------------
+// For Array
+// -----------------------------------------------------------------------------
+type ArrayValue struct {
+	Token  lexer.Token // {
+	Type   *Type
+	Values []Expression
+}
+
+func (av *ArrayValue) expressionNode()    {}
+func (av *ArrayValue) TokenValue() string { return av.Token.Value }
+func (av *ArrayValue) String() string {
+	var out bytes.Buffer
+
+	elements := []string{}
+	for _, el := range av.Values {
+		elements = append(elements, el.String())
+	}
+
+	out.WriteString("[")
+	out.WriteString(strings.Join(elements, ", "))
+	out.WriteString("]")
+
+	return out.String()
+}
+
+// -----------------------------------------------------------------------------
 // For Integer
 // -----------------------------------------------------------------------------
 
@@ -67,7 +117,6 @@ type FloatValue struct {
 
 func (fv *FloatValue) expressionNode() {}
 
-// func (fv *FloatValue) TokenValue() string { return fv.Token.Value }
 func (fv *FloatValue) TokenValue() string { return fmt.Sprintf("%g", fv.Value) }
 func (fv *FloatValue) String() string     { return fv.Token.Value }
 
@@ -123,12 +172,27 @@ func (i *Identifier) String() string     { return i.Value }
 // For Type (int, string, char, float, bool)
 // -----------------------------------------------------------------------------
 type Type struct {
-	Token lexer.Token
-	Value string
+	Token    lexer.Token
+	Value    string
+	IsArray  bool
+	IsHash   bool
+	SubTypes []*Type
 }
 
 func (t *Type) TokenValue() string { return t.Token.Value }
-func (t *Type) String() string     { return t.Value }
+func (t *Type) String() string {
+	var out bytes.Buffer
+	if t.IsHash {
+		// key[value]
+		out.WriteString(t.SubTypes[0].String() + "[" + t.SubTypes[1].String() + "]")
+	} else {
+		out.WriteString(t.TokenValue())
+		if t.IsArray {
+			out.WriteString("[]")
+		}
+	}
+	return out.String()
+}
 
 // -----------------------------------------------------------------------------
 // For Function Parameters
@@ -179,6 +243,28 @@ func (fb *FunctionBody) String() string {
 }
 
 // -----------------------------------------------------------------------------
+// For Multiple declaration of var stmt or variable assignment
+// eg: var a: int, var b: int, c, d = 1, 2, 3, 4
+// Here a and b are declared and c and d are already declared, but assigned newly
+// -----------------------------------------------------------------------------
+type MultiValueAssignStmt struct {
+	Token   lexer.Token // "=" (Equal Assign) Token
+	Objects []Statement // it will store objects of type VarStatement and ExpressionStatement(Expression in es will always be AssignemntExpression with operator "=")
+}
+
+func (mvas *MultiValueAssignStmt) statementNode()     {}
+func (mvas *MultiValueAssignStmt) TokenValue() string { return mvas.Token.Value }
+func (mvas *MultiValueAssignStmt) String() string {
+	var out bytes.Buffer
+
+	for _, obj := range mvas.Objects {
+		out.WriteString(obj.String())
+	}
+
+	return out.String()
+}
+
+// -----------------------------------------------------------------------------
 // For Var AND Const Statement
 // -----------------------------------------------------------------------------
 type VarStatement struct {
@@ -219,7 +305,11 @@ func (r *ReturnStatement) TokenValue() string { return r.Token.Value }
 func (r *ReturnStatement) String() string {
 	var out bytes.Buffer
 
-	out.WriteString(r.TokenValue() + ": ")
+	out.WriteString(r.TokenValue())
+
+	if r.Value != nil {
+		out.WriteString(": ")
+	}
 
 	if len(r.Value) > 1 {
 		out.WriteString("(")
@@ -239,6 +329,28 @@ func (r *ReturnStatement) String() string {
 	out.WriteString(";")
 	return out.String()
 }
+
+// -----------------------------------------------------------------------------
+// For Continue Statement
+// -----------------------------------------------------------------------------
+type ContinueStatement struct {
+	Token lexer.Token
+}
+
+func (cs *ContinueStatement) statementNode()     {}
+func (cs *ContinueStatement) TokenValue() string { return cs.Token.Value }
+func (cs *ContinueStatement) String() string     { return cs.TokenValue() + ";" }
+
+// -----------------------------------------------------------------------------
+// For Break Statement
+// -----------------------------------------------------------------------------
+type BreakStatement struct {
+	Token lexer.Token
+}
+
+func (bs *BreakStatement) statementNode()     {}
+func (bs *BreakStatement) TokenValue() string { return bs.Token.Value }
+func (bs *BreakStatement) String() string     { return bs.TokenValue() + ";" }
 
 // -----------------------------------------------------------------------------
 // For Functions
@@ -523,5 +635,22 @@ func (ce *CallExpression) String() string {
 	out.WriteString(strings.Join(args, ", "))
 	out.WriteString(")")
 
+	return out.String()
+}
+
+// -----------------------------------------------------------------------------
+// Index Expression
+// -----------------------------------------------------------------------------
+type IndexExpression struct {
+	Token lexer.Token // [
+	Left  Expression
+	Index Expression
+}
+
+func (ie *IndexExpression) expressionNode()    {}
+func (ie *IndexExpression) TokenValue() string { return ie.Token.Value }
+func (ie *IndexExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString(ie.Left.String() + "[" + ie.Index.String() + "]")
 	return out.String()
 }

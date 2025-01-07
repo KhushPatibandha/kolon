@@ -1,0 +1,11 @@
+fun: main() {
+    var a: string[int] = {"khush": 1, "heeh": 2};
+    println(a);
+
+    var b: int = a["khush"];
+    println(b);
+
+    // var b: int = a["hehe"];
+    // println(b);
+}
+

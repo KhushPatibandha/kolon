@@ -1,0 +1,5 @@
+fun: main() {
+    var a: int[] = [1, 2, 3];
+    var b: int = a[2];
+    println(b);
+}

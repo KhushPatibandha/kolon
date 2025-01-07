@@ -377,9 +377,9 @@ func Test12(t *testing.T) {
 		{"5 || 5;", 5, "||", 5},
 		{"5 & 5;", 5, "&", 5},
 		{"5 | 5;", 5, "|", 5},
-		{"true == true", true, "==", true},
-		{"true != false", true, "!=", false},
-		{"false == false", false, "==", false},
+		{"true == true;", true, "==", true},
+		{"true != false;", true, "!=", false},
+		{"false == false;", false, "==", false},
 	}
 
 	for _, tt := range infixTests {
@@ -424,112 +424,118 @@ func Test13(t *testing.T) {
 		expected string
 	}{
 		{
-			"a + add(b * c) + d",
+			"a + add(b * c) + d;",
 			"((a + add((b * c))) + d)",
 		},
 		{
-			"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+			"add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8));",
 			"add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
 		},
 		{
-			"add(a + b + c * d / f + g)",
+			"add(a + b + c * d / f + g);",
 			"add((((a + b) + ((c * d) / f)) + g))",
 		},
 		{
-			"1 + (2 + 3) + 4",
+			"1 + (2 + 3) + 4;",
 			"((1 + (2 + 3)) + 4)",
 		},
 		{
-			"(5 + 5) * 2",
+			"(5 + 5) * 2;",
 			"((5 + 5) * 2)",
 		},
 		{
-			"2 / (5 + 5)",
+			"2 / (5 + 5);",
 			"(2 / (5 + 5))",
 		},
 		{
-			"-(5 + 5)",
+			"-(5 + 5);",
 			"(-(5 + 5))",
 		},
 		{
-			"!(true == true)",
+			"!(true == true);",
 			"(!(true == true))",
 		},
 		{
-			"true",
+			"true;",
 			"true",
 		},
 		{
-			"false",
+			"false;",
 			"false",
 		},
 		{
-			"3 > 5 == false",
+			"3 > 5 == false;",
 			"((3 > 5) == false)",
 		},
 		{
-			"3 < 5 == true",
+			"3 < 5 == true;",
 			"((3 < 5) == true)",
 		},
 		{
-			"-a * b",
+			"-a * b;",
 			"((-a) * b)",
 		},
 		{
-			"!-a",
+			"!-a;",
 			"(!(-a))",
 		},
 		{
-			"a + b + c",
+			"a + b + c;",
 			"((a + b) + c)",
 		},
 		{
-			"a + b - c",
+			"a + b - c;",
 			"((a + b) - c)",
 		},
 		{
-			"a * b * c",
+			"a * b * c;",
 			"((a * b) * c)",
 		},
 		{
-			"a * b / c",
+			"a * b / c;",
 			"((a * b) / c)",
 		},
 		{
-			"a + b / c",
+			"a + b / c;",
 			"(a + (b / c))",
 		},
 		{
-			"a + b * c + d / e - f",
+			"a + b * c + d / e - f;",
 			"(((a + (b * c)) + (d / e)) - f)",
 		},
 		{
-			"3 + 4; -5 * 5",
+			"3 + 4; -5 * 5;",
 			"(3 + 4)((-5) * 5)",
 		},
 		{
-			"5 > 4 == 3 < 4",
+			"5 > 4 == 3 < 4;",
 			"((5 > 4) == (3 < 4))",
 		},
 		{
-			"5 < 4 != 3 > 4",
+			"5 < 4 != 3 > 4;",
 			"((5 < 4) != (3 > 4))",
 		},
 		{
-			"3 + 4 * 5 == 3 * 1 + 4 * 5",
+			"3 + 4 * 5 == 3 * 1 + 4 * 5;",
 			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
 		},
 		{
-			"3 + 4 * 5 == 3 * 1 + 4 * 5",
+			"3 + 4 * 5 == 3 * 1 + 4 * 5;",
 			"((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
 		},
 		{
-			"-5--",
+			"-5--;",
 			"(-(5--))",
+		},
+		{
+			"1 == 1 && 2 == 2 && 3 == 3;",
+			"(((1 == 1) && (2 == 2)) && (3 == 3))",
 		},
 	}
 
 	for _, tt := range tests {
+		// println(tt.input)
+		// println(i)
 		l := lexer.Tokenizer(tt.input)
 		p := parser.New(l)
 		program := p.ParseProgram()
@@ -539,6 +545,7 @@ func Test13(t *testing.T) {
 		if actual != tt.expected {
 			t.Errorf("expected=%q, got=%q", tt.expected, actual)
 		}
+		// println("Pass")
 	}
 }
 
@@ -548,8 +555,8 @@ func Test17(t *testing.T) {
 		integerValue int64
 		operator     string
 	}{
-		{"5++", 5, "++"},
-		{"5--", 5, "--"},
+		{"5++;", 5, "++"},
+		{"5--;", 5, "--"},
 	}
 
 	for _, tt := range postfixTests {
@@ -633,7 +640,7 @@ func Test19(t *testing.T) {
 }
 
 func Test20(t *testing.T) {
-	input := "add(1, 2*3, 4 + 5)"
+	input := "add(1, 2*3, 4 + 5);"
 
 	l := lexer.Tokenizer(input)
 	p := parser.New(l)

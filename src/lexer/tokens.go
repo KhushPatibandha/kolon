@@ -5,110 +5,77 @@ import "fmt"
 type TokenKind int
 
 const (
-	EOF        TokenKind = iota // PERF:
-	STRING                      // PERF:
-	CHAR                        // PERF:
-	INT                         // PERF:
-	FLOAT                       // PERF:
-	BOOL                        // PERF:
-	IDENTIFIER                  // PERF:
-	// ENUM
-
-	TYPE // PERF:
-
-	PRINT   // PERF:
-	PRINTLN // PERF:
-
-	// EXPONENT // TODO: Include in test
-
-	OPEN_BRACKET         // PERF:
-	CLOSE_BRACKET        // PERF:
-	OPEN_SQUARE_BRACKET  // PERF:
-	CLOSE_SQUARE_BRACKET // PERF:
-	OPEN_CURLY_BRACKET   // PERF:
-	CLOSE_CURLY_BRACKET  // PERF:
-
-	LESS_THAN          // PERF:
-	GREATER_THAN       // PERF:
-	LESS_THAN_EQUAL    // PERF:
-	GREATER_THAN_EQUAL // PERF:
-
-	EQUAL_ASSIGN // PERF:
-	DOUBLE_EQUAL // PERF:
-	NOT          // PERF:
-	NOT_EQUAL    // PERF:
-
-	PLUS    // PERF:
-	DASH    // PERF:
-	STAR    // PERF:
-	SLASH   // PERF:
-	PERCENT // PERF:
-
-	PLUS_PLUS     // PERF:
-	PLUS_EQUAL    // PERF:
-	MINUS_MINUS   // PERF:
-	MINUS_EQUAL   // PERF:
-	STAR_EQUAL    // PERF:
-	SLASH_EQUAL   // PERF:
-	PERCENT_EQUAL // PERF:
-
-	COLON         // PERF:
-	SEMI_COLON    // PERF:
-	DOT           // PERF:
-	COMMA         // PERF:
-	QUESTION_MARK // PERF:
-	DOT_DOT       // PERF:
-
-	AND     // PERF:
-	OR      // PERF:
-	AND_AND // PERF:
-	OR_OR   // PERF:
-
-	IN      // PERF:
-	VAR     // PERF:
-	CONST   // PERF:
-	FUN     // PERF:
-	IF      // PERF:
-	ELSE    // PERF:
-	ELSE_IF // PERF:
-	FOR     // PERF:
-	RETURN  // PERF:
-
-	// TODO: Can't parse these yet.
-	IMPORT
-	FROM
-	PACKAGE
-	STRUCT
-	// EXPORT
+	EOF TokenKind = iota
+	STRING
+	CHAR
+	INT
+	FLOAT
+	BOOL
+	IDENTIFIER
+	TYPE
+	OPEN_BRACKET
+	CLOSE_BRACKET
+	OPEN_SQUARE_BRACKET
+	CLOSE_SQUARE_BRACKET
+	OPEN_CURLY_BRACKET
+	CLOSE_CURLY_BRACKET
+	LESS_THAN
+	GREATER_THAN
+	LESS_THAN_EQUAL
+	GREATER_THAN_EQUAL
+	EQUAL_ASSIGN
+	DOUBLE_EQUAL
+	NOT
+	NOT_EQUAL
+	PLUS
+	DASH
+	STAR
+	SLASH
+	PERCENT
+	PLUS_PLUS
+	PLUS_EQUAL
+	MINUS_MINUS
+	MINUS_EQUAL
+	STAR_EQUAL
+	SLASH_EQUAL
+	PERCENT_EQUAL
+	COLON
+	SEMI_COLON
+	COMMA
+	AND
+	OR
+	AND_AND
+	OR_OR
+	VAR
+	CONST
+	FUN
+	IF
+	ELSE
+	ELSE_IF
+	FOR
+	RETURN
+	CONTINUE
+	BREAK
 )
 
 var reservedWords = map[string]TokenKind{
-	"var":     VAR,
-	"const":   CONST,
-	"fun":     FUN,
-	"if":      IF,
-	"else":    ELSE,
-	"for":     FOR,
-	"else if": ELSE_IF,
-	"println": PRINTLN,
-	"print":   PRINT,
-	"true":    BOOL,
-	"false":   BOOL,
-	"return":  RETURN,
-	"in":      IN,
-	"auto":    TYPE,
-	"string":  TYPE,
-	"char":    TYPE,
-	"int":     TYPE,
-	"float":   TYPE,
-	"bool":    TYPE,
-	"package": PACKAGE,
-	"struct":  STRUCT,
-	"import":  IMPORT,
-	"from":    FROM,
-
-	// "enum":  ENUM,
-	// "export": EXPORT,
+	"var":      VAR,
+	"const":    CONST,
+	"fun":      FUN,
+	"if":       IF,
+	"else":     ELSE,
+	"for":      FOR,
+	"else if":  ELSE_IF,
+	"true":     BOOL,
+	"false":    BOOL,
+	"return":   RETURN,
+	"string":   TYPE,
+	"char":     TYPE,
+	"int":      TYPE,
+	"float":    TYPE,
+	"bool":     TYPE,
+	"continue": CONTINUE,
+	"break":    BREAK,
 }
 
 type Token struct {
@@ -117,7 +84,7 @@ type Token struct {
 }
 
 func (token Token) Help() {
-	if token.Kind == STRING || token.Kind == INT || token.Kind == BOOL || token.Kind == CHAR || token.Kind == FLOAT || token.Kind == IDENTIFIER || token.Kind == TYPE || token.Kind == PRINT || token.Kind == PRINTLN || token.Kind == PACKAGE || token.Kind == STRUCT || token.Kind == IMPORT || token.Kind == FROM {
+	if token.Kind == STRING || token.Kind == INT || token.Kind == BOOL || token.Kind == CHAR || token.Kind == FLOAT || token.Kind == IDENTIFIER || token.Kind == TYPE {
 		fmt.Printf("%s(%s)\n", TokenKindString(token.Kind), token.Value)
 	} else {
 		fmt.Printf("%s()\n", TokenKindString(token.Kind))
@@ -142,8 +109,6 @@ func TokenKindString(tKind TokenKind) string {
 		return "FLOAT"
 	case BOOL:
 		return "BOOL"
-		// case ENUM:
-		// return "ENUM"
 	case TYPE:
 		return "TYPE"
 	case IDENTIFIER:
@@ -204,14 +169,8 @@ func TokenKindString(tKind TokenKind) string {
 		return "COLON"
 	case SEMI_COLON:
 		return "SEMI_COLON"
-	case DOT:
-		return "DOT"
 	case COMMA:
 		return "COMMA"
-	case QUESTION_MARK:
-		return "QUESTION_MARK"
-	case DOT_DOT:
-		return "DOT_DOT"
 	case AND:
 		return "AND"
 	case OR:
@@ -234,24 +193,12 @@ func TokenKindString(tKind TokenKind) string {
 		return "ELSE_IF"
 	case FOR:
 		return "FOR"
-	// case EXPONENT:
-	// return "EXPONENT"
-	case PRINTLN:
-		return "PRINTLN"
-	case PRINT:
-		return "PRINT"
 	case RETURN:
 		return "RETURN"
-	case IN:
-		return "IN"
-	case IMPORT:
-		return "IMPORT"
-	case FROM:
-		return "FROM"
-	case PACKAGE:
-		return "PACKAGE"
-	case STRUCT:
-		return "STRUCT"
+	case CONTINUE:
+		return "CONTINUE"
+	case BREAK:
+		return "BREAK"
 	default:
 		return fmt.Sprintf("unknown(%d)", tKind)
 	}

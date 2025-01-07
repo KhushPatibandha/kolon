@@ -887,3 +887,567 @@ func Test23(t *testing.T) {
 		t.Errorf("Expected: for: (var i: int = 0; (i < 10); (i++)): {var a: int = 5;}")
 	}
 }
+
+func Test40(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "s"},
+					Value: "s",
+				},
+				Type: &ast.Type{
+					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Value: "int",
+				},
+			},
+			&ast.ExpressionStatement{
+				Expression: &ast.AssignmentExpression{
+					Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+					Left: &ast.Identifier{
+						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "s"},
+						Value: "s",
+					},
+					Right: &ast.IntegerValue{
+						Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+						Value: 10,
+					},
+					Operator: "=",
+				},
+			},
+		},
+	}
+
+	if program.String() != "var s: int;s = 10;" {
+		t.Errorf("program.String() wrong. got=%q", program.String())
+		t.Errorf("Expected: var s: int;s = 10;")
+	}
+}
+
+func Test41(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.MultiValueAssignStmt{
+				Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+				Objects: []ast.Statement{
+					&ast.VarStatement{
+						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						Name: &ast.Identifier{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+							Value: "a",
+						},
+						Type: &ast.Type{
+							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Value: "int",
+						},
+						Value: &ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+							Value: 10,
+						},
+					},
+					&ast.VarStatement{
+						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						Name: &ast.Identifier{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+							Value: "b",
+						},
+						Type: &ast.Type{
+							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Value: "int",
+						},
+						Value: &ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "20"},
+							Value: 20,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// var a: int, var b: int = 10, 20;
+	// if program.String() != "var a: int, var b: int = 10, 20;" {
+	if program.String() != "var a: int = 10;var b: int = 20;" {
+		t.Errorf("program.String() wrong. got=%q", program.String())
+		t.Errorf("var a: int = 10;var b: int = 20;")
+	}
+}
+
+func Test42(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
+					Value: "d",
+				},
+				Type: &ast.Type{
+					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Value: "int",
+				},
+			},
+			&ast.MultiValueAssignStmt{
+				Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+				Objects: []ast.Statement{
+					&ast.VarStatement{
+						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						Name: &ast.Identifier{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+							Value: "a",
+						},
+						Type: &ast.Type{
+							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Value: "int",
+						},
+						Value: &ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+							Value: 10,
+						},
+					},
+					&ast.VarStatement{
+						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						Name: &ast.Identifier{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+							Value: "b",
+						},
+						Type: &ast.Type{
+							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Value: "int",
+						},
+						Value: &ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "20"},
+							Value: 20,
+						},
+					},
+					&ast.VarStatement{
+						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						Name: &ast.Identifier{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+							Value: "c",
+						},
+						Type: &ast.Type{
+							Token: lexer.Token{Kind: lexer.TYPE, Value: "string"},
+							Value: "string",
+						},
+						Value: &ast.StringValue{
+							Token: lexer.Token{Kind: lexer.STRING, Value: "\"hello\""},
+							Value: "\"hello\"",
+						},
+					},
+					&ast.ExpressionStatement{
+						Expression: &ast.AssignmentExpression{
+							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+							Left: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
+								Value: "d",
+							},
+							Right: &ast.IntegerValue{
+								Token: lexer.Token{Kind: lexer.INT, Value: "100"},
+								Value: 100,
+							},
+							Operator: "=",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// var d: int; var a: int, var b: int, var c: string, d = 10, 20, "hello", 100;
+	// if program.String() != "var d: int; var a: int, var b: int, var c: string, d = 10, 20, \"hello\", 100;" {
+	if program.String() != "var d: int;var a: int = 10;var b: int = 20;var c: string = \"hello\";d = 100;" {
+		t.Errorf("program.String() wrong. got=%q", program.String())
+		t.Errorf("var d: int;var a: int = 10;var b: int = 20;var c: string = \"hello\";d = 100;")
+	}
+}
+
+func Test43(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+					Value: "a",
+				},
+				Type: &ast.Type{
+					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Value: "int",
+				},
+			},
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+					Value: "b",
+				},
+				Type: &ast.Type{
+					Token: lexer.Token{Kind: lexer.TYPE, Value: "string"},
+					Value: "string",
+				},
+			},
+			&ast.MultiValueAssignStmt{
+				Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+				Objects: []ast.Statement{
+					&ast.ExpressionStatement{
+						Expression: &ast.AssignmentExpression{
+							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+							Left: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Value: "a",
+							},
+							Right: &ast.IntegerValue{
+								Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+								Value: 10,
+							},
+							Operator: "=",
+						},
+					},
+					&ast.ExpressionStatement{
+						Expression: &ast.AssignmentExpression{
+							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+							Left: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+								Value: "b",
+							},
+							Right: &ast.StringValue{
+								Token: lexer.Token{Kind: lexer.STRING, Value: "\"hello\""},
+								Value: "\"hello\"",
+							},
+							Operator: "=",
+						},
+					},
+					&ast.VarStatement{
+						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						Name: &ast.Identifier{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+							Value: "c",
+						},
+						Type: &ast.Type{
+							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Value: "int",
+						},
+						Value: &ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "20"},
+							Value: 20,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// var a: int; var b: string; a, b, var c: int = 10, "hello", 20;
+	// if program.String() != "var a: int; var b: string; a, b, var c: int = 10, \"hello\", 20;" {
+	if program.String() != "var a: int;var b: string;a = 10;b = \"hello\";var c: int = 20;" {
+		t.Errorf("program.String() wrong. got=%q", program.String())
+		t.Errorf("var a: int;var b: string;a = 10;b = \"hello\";var c: int = 20;")
+	}
+}
+
+func Test44(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+					Value: "c",
+				},
+				Type: &ast.Type{
+					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Value: "int",
+				},
+			},
+			&ast.MultiValueAssignStmt{
+				Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+				Objects: []ast.Statement{
+					&ast.VarStatement{
+						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						Name: &ast.Identifier{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+							Value: "a",
+						},
+						Type: &ast.Type{
+							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Value: "int",
+						},
+						Value: &ast.CallExpression{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+							Name: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Value: "getValues",
+							},
+							Args: []ast.Expression{},
+						},
+					},
+					&ast.VarStatement{
+						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						Name: &ast.Identifier{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+							Value: "b",
+						},
+						Type: &ast.Type{
+							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Value: "int",
+						},
+						Value: &ast.CallExpression{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+							Name: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Value: "getValues",
+							},
+							Args: []ast.Expression{},
+						},
+					},
+					&ast.ExpressionStatement{
+						Expression: &ast.AssignmentExpression{
+							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+							Left: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+								Value: "c",
+							},
+							Right: &ast.CallExpression{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Name: &ast.Identifier{
+									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+									Value: "getValues",
+								},
+								Args: []ast.Expression{},
+							},
+							Operator: "=",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// var c: int; var a: int, var: b: int, c = getValues();
+	// if program.String() != "var c: int; var a: int, var: b: int, c = getValues();" {
+	if program.String() != "var c: int;var a: int = getValues();var b: int = getValues();c = getValues();" {
+		t.Errorf("program.String() wrong. got=%q", program.String())
+		t.Errorf("var c: int;var a: int = getValues();var b: int = getValues();c = getValues();")
+	}
+}
+
+func Test45(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+					Value: "a",
+				},
+				Type: &ast.Type{
+					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Value: "int",
+				},
+			},
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+					Value: "b",
+				},
+				Type: &ast.Type{
+					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Value: "int",
+				},
+			},
+			&ast.MultiValueAssignStmt{
+				Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+				Objects: []ast.Statement{
+					&ast.ExpressionStatement{
+						Expression: &ast.AssignmentExpression{
+							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+							Left: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Value: "a",
+							},
+							Right: &ast.CallExpression{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Name: &ast.Identifier{
+									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+									Value: "getValues",
+								},
+								Args: []ast.Expression{},
+							},
+							Operator: "=",
+						},
+					},
+					&ast.ExpressionStatement{
+						Expression: &ast.AssignmentExpression{
+							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+							Left: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+								Value: "b",
+							},
+							Right: &ast.CallExpression{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Name: &ast.Identifier{
+									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+									Value: "getValues",
+								},
+								Args: []ast.Expression{},
+							},
+							Operator: "=",
+						},
+					},
+					&ast.VarStatement{
+						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						Name: &ast.Identifier{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+							Value: "c",
+						},
+						Type: &ast.Type{
+							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Value: "int",
+						},
+						Value: &ast.CallExpression{
+							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+							Name: &ast.Identifier{
+								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Value: "getValues",
+							},
+							Args: []ast.Expression{},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	// var a: int; var b: int; a, b, var c: int = getValues();
+	// if program.String() != "var a: int; var b: int; a, b, var c: int = getValues();" {
+	if program.String() != "var a: int;var b: int;a = getValues();b = getValues();var c: int = getValues();" {
+		t.Errorf("program.String() wrong. got=%q", program.String())
+		t.Errorf("var a: int;var b: int;a = getValues();b = getValues();var c: int = getValues();")
+	}
+}
+
+func Test46(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+					Value: "a",
+				},
+				Type: &ast.Type{
+					Token:   lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Value:   "int",
+					IsArray: true,
+				},
+				Value: &ast.ArrayValue{
+					Type: &ast.Type{
+						Token:   lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Value:   "int",
+						IsArray: true,
+					},
+					Token: lexer.Token{Kind: lexer.OPEN_BRACKET, Value: "{"},
+					Values: []ast.Expression{
+						&ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "1"},
+							Value: 1,
+						},
+						&ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "2"},
+							Value: 2,
+						},
+						&ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "3"},
+							Value: 3,
+						},
+						&ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "4"},
+							Value: 4,
+						},
+						&ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "5"},
+							Value: 5,
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if program.String() != "var a: int[] = [1, 2, 3, 4, 5];" {
+		t.Errorf("program.String() wrong. got=%q", program.String())
+		t.Errorf("Expected: var a: int[] = {1, 2, 3, 4, 5};")
+	}
+}
+
+func Test47(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+					Value: "a",
+				},
+				Type: &ast.Type{
+					Token:   lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Value:   "int",
+					IsArray: true,
+				},
+				Value: &ast.ArrayValue{
+					Type: &ast.Type{
+						Token:   lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Value:   "int",
+						IsArray: true,
+					},
+					Token: lexer.Token{Kind: lexer.OPEN_BRACKET, Value: "{"},
+					Values: []ast.Expression{
+						&ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "1"},
+							Value: 1,
+						},
+						&ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "2"},
+							Value: 2,
+						},
+						&ast.IntegerValue{
+							Token: lexer.Token{Kind: lexer.INT, Value: "3"},
+							Value: 3,
+						},
+					},
+				},
+			},
+			&ast.VarStatement{
+				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+					Value: "b",
+				},
+				Type: &ast.Type{
+					Token:   lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Value:   "int",
+					IsArray: false,
+				},
+				Value: &ast.IndexExpression{
+					Token: lexer.Token{Kind: lexer.OPEN_SQUARE_BRACKET, Value: "["},
+					Left: &ast.Identifier{
+						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+						Value: "a",
+					},
+					Index: &ast.IntegerValue{
+						Token: lexer.Token{Kind: lexer.INT, Value: "0"},
+						Value: 0,
+					},
+				},
+			},
+		},
+	}
+
+	if program.String() != "var a: int[] = [1, 2, 3];var b: int = a[0];" {
+		t.Errorf("program.String() wrong. got=%q", program.String())
+		t.Errorf("Expected: var a: int[] = {1, 2, 3};var b: int = a[0];")
+	}
+}

@@ -1,0 +1,10 @@
+fun: main() {
+    var a: string[] = ["khush", "hehe"];
+    var b: string[], var c: bool = some(false, a);
+    println(c);
+    println(b);
+}
+
+fun: some(b: bool, a: string[]): (string[], bool) {
+    return: (a, true);
+}

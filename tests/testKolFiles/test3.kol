@@ -1,0 +1,16 @@
+fun: main() {
+    var a: int;
+    var b: bool;
+
+    a, var c: int, var d: int, b = res();
+    if: (a == 1 && b == true && c == 2  && d == 3): {
+        println(true);
+        return;
+    }
+    println("false");
+}
+
+fun: res(): (int, int, int, bool) {
+    return: (1, 2, 3, true);
+}
+

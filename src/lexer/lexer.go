@@ -46,15 +46,11 @@ func createLexer(source string) *Lexer {
 		source:   source,
 		Tokens:   make([]Token, 0),
 		patterns: []regexPattern{
-
 			{regexp.MustCompile(`\t+`), skipHandler},
 			{regexp.MustCompile(`\s+`), skipHandler},
 			{regexp.MustCompile(`\/\/.*`), skipHandler},
 
 			{regexp.MustCompile(`else\s+if`), identifierHandler},
-
-			{regexp.MustCompile(`print\s*\((.*?)\)`), printHandler},
-			{regexp.MustCompile(`println\s*\((.*?)\)`), printlnHandler},
 
 			{regexp.MustCompile(`[a-zA-Z_][a-zA-Z0-9_]*`), identifierHandler},
 
@@ -102,12 +98,7 @@ func createLexer(source string) *Lexer {
 			{regexp.MustCompile(`!`), defaultHandler(NOT, "!")},
 			{regexp.MustCompile(`:`), defaultHandler(COLON, ":")},
 			{regexp.MustCompile(`;`), defaultHandler(SEMI_COLON, ";")},
-			{regexp.MustCompile(`\.\.`), defaultHandler(DOT_DOT, "..")},
-			{regexp.MustCompile(`\.`), defaultHandler(DOT, ".")},
 			{regexp.MustCompile(`,`), defaultHandler(COMMA, ",")},
-			{regexp.MustCompile(`\?`), defaultHandler(QUESTION_MARK, "?")},
-
-			// {regexp.MustCompile(`[eE]`), defaultHandler(EXPONENT, "e")},
 		},
 	}
 }
@@ -121,18 +112,6 @@ func defaultHandler(k TokenKind, v string) regexHandler {
 		lex.push(GetNewToken(k, v))
 		lex.advanceN(len(v))
 	}
-}
-
-func printHandler(lex *Lexer, regex *regexp.Regexp) {
-	match := regex.FindStringSubmatch(lex.remainder())
-	lex.push(GetNewToken(PRINT, match[1]))
-	lex.advanceN(len(match[0]))
-}
-
-func printlnHandler(lex *Lexer, regex *regexp.Regexp) {
-	match := regex.FindStringSubmatch(lex.remainder())
-	lex.push(GetNewToken(PRINTLN, match[1]))
-	lex.advanceN(len(match[0]))
 }
 
 func floatHandler(k TokenKind) regexHandler {
@@ -173,7 +152,7 @@ func stringHandler(k TokenKind) regexHandler {
 
 func identifierHandler(lex *Lexer, regex *regexp.Regexp) {
 	value := regex.FindString(lex.remainder())
-	var kind, ok = reservedWords[value]
+	kind, ok := reservedWords[value]
 	if ok {
 		lex.push(GetNewToken(kind, value))
 	} else {
