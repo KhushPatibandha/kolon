@@ -6,7 +6,7 @@ I, created this language to learn more about programming languages and how they 
 
 You might have already noticed—or will notice later when going through the docs—the extensive use of `kolon (:)`. That's about it! I think that's unique enough, right?
 
-Before we start, you should have Kolon installed on your system, if you don't already. You can do so by building it from the source or installing the binary. Check out [installation guide](<place holder>) for more details.
+Before we start, you should have Kolon installed on your system, if you don't already. You can do so by building it from the source or installing the binary. Check out [installation guide](https://github.com/KhushPatibandha/Kolon/blob/main/docs/installation.md) for more details.
 
 ## Hello, World!!
 

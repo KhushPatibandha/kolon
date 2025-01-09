@@ -1,4 +1,4 @@
-# Installation Guide for [Your Language]
+# Installation Guide for Kolon
 
 Welcome to the installation guide for **Kolon**! Follow the steps below to install and set up the language on your system.
 
@@ -15,7 +15,7 @@ You can install **Kolon** using one of the two methods below:
 
 ### Method 1: Install Prebuilt Binary
 
-1. Visit the [Releases Page](https://github.com/your-repo/your-language/releases).
+1. Visit the [Releases Page](https://github.com/KhushPatibandha/Kolon/releases).
 2. Download the prebuilt binary for your operating system:
    - **Linux**: `kolon_x86_64`
 3. Make the binary executable (Linux/MacOS):
@@ -51,4 +51,4 @@ You can install **Kolon** using one of the two methods below:
    kolon --version
    ```
 
-For more information, refer to the [documentation](https://github.com/your-repo/your-language/wiki).
+For more information, refer to the [documentation](https://github.com/KhushPatibandha/Kolon/blob/main/docs/docs.md).
