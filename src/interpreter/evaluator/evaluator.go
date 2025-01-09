@@ -1013,6 +1013,9 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 	case left.Type() == object.CHAR_OBJ && right.Type() == object.CHAR_OBJ:
 		return evalCharInfixExpression(operator, left, right)
 	case left.Type() == object.ARRAY_OBJ && right.Type() == object.ARRAY_OBJ:
+		if left.(*object.Array).TypeOf != right.(*object.Array).TypeOf {
+			return NULL, true, errors.New("Array types don't match. Expected: " + left.(*object.Array).TypeOf + " got: " + right.(*object.Array).TypeOf)
+		}
 		return evalArrayInfixExpression(operator, left, right)
 	default:
 		return NULL, true, errors.New("Invalid operation with variable types on left and right.")
