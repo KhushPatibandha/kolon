@@ -183,7 +183,7 @@ var builtins = map[string]*object.Builtin{
 				}
 			case *object.Hash:
 				if len(args) != 3 {
-					return NULL, true, errors.New("Wrong number of arguments for `push` on hash. got=" + strconv.Itoa(len(args)) + ", want=3. `push(hash, key, value)`")
+					return NULL, true, errors.New("Wrong number of arguments for `push` on hash. got=" + strconv.Itoa(len(args)) + ", want=3. `push(map, key, value)`")
 				}
 				keyType := arg.KeyType
 				valueType := arg.ValueType
@@ -256,7 +256,7 @@ var builtins = map[string]*object.Builtin{
 				}
 				hashed := hashKey.HashKey()
 				arg.Pairs[hashed] = object.HashPair{Key: arg2, Value: arg3}
-				return NULL, false, nil
+				return arg, false, nil
 			default:
 				return NULL, true, errors.New("Data structure not supported by `push`. got=" + string(args[0].Type()))
 			}

@@ -916,6 +916,10 @@ func (p *Parser) parseVarStatement() ast.Statement {
 		msg := fmt.Sprintf("Hashmap type %s must be initialized with values, even `{}` empty", stmt.Type.Value)
 		p.errors = append(p.errors, msg)
 		return nil
+	} else if stmt.Token.Kind == lexer.CONST && !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
+		msg := fmt.Sprintf("Const %s must be initialized", stmt.Name.Value)
+		p.errors = append(p.errors, msg)
+		return nil
 	}
 
 	if p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {

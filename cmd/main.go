@@ -11,11 +11,11 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run main.go <path-to-kolon-file>")
+	if len(os.Args) < 3 || os.Args[1] != "run:" {
+		fmt.Println("Usage: kolon run: <path-to-kolon-file>")
 		return
 	}
-	filePath := os.Args[1]
+	filePath := os.Args[2]
 	bytes, err := os.ReadFile(filePath)
 	if err != nil {
 		fmt.Println("Error reading file:", err)
