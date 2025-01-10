@@ -32,10 +32,15 @@ func main() {
 	// }
 
 	parser := parser.New(tokens)
-	program := parser.ParseProgram()
+	program, err := parser.ParseProgram()
+	if err != nil {
+		fmt.Println("Error parsing program:", err)
+		return
+	}
 	env := object.NewEnvironment()
 	_, _, err = evaluator.Eval(program, env)
 	if err != nil {
 		fmt.Println("Error evaluating program:", err)
+		return
 	}
 }

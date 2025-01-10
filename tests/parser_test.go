@@ -21,8 +21,10 @@ func Test4(t *testing.T) {
 	tokens := lexer.Tokenizer(input)
 	parser := parser.New(tokens)
 
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
+	program, err := parser.ParseProgram()
+	if err != nil {
+		t.Fatalf("ParseProgram() returned error: %s", err)
+	}
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
@@ -60,8 +62,10 @@ func Test5(t *testing.T) {
 	tokens := lexer.Tokenizer(input)
 	parser := parser.New(tokens)
 
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
+	program, err := parser.ParseProgram()
+	if err != nil {
+		t.Fatalf("ParseProgram() returned error: %s", err)
+	}
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
@@ -92,8 +96,10 @@ func Test6(t *testing.T) {
 	tokens := lexer.Tokenizer(input)
 	parser := parser.New(tokens)
 
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
+	program, err := parser.ParseProgram()
+	if err != nil {
+		t.Fatalf("ParseProgram() returned error: %s", err)
+	}
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
@@ -150,8 +156,10 @@ func Test7(t *testing.T) {
 
 	tokens := lexer.Tokenizer(input)
 	parser := parser.New(tokens)
-	program := parser.ParseProgram()
-	checkParserErrors(t, parser)
+	program, err := parser.ParseProgram()
+	if err != nil {
+		t.Fatalf("ParseProgram() returned error: %s", err)
+	}
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
@@ -229,8 +237,10 @@ func Test8(t *testing.T) {
 
 	tokens := lexer.Tokenizer(input)
 	p := parser.New(tokens)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
+	program, err := p.ParseProgram()
+	if err != nil {
+		t.Fatalf("ParseProgram() returned error: %s", err)
+	}
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
@@ -263,8 +273,10 @@ func Test9(t *testing.T) {
 
 	tokens := lexer.Tokenizer(input)
 	p := parser.New(tokens)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
+	program, err := p.ParseProgram()
+	if err != nil {
+		t.Fatalf("ParseProgram() returned error: %s", err)
+	}
 
 	if len(program.Statements) != 1 {
 		t.Fatalf("Program has not enough statements. got=%d", len(program.Statements))
@@ -292,8 +304,10 @@ func Test10(t *testing.T) {
 
 	tokens := lexer.Tokenizer(input)
 	p := parser.New(tokens)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
+	program, err := p.ParseProgram()
+	if err != nil {
+		t.Fatalf("ParseProgram() returned error: %s", err)
+	}
 
 	if len(program.Statements) != 1 {
 		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
@@ -330,8 +344,10 @@ func Test11(t *testing.T) {
 	for _, tt := range prefixTests {
 		tokens := lexer.Tokenizer(tt.input)
 		p := parser.New(tokens)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		program, err := p.ParseProgram()
+		if err != nil {
+			t.Fatalf("ParseProgram() returned error: %s", err)
+		}
 
 		if len(program.Statements) != 1 {
 			t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
@@ -385,8 +401,10 @@ func Test12(t *testing.T) {
 	for _, tt := range infixTests {
 		tokens := lexer.Tokenizer(tt.input)
 		p := parser.New(tokens)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		program, err := p.ParseProgram()
+		if err != nil {
+			t.Fatalf("ParseProgram() returned error: %s", err)
+		}
 
 		if len(program.Statements) != 1 {
 			t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
@@ -538,8 +556,10 @@ func Test13(t *testing.T) {
 		// println(i)
 		l := lexer.Tokenizer(tt.input)
 		p := parser.New(l)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		program, err := p.ParseProgram()
+		if err != nil {
+			t.Fatalf("ParseProgram() returned error: %s", err)
+		}
 
 		actual := program.String()
 		if actual != tt.expected {
@@ -562,8 +582,10 @@ func Test17(t *testing.T) {
 	for _, tt := range postfixTests {
 		l := lexer.Tokenizer(tt.input)
 		p := parser.New(l)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		program, err := p.ParseProgram()
+		if err != nil {
+			t.Fatalf("ParseProgram() returned error: %s", err)
+		}
 
 		if len(program.Statements) != 1 {
 			t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
@@ -597,8 +619,10 @@ func Test19(t *testing.T) {
     `
 	tokens := lexer.Tokenizer(input)
 	p := parser.New(tokens)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
+	program, err := p.ParseProgram()
+	if err != nil {
+		t.Fatalf("ParseProgram() returned error: %s", err)
+	}
 	if program == nil {
 		t.Fatalf("ParseProgram() returned nil")
 	}
@@ -644,8 +668,10 @@ func Test20(t *testing.T) {
 
 	l := lexer.Tokenizer(input)
 	p := parser.New(l)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
+	program, err := p.ParseProgram()
+	if err != nil {
+		t.Fatalf("ParseProgram() returned error: %s", err)
+	}
 
 	if len(program.Statements) != 1 {
 		t.Fatalf("program.Statements does not contain 1 statements. got=%d", len(program.Statements))
@@ -682,8 +708,10 @@ func Test24(t *testing.T) {
     `
 	l := lexer.Tokenizer(input)
 	p := parser.New(l)
-	program := p.ParseProgram()
-	checkParserErrors(t, p)
+	program, err := p.ParseProgram()
+	if err != nil {
+		t.Fatalf("ParseProgram() returned error: %s", err)
+	}
 
 	if len(program.Statements) != 3 {
 		t.Fatalf("program.Statements does not contain 3 statements. got=%d", len(program.Statements))
@@ -726,8 +754,10 @@ func Test25(t *testing.T) {
 	for _, tt := range assignmentTests {
 		tokens := lexer.Tokenizer(tt.input)
 		p := parser.New(tokens)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		program, err := p.ParseProgram()
+		if err != nil {
+			t.Fatalf("ParseProgram() returned error: %s", err)
+		}
 
 		if len(program.Statements) != 1 {
 			t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
@@ -769,8 +799,10 @@ func Test26(t *testing.T) {
 	for _, tt := range assignTests {
 		tokens := lexer.Tokenizer(tt.input)
 		p := parser.New(tokens)
-		program := p.ParseProgram()
-		checkParserErrors(t, p)
+		program, err := p.ParseProgram()
+		if err != nil {
+			t.Fatalf("ParseProgram() returned error: %s", err)
+		}
 
 		if len(program.Statements) != 1 {
 			t.Fatalf("program has not enough statements. got=%d", len(program.Statements))
@@ -965,17 +997,4 @@ func testInfixExpression(t *testing.T, exp ast.Expression, left interface{}, ope
 		return false
 	}
 	return true
-}
-
-func checkParserErrors(t *testing.T, p *parser.Parser) {
-	errors := p.Errors()
-	if len(errors) == 0 {
-		return
-	}
-
-	t.Errorf("parser has %d errors", len(errors))
-	for _, msg := range errors {
-		t.Errorf("parser error: %q", msg)
-	}
-	t.FailNow()
 }
