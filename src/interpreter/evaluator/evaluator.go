@@ -303,6 +303,9 @@ func applyFunction(fn object.Object, args []object.Object) (object.Object, bool,
 		return NULL, true, errors.New("Number of arguments doesn't match.")
 	}
 	for i, param := range function.Parameters {
+		if args[i].Type() == object.RETURN_VALUE_OBJ {
+			args[i] = args[i].(*object.ReturnValue).Value[0]
+		}
 		if param.ParameterType.IsArray {
 			if args[i].Type() != object.ARRAY_OBJ {
 				return NULL, true, errors.New("Parameter type doesn't match. Expected: array at: " + strconv.Itoa(i+1) + "got: " + string(args[i].Type()))
@@ -366,6 +369,9 @@ func applyFunction(fn object.Object, args []object.Object) (object.Object, bool,
 
 		// check if the return types are correct.
 		for i, ret := range returnValue.Value {
+			if ret.Type() == object.RETURN_VALUE_OBJ {
+				ret = ret.(*object.ReturnValue).Value[0]
+			}
 			if function.ReturnType[i].ReturnType.IsArray {
 				if ret.Type() != object.ARRAY_OBJ {
 					return NULL, true, errors.New("Return type doesn't match. Expected: array at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
@@ -531,7 +537,7 @@ func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object,
 	}
 
 	// The idea is, if we only have a single value on the left, then we can directly assign the 0th element of the return object to the val.
-	if val.Type() == object.RETURN_VALUE_OBJ {
+	for val.Type() == object.RETURN_VALUE_OBJ {
 		val = val.(*object.ReturnValue).Value[0]
 	}
 
@@ -715,7 +721,7 @@ func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Ob
 func evalReturnValue(rs *ast.ReturnStatement, idx int, env *object.Environment) (object.Object, bool, error) {
 	currNode := rs.Value[idx]
 	switch currNode.(type) {
-	case *ast.Identifier, *ast.IntegerValue, *ast.FloatValue, *ast.BooleanValue, *ast.StringValue, *ast.CharValue, *ast.PrefixExpression, *ast.PostfixExpression, *ast.InfixExpression, *ast.ArrayValue, *ast.HashMap:
+	case *ast.Identifier, *ast.IntegerValue, *ast.FloatValue, *ast.BooleanValue, *ast.StringValue, *ast.CharValue, *ast.PrefixExpression, *ast.PostfixExpression, *ast.InfixExpression, *ast.ArrayValue, *ast.HashMap, *ast.CallExpression:
 		return Eval(currNode, env)
 	default:
 		return NULL, true, errors.New("Can Only return expressions and datatypes. got: " + fmt.Sprintf("%T", currNode))

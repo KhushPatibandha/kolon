@@ -1,0 +1,12 @@
+fun: main() {
+    var a: int = he(ret(he(10)));
+    println(a);
+}
+
+fun: ret(a: int): (int) {
+    return: a + 100;
+}
+
+fun: he(a: int): (int) {
+    return: a + 100;
+}
