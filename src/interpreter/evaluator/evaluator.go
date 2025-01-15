@@ -53,14 +53,33 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		if err != nil {
 			return index, hasErr, err
 		}
+		if left.Type() == object.RETURN_VALUE_OBJ {
+			if len(left.(*object.ReturnValue).Value) != 1 {
+				return NULL, true, errors.New("Too many return values. Can only index a call expression with a single return value.")
+			}
+			left = left.(*object.ReturnValue).Value[0]
+		}
+		if index.Type() == object.RETURN_VALUE_OBJ {
+			if len(index.(*object.ReturnValue).Value) != 1 {
+				return NULL, true, errors.New("Too many return values. Can only use call expression as an index with a single return value.")
+			}
+			index = index.(*object.ReturnValue).Value[0]
+		}
 		return evalIndexExpression(left, index)
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	case *ast.PrefixExpression:
+		var right object.Object
 		if postfix, ok := node.Right.(*ast.PostfixExpression); ok {
 			left, hasErr, err := Eval(postfix.Left, env)
 			if err != nil {
 				return left, hasErr, err
+			}
+			if left.Type() == object.RETURN_VALUE_OBJ {
+				if len(left.(*object.ReturnValue).Value) != 1 {
+					return NULL, true, errors.New("Too many return values. Can only use prefix operation on a single return value.")
+				}
+				left = left.(*object.ReturnValue).Value[0]
 			}
 			operator := postfix.Operator
 			res, hasErr, err := evalPostfixExpression(operator, left)
@@ -68,36 +87,20 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 				return res, hasErr, err
 			}
 
-			var resVal interface{}
-
-			switch {
-			case res.Type() == object.INTEGER_OBJ:
-				resVal = res.(*object.Integer).Value
-			case res.Type() == object.FLOAT_OBJ:
-				resVal = res.(*object.Float).Value
-			default:
-				return NULL, true, errors.New("Only Integer and Float datatypes supported with Postfix operation. got: " + string(res.Type()))
+			right = res
+		} else {
+			some, hasErr, err := Eval(node.Right, env)
+			if err != nil {
+				return right, hasErr, err
 			}
-
-			switch val := resVal.(type) {
-			case int64:
-				if operator == "++" {
-					return evalPrefixExpression(node.Operator, &object.Integer{Value: val - 2})
-				} else {
-					return evalPrefixExpression(node.Operator, &object.Integer{Value: val + 2})
-				}
-			case float64:
-				if operator == "++" {
-					return evalPrefixExpression(node.Operator, &object.Float{Value: val - 2})
-				} else {
-					return evalPrefixExpression(node.Operator, &object.Float{Value: val + 2})
-				}
-			}
+			right = some
 		}
 
-		right, hasErr, err := Eval(node.Right, env)
-		if err != nil {
-			return right, hasErr, err
+		if right.Type() == object.RETURN_VALUE_OBJ {
+			if len(right.(*object.ReturnValue).Value) != 1 {
+				return NULL, true, errors.New("Too many return values. Can only use prefix operation on a single return value.")
+			}
+			right = right.(*object.ReturnValue).Value[0]
 		}
 		return evalPrefixExpression(node.Operator, right)
 	case *ast.InfixExpression:
@@ -109,11 +112,33 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		if err != nil {
 			return right, hasErr, err
 		}
+
+		// if left or right is return value object, then convert it into the data type object first.
+		// but if the return value object has multiple values, then return error.
+		if left.Type() == object.RETURN_VALUE_OBJ {
+			if len(left.(*object.ReturnValue).Value) > 1 {
+				return NULL, true, errors.New("Can't use multiple return values in infix operation.")
+			}
+			left = left.(*object.ReturnValue).Value[0]
+		}
+		if right.Type() == object.RETURN_VALUE_OBJ {
+			if len(right.(*object.ReturnValue).Value) > 1 {
+				return NULL, true, errors.New("Can't use multiple return values in infix operation.")
+			}
+			right = right.(*object.ReturnValue).Value[0]
+		}
+
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.PostfixExpression:
 		left, hasErr, err := Eval(node.Left, env)
 		if err != nil {
 			return left, hasErr, err
+		}
+		if left.Type() == object.RETURN_VALUE_OBJ {
+			if len(left.(*object.ReturnValue).Value) != 1 {
+				return NULL, true, errors.New("Too many return values. Can only use postfix operation on a single return value.")
+			}
+			left = left.(*object.ReturnValue).Value[0]
 		}
 
 		resObj, hasErr, err := evalPostfixExpression(node.Operator, left)
@@ -498,26 +523,26 @@ func evalHashMap(node *ast.HashMap, env *object.Environment) (object.Object, boo
 
 func validateMapTypes(key object.Object, value object.Object, keyType string, valueType string) error {
 	if keyType == "int" && key.Type() != object.INTEGER_OBJ {
-		return errors.New("Map declared as int but got key of type: " + string(key.Type()))
+		return errors.New("Map declared with key as int but got key of type: " + string(key.Type()))
 	} else if keyType == "string" && key.Type() != object.STRING_OBJ {
-		return errors.New("Map declared as string but got key of type: " + string(key.Type()))
+		return errors.New("Map declared with key as string but got key of type: " + string(key.Type()))
 	} else if keyType == "float" && key.Type() != object.FLOAT_OBJ {
-		return errors.New("Map declared as float but got key of type: " + string(key.Type()))
+		return errors.New("Map declared with key as float but got key of type: " + string(key.Type()))
 	} else if keyType == "char" && key.Type() != object.CHAR_OBJ {
-		return errors.New("Map declared as char but got key of type: " + string(key.Type()))
+		return errors.New("Map declared with key as char but got key of type: " + string(key.Type()))
 	} else if keyType == "bool" && key.Type() != object.BOOLEAN_OBJ {
-		return errors.New("Map declared as bool but got key of type: " + string(key.Type()))
+		return errors.New("Map declared with key as bool but got key of type: " + string(key.Type()))
 	}
 	if valueType == "int" && value.Type() != object.INTEGER_OBJ {
-		return errors.New("Map declared as int but got value of type: " + string(value.Type()))
+		return errors.New("Map declared with value as int but got value of type: " + string(value.Type()))
 	} else if valueType == "string" && value.Type() != object.STRING_OBJ {
-		return errors.New("Map declared as string but got value of type: " + string(value.Type()))
+		return errors.New("Map declared with value as string but got value of type: " + string(value.Type()))
 	} else if valueType == "float" && value.Type() != object.FLOAT_OBJ {
-		return errors.New("Map declared as float but got value of type: " + string(value.Type()))
+		return errors.New("Map declared with value as float but got value of type: " + string(value.Type()))
 	} else if valueType == "char" && value.Type() != object.CHAR_OBJ {
-		return errors.New("Map declared as char but got value of type: " + string(value.Type()))
+		return errors.New("Map declared with value as char but got value of type: " + string(value.Type()))
 	} else if valueType == "bool" && value.Type() != object.BOOLEAN_OBJ {
-		return errors.New("Map declared as bool but got value of type: " + string(value.Type()))
+		return errors.New("Map declared with value as bool but got value of type: " + string(value.Type()))
 	}
 	return nil
 }
@@ -538,6 +563,9 @@ func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object,
 
 	// The idea is, if we only have a single value on the left, then we can directly assign the 0th element of the return object to the val.
 	for val.Type() == object.RETURN_VALUE_OBJ {
+		if len(val.(*object.ReturnValue).Value) != 1 {
+			return NULL, true, errors.New("Too many return values. Can only assign a single return value to a variable.")
+		}
 		val = val.(*object.ReturnValue).Value[0]
 	}
 
@@ -856,6 +884,13 @@ func assignOpHelper(node *ast.AssignmentExpression, injectObj bool, rightVal obj
 		return NULL, NULL, isVar, hasErr, err
 	}
 
+	if rightSideObj.Type() == object.RETURN_VALUE_OBJ {
+		if len(rightSideObj.(*object.ReturnValue).Value) != 1 {
+			return NULL, NULL, isVar, true, errors.New("Too many return values. Can only assign a single return value to a variable.")
+		}
+		rightSideObj = rightSideObj.(*object.ReturnValue).Value[0]
+	}
+
 	return leftSideVariable.Value, rightSideObj, isVar, false, nil
 }
 
@@ -982,20 +1017,6 @@ func evalIntegerPostfixExpression(operator string, left object.Object) (object.O
 // Infix op
 // -----------------------------------------------------------------------------
 func evalInfixExpression(operator string, left object.Object, right object.Object) (object.Object, bool, error) {
-	// if left or right is return value object, then convert it into the data type object first.
-	// but if the return value object has multiple values, then return error.
-	if left.Type() == object.RETURN_VALUE_OBJ {
-		if len(left.(*object.ReturnValue).Value) > 1 {
-			return NULL, true, errors.New("Can't use multiple return values in infix operation.")
-		}
-		left = left.(*object.ReturnValue).Value[0]
-	}
-	if right.Type() == object.RETURN_VALUE_OBJ {
-		if len(right.(*object.ReturnValue).Value) > 1 {
-			return NULL, true, errors.New("Can't use multiple return values in infix operation.")
-		}
-		right = right.(*object.ReturnValue).Value[0]
-	}
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)

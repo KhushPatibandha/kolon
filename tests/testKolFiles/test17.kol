@@ -1,0 +1,13 @@
+fun: main() {
+    var a: int = name()[idx()];
+    println(a);
+}
+
+fun: name(): (string[int]) {
+    return: {"khush": 1, "hehe": 2};
+}
+
+fun: idx(): (string) {
+    return: "hehe";
+}
+

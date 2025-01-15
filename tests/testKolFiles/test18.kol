@@ -1,0 +1,8 @@
+fun: main() {
+    var a: int = -name();
+    println(a);
+}
+
+fun: name(): (int) {
+    return: 1;
+}

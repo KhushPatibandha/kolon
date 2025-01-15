@@ -318,8 +318,9 @@ func Test34(t *testing.T) {
 	}{
 		{"5++;", &object.Integer{Value: 6}, false},
 		{"5--;", &object.Integer{Value: 4}, false},
-		{"-5--;", &object.Integer{Value: -6}, false},
-		{"-5++;", &object.Integer{Value: -4}, false},
+		{"-5--;", &object.Integer{Value: -4}, false},
+		{"-5++;", &object.Integer{Value: -6}, false},
+		{"(-5)++;", &object.Integer{Value: -4}, false},
 		{"10.1++;", &object.Float{Value: 11.1}, false},
 		{"10.1--;", &object.Float{Value: 9.1}, false},
 		{"-10.1--;", &object.Float{Value: -11.1}, false},
@@ -336,7 +337,7 @@ func Test34(t *testing.T) {
 			if err == nil {
 				t.Errorf("Expected error for %s, but got nil", tt.input)
 			}
-			if err != nil && i != 8 {
+			if err != nil && i != 9 {
 				t.Error(err.Error())
 			}
 			if tt.object != evaluator.NULL && evaluated != tt.object {
