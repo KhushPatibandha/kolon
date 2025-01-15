@@ -609,25 +609,16 @@ func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object,
 
 func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Environment) (object.Object, bool, error) {
 	// Check if the right side is bunch of expressions or a call expression.
-	isCallExpr := false
 	isVar := false
 	varEntry, ok := node.Objects[0].(*ast.VarStatement)
 	var expStmtEntry *ast.CallExpression
 	if ok {
 		isVar = true
-		_, ok := varEntry.Value.(*ast.CallExpression)
-		if ok {
-			isCallExpr = true
-		}
 	} else {
 		isVar = false
-		expStmtEntry, ok = node.Objects[0].(*ast.ExpressionStatement).Expression.(*ast.AssignmentExpression).Right.(*ast.CallExpression)
-		if ok {
-			isCallExpr = true
-		}
 	}
 
-	if !isCallExpr {
+	if !node.SingleCallExp {
 		// loop throught all the elements in the mvas object param and execute them.
 		for _, element := range node.Objects {
 			switch element := element.(type) {

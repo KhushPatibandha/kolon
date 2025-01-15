@@ -248,8 +248,9 @@ func (fb *FunctionBody) String() string {
 // Here a and b are declared and c and d are already declared, but assigned newly
 // -----------------------------------------------------------------------------
 type MultiValueAssignStmt struct {
-	Token   lexer.Token // "=" (Equal Assign) Token
-	Objects []Statement // it will store objects of type VarStatement and ExpressionStatement(Expression in es will always be AssignemntExpression with operator "=")
+	Token         lexer.Token // "=" (Equal Assign) Token
+	Objects       []Statement // it will store objects of type VarStatement and ExpressionStatement(Expression in es will always be AssignemntExpression with operator "=")
+	SingleCallExp bool
 }
 
 func (mvas *MultiValueAssignStmt) statementNode()     {}

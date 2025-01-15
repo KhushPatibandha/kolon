@@ -783,6 +783,7 @@ func (p *Parser) parseMultipleAssignmentStatement(list []ast.Statement) (*ast.Mu
 	// if we have equal number of expressions, assign each expression to the corresponding object
 
 	if len(valueList) == 1 {
+		stmt.SingleCallExp = true
 		if callExp, ok := valueList[0].(*ast.CallExpression); ok {
 			for i, obj := range list {
 				varObj, ok := obj.(*ast.VarStatement)
@@ -809,6 +810,7 @@ func (p *Parser) parseMultipleAssignmentStatement(list []ast.Statement) (*ast.Mu
 		if len(valueList) != len(list) {
 			return nil, errors.New("Number of expressions on the right do not match the number of decelaraions on the left")
 		}
+		stmt.SingleCallExp = false
 
 		for i, obj := range list {
 			varObj, ok := obj.(*ast.VarStatement)
