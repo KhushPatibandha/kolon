@@ -1,7 +1,8 @@
 fun: main() {
     var a: int = callMe([1, 2, 3, 4]);
-    // var a: int = callMe([]);
+    var b: int = callMe([]);
     println(a);
+    println(b);
 }
 
 fun: callMe(a: int[]): (int) {

@@ -167,8 +167,7 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 
 		return resObj, false, nil
 	case *ast.FunctionBody:
-		localEnv := object.NewEnclosedEnvironment(env)
-		return evalStatements(node.Statements, localEnv)
+		return evalStatements(node.Statements, env)
 	case *ast.IfStatement:
 		localEnv := object.NewEnclosedEnvironment(env)
 		return evalIfStatements(node, localEnv)
@@ -254,7 +253,7 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Obje
 }
 
 func evalMainFunc(node *ast.Function, env *object.Environment) (object.Object, bool, error) {
-	resObj, hasErr, err := evalStatements(node.Body.Statements, env)
+	resObj, hasErr, err := Eval(node.Body, env)
 	if err != nil {
 		return resObj, hasErr, err
 	}
@@ -608,7 +607,6 @@ func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object,
 }
 
 func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Environment) (object.Object, bool, error) {
-	// Check if the right side is bunch of expressions or a call expression.
 	isVar := false
 	varEntry, ok := node.Objects[0].(*ast.VarStatement)
 	var expStmtEntry *ast.CallExpression
@@ -616,6 +614,7 @@ func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Enviro
 		isVar = true
 	} else {
 		isVar = false
+		expStmtEntry, _ = node.Objects[0].(*ast.ExpressionStatement).Expression.(*ast.AssignmentExpression).Right.(*ast.CallExpression)
 	}
 
 	if !node.SingleCallExp {
