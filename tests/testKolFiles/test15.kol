@@ -1,0 +1,9 @@
+fun: main() { 
+    var a: int[] = [1, 2, 3, 4];
+    var b: int = callMe(a[a[0]]);
+    println(b);
+}
+
+fun: callMe(a: int): (int) {
+    return: a;
+}

@@ -721,7 +721,7 @@ func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Ob
 func evalReturnValue(rs *ast.ReturnStatement, idx int, env *object.Environment) (object.Object, bool, error) {
 	currNode := rs.Value[idx]
 	switch currNode.(type) {
-	case *ast.Identifier, *ast.IntegerValue, *ast.FloatValue, *ast.BooleanValue, *ast.StringValue, *ast.CharValue, *ast.PrefixExpression, *ast.PostfixExpression, *ast.InfixExpression, *ast.ArrayValue, *ast.HashMap, *ast.CallExpression:
+	case *ast.Identifier, *ast.IntegerValue, *ast.FloatValue, *ast.BooleanValue, *ast.StringValue, *ast.CharValue, *ast.PrefixExpression, *ast.PostfixExpression, *ast.InfixExpression, *ast.ArrayValue, *ast.HashMap, *ast.CallExpression, *ast.IndexExpression:
 		return Eval(currNode, env)
 	default:
 		return NULL, true, errors.New("Can Only return expressions and datatypes. got: " + fmt.Sprintf("%T", currNode))

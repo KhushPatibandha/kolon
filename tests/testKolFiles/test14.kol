@@ -1,0 +1,12 @@
+fun: main() {
+    var a: int = callMe([1, 2, 3, 4]);
+    // var a: int = callMe([]);
+    println(a);
+}
+
+fun: callMe(a: int[]): (int) {
+    if: (len(a) > 0): {
+        return: a[0];
+    }
+    return: 0;
+}
