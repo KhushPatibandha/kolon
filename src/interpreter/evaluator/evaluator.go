@@ -204,8 +204,8 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 			}
 
 			// evaluate main function
-			mainLocalEnv := object.NewEnclosedEnvironment(env)
-			return evalMainFunc(node, mainLocalEnv)
+			funVar, _ := env.Get("main")
+			return evalMainFunc(node, funVar.Value.(*object.Function).Env)
 		}
 		return nil, false, nil
 	case *ast.CallExpression:

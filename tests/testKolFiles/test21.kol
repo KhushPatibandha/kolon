@@ -1,0 +1,12 @@
+fun: main() {
+    var a: int = 10;
+    var b: string = "hehe";
+    var c: bool = callMe();
+}
+
+fun: callMe(): (bool) {
+    println("Expecting an error");
+    println(a);
+    println(b);
+    return: true;
+}
