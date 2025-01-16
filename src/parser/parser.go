@@ -10,7 +10,7 @@ import (
 
 var (
 	FunctionMap = make(map[*ast.Identifier]*ast.Function)
-	InForLoop   = false
+	inForLoop   = false
 )
 
 type Parser struct {
@@ -696,7 +696,7 @@ func (p *Parser) parseReturnStatement() (*ast.ReturnStatement, error) {
 // Parsing Continue Statements
 // -----------------------------------------------------------------------------
 func (p *Parser) parseContinueStatement() (*ast.ContinueStatement, error) {
-	if !InForLoop {
+	if !inForLoop {
 		return nil, errors.New("Continue statement can only be used inside a for loop")
 	}
 	stmt := &ast.ContinueStatement{Token: p.currentToken}
@@ -710,7 +710,7 @@ func (p *Parser) parseContinueStatement() (*ast.ContinueStatement, error) {
 // Parsing Break Statements
 // -----------------------------------------------------------------------------
 func (p *Parser) parseBreakStatement() (*ast.BreakStatement, error) {
-	if !InForLoop {
+	if !inForLoop {
 		return nil, errors.New("Break statement can only be used inside a for loop")
 	}
 	stmt := &ast.BreakStatement{Token: p.currentToken}
@@ -1149,7 +1149,7 @@ func (p *Parser) parseIfStatement() (*ast.IfStatement, error) {
 // Parsing For Loop
 // -----------------------------------------------------------------------------
 func (p *Parser) parseForLoop() (*ast.ForLoopStatement, error) {
-	InForLoop = true
+	inForLoop = true
 	stmt := &ast.ForLoopStatement{Token: p.currentToken}
 
 	if !p.expectedPeekToken(lexer.COLON) {
@@ -1199,7 +1199,7 @@ func (p *Parser) parseForLoop() (*ast.ForLoopStatement, error) {
 	}
 	stmt.Body = stmtBody
 
-	InForLoop = false
+	inForLoop = false
 	return stmt, nil
 }
 

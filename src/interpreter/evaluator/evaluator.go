@@ -17,7 +17,7 @@ var (
 	BREAK     = &object.Break{}
 	TRUE      = &object.Boolean{Value: true}
 	FALSE     = &object.Boolean{Value: false}
-	InForLoop = false
+	inForLoop = false
 )
 
 func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
@@ -204,7 +204,8 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 			}
 
 			// evaluate main function
-			return evalMainFunc(node, env)
+			mainLocalEnv := object.NewEnclosedEnvironment(env)
+			return evalMainFunc(node, mainLocalEnv)
 		}
 		return nil, false, nil
 	case *ast.CallExpression:
@@ -243,9 +244,9 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Obje
 			return result, hasErr, err
 		}
 
-		if InForLoop && result == BREAK {
+		if inForLoop && result == BREAK {
 			return BREAK, false, nil
-		} else if InForLoop && result == CONTINUE {
+		} else if inForLoop && result == CONTINUE {
 			return CONTINUE, false, nil
 		}
 	}
@@ -607,16 +608,6 @@ func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object,
 }
 
 func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Environment) (object.Object, bool, error) {
-	isVar := false
-	varEntry, ok := node.Objects[0].(*ast.VarStatement)
-	var expStmtEntry *ast.CallExpression
-	if ok {
-		isVar = true
-	} else {
-		isVar = false
-		expStmtEntry, _ = node.Objects[0].(*ast.ExpressionStatement).Expression.(*ast.AssignmentExpression).Right.(*ast.CallExpression)
-	}
-
 	if !node.SingleCallExp {
 		// loop throught all the elements in the mvas object param and execute them.
 		for _, element := range node.Objects {
@@ -635,6 +626,16 @@ func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Enviro
 			}
 		}
 	} else {
+		isVar := false
+		varEntry, ok := node.Objects[0].(*ast.VarStatement)
+		var expStmtEntry *ast.CallExpression
+		if ok {
+			isVar = true
+		} else {
+			isVar = false
+			expStmtEntry, _ = node.Objects[0].(*ast.ExpressionStatement).Expression.(*ast.AssignmentExpression).Right.(*ast.CallExpression)
+		}
+
 		var returnObj object.Object
 		if isVar {
 			newObj, hasErr, err := Eval(varEntry.Value, env)
@@ -675,7 +676,7 @@ func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Enviro
 }
 
 func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Object, bool, error) {
-	InForLoop = true
+	inForLoop = true
 
 	// Evaluate the VAR stmt in the for loop(.)
 	varStmtObj, hasErr, err := Eval(node.Left, env)
@@ -732,7 +733,7 @@ func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Ob
 		}
 	}
 
-	InForLoop = false
+	inForLoop = false
 	return nil, false, nil
 }
 
