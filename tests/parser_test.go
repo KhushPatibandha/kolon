@@ -19,7 +19,7 @@ func Test4(t *testing.T) {
     `
 
 	tokens := lexer.Tokenizer(input)
-	parser := parser.New(tokens)
+	parser := parser.New(tokens, true)
 
 	program, err := parser.ParseProgram()
 	if err != nil {
@@ -60,7 +60,7 @@ func Test5(t *testing.T) {
     `
 
 	tokens := lexer.Tokenizer(input)
-	parser := parser.New(tokens)
+	parser := parser.New(tokens, true)
 
 	program, err := parser.ParseProgram()
 	if err != nil {
@@ -94,7 +94,7 @@ func Test6(t *testing.T) {
     `
 
 	tokens := lexer.Tokenizer(input)
-	parser := parser.New(tokens)
+	parser := parser.New(tokens, true)
 
 	program, err := parser.ParseProgram()
 	if err != nil {
@@ -155,7 +155,7 @@ func Test7(t *testing.T) {
     `
 
 	tokens := lexer.Tokenizer(input)
-	parser := parser.New(tokens)
+	parser := parser.New(tokens, true)
 	program, err := parser.ParseProgram()
 	if err != nil {
 		t.Fatalf("ParseProgram() returned error: %s", err)
@@ -236,7 +236,7 @@ func Test8(t *testing.T) {
     `
 
 	tokens := lexer.Tokenizer(input)
-	p := parser.New(tokens)
+	p := parser.New(tokens, true)
 	program, err := p.ParseProgram()
 	if err != nil {
 		t.Fatalf("ParseProgram() returned error: %s", err)
@@ -272,7 +272,7 @@ func Test9(t *testing.T) {
 	input := `foobar;`
 
 	tokens := lexer.Tokenizer(input)
-	p := parser.New(tokens)
+	p := parser.New(tokens, true)
 	program, err := p.ParseProgram()
 	if err != nil {
 		t.Fatalf("ParseProgram() returned error: %s", err)
@@ -303,7 +303,7 @@ func Test10(t *testing.T) {
 	input := "5;"
 
 	tokens := lexer.Tokenizer(input)
-	p := parser.New(tokens)
+	p := parser.New(tokens, true)
 	program, err := p.ParseProgram()
 	if err != nil {
 		t.Fatalf("ParseProgram() returned error: %s", err)
@@ -343,7 +343,7 @@ func Test11(t *testing.T) {
 
 	for _, tt := range prefixTests {
 		tokens := lexer.Tokenizer(tt.input)
-		p := parser.New(tokens)
+		p := parser.New(tokens, true)
 		program, err := p.ParseProgram()
 		if err != nil {
 			t.Fatalf("ParseProgram() returned error: %s", err)
@@ -400,7 +400,7 @@ func Test12(t *testing.T) {
 
 	for _, tt := range infixTests {
 		tokens := lexer.Tokenizer(tt.input)
-		p := parser.New(tokens)
+		p := parser.New(tokens, true)
 		program, err := p.ParseProgram()
 		if err != nil {
 			t.Fatalf("ParseProgram() returned error: %s", err)
@@ -555,7 +555,7 @@ func Test13(t *testing.T) {
 		// println(tt.input)
 		// println(i)
 		l := lexer.Tokenizer(tt.input)
-		p := parser.New(l)
+		p := parser.New(l, true)
 		program, err := p.ParseProgram()
 		if err != nil {
 			t.Fatalf("ParseProgram() returned error: %s", err)
@@ -581,7 +581,7 @@ func Test17(t *testing.T) {
 
 	for _, tt := range postfixTests {
 		l := lexer.Tokenizer(tt.input)
-		p := parser.New(l)
+		p := parser.New(l, true)
 		program, err := p.ParseProgram()
 		if err != nil {
 			t.Fatalf("ParseProgram() returned error: %s", err)
@@ -618,7 +618,7 @@ func Test19(t *testing.T) {
     var b: bool = false;
     `
 	tokens := lexer.Tokenizer(input)
-	p := parser.New(tokens)
+	p := parser.New(tokens, true)
 	program, err := p.ParseProgram()
 	if err != nil {
 		t.Fatalf("ParseProgram() returned error: %s", err)
@@ -667,7 +667,7 @@ func Test20(t *testing.T) {
 	input := "add(1, 2*3, 4 + 5);"
 
 	l := lexer.Tokenizer(input)
-	p := parser.New(l)
+	p := parser.New(l, true)
 	program, err := p.ParseProgram()
 	if err != nil {
 		t.Fatalf("ParseProgram() returned error: %s", err)
@@ -707,7 +707,7 @@ func Test24(t *testing.T) {
     a--;
     `
 	l := lexer.Tokenizer(input)
-	p := parser.New(l)
+	p := parser.New(l, true)
 	program, err := p.ParseProgram()
 	if err != nil {
 		t.Fatalf("ParseProgram() returned error: %s", err)
@@ -753,7 +753,7 @@ func Test25(t *testing.T) {
 
 	for _, tt := range assignmentTests {
 		tokens := lexer.Tokenizer(tt.input)
-		p := parser.New(tokens)
+		p := parser.New(tokens, true)
 		program, err := p.ParseProgram()
 		if err != nil {
 			t.Fatalf("ParseProgram() returned error: %s", err)
@@ -798,7 +798,7 @@ func Test26(t *testing.T) {
 
 	for _, tt := range assignTests {
 		tokens := lexer.Tokenizer(tt.input)
-		p := parser.New(tokens)
+		p := parser.New(tokens, true)
 		program, err := p.ParseProgram()
 		if err != nil {
 			t.Fatalf("ParseProgram() returned error: %s", err)

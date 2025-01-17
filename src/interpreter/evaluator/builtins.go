@@ -2,6 +2,7 @@ package evaluator
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/KhushPatibandha/Kolon/src/interpreter/object"
@@ -66,28 +67,28 @@ var builtins = map[string]*object.Builtin{
 			switch arg := args[0].(type) {
 			case *object.String:
 				newStr := arg.Value[1 : len(arg.Value)-1]
-				print(newStr)
+				fmt.Print(newStr)
 				return NULL, false, nil
 			case *object.Char:
 				newStr := arg.Value[1 : len(arg.Value)-1]
-				print(newStr)
+				fmt.Print(newStr)
 				return NULL, false, nil
 			case *object.Integer:
 				newStr := strconv.FormatInt(arg.Value, 10)
-				print(newStr)
+				fmt.Print(newStr)
 				return NULL, false, nil
 			case *object.Float:
 				newStr := strconv.FormatFloat(arg.Value, 'f', -1, 64)
-				print(newStr)
+				fmt.Print(newStr)
 				return NULL, false, nil
 			case *object.Boolean:
-				print(arg.Value)
+				fmt.Print(arg.Value)
 				return NULL, false, nil
 			case *object.Array:
-				print(arg.Inspect())
+				fmt.Print(arg.Inspect())
 				return NULL, false, nil
 			case *object.Hash:
-				print(arg.Inspect())
+				fmt.Print(arg.Inspect())
 				return NULL, false, nil
 			case *object.Null:
 				return NULL, false, nil
@@ -104,28 +105,28 @@ var builtins = map[string]*object.Builtin{
 			switch arg := args[0].(type) {
 			case *object.String:
 				newStr := arg.Value[1 : len(arg.Value)-1]
-				println(newStr)
+				fmt.Println(newStr)
 				return NULL, false, nil
 			case *object.Char:
 				newStr := arg.Value[1 : len(arg.Value)-1]
-				println(newStr)
+				fmt.Println(newStr)
 				return NULL, false, nil
 			case *object.Integer:
 				newStr := strconv.FormatInt(arg.Value, 10)
-				println(newStr)
+				fmt.Println(newStr)
 				return NULL, false, nil
 			case *object.Float:
 				newStr := strconv.FormatFloat(arg.Value, 'f', -1, 64)
-				println(newStr)
+				fmt.Println(newStr)
 				return NULL, false, nil
 			case *object.Boolean:
-				println(arg.Value)
+				fmt.Println(arg.Value)
 				return NULL, false, nil
 			case *object.Array:
-				println(arg.Inspect())
+				fmt.Println(arg.Inspect())
 				return NULL, false, nil
 			case *object.Hash:
-				println(arg.Inspect())
+				fmt.Println(arg.Inspect())
 				return NULL, false, nil
 			case *object.Null:
 				return NULL, false, nil

@@ -11,6 +11,7 @@ import (
 var (
 	FunctionMap = make(map[*ast.Identifier]*ast.Function)
 	inForLoop   = false
+	inFunction  = false
 )
 
 type Parser struct {
@@ -19,6 +20,7 @@ type Parser struct {
 	previousToken lexer.Token
 	currentToken  lexer.Token
 	peekToken     lexer.Token
+	inTesting     bool
 
 	prefixParseFns  map[lexer.TokenKind]prefixParseFn
 	infixParseFns   map[lexer.TokenKind]infixParseFn
@@ -93,8 +95,8 @@ var precedences = map[lexer.TokenKind]int{
 	lexer.OPEN_SQUARE_BRACKET: INDEX,
 }
 
-func New(tokens []lexer.Token) *Parser {
-	p := &Parser{peekToken: tokens[0], tokens: tokens, tokenPointer: 1}
+func New(tokens []lexer.Token, inTesting bool) *Parser {
+	p := &Parser{inTesting: inTesting, peekToken: tokens[0], tokens: tokens, tokenPointer: 1}
 	p.nextToken()
 
 	p.prefixParseFns = make(map[lexer.TokenKind]prefixParseFn)
@@ -426,6 +428,7 @@ func (p *Parser) parseCharValue() (ast.Expression, error) {
 // Parsing Functions
 // -----------------------------------------------------------------------------
 func (p *Parser) parseFunctionStatement() (*ast.Function, error) {
+	inFunction = true
 	stmt := &ast.Function{Token: p.currentToken}
 
 	if !p.expectedPeekToken(lexer.COLON) {
@@ -463,6 +466,7 @@ func (p *Parser) parseFunctionStatement() (*ast.Function, error) {
 	stmt.Body = funBody
 
 	FunctionMap[stmt.Name] = stmt
+	inFunction = false
 
 	return stmt, nil
 }
@@ -635,6 +639,10 @@ func (p *Parser) parseFunctionParameters() ([]*ast.FunctionParameters, error) {
 // Parsing Return Statements
 // -----------------------------------------------------------------------------
 func (p *Parser) parseReturnStatement() (*ast.ReturnStatement, error) {
+	if !inFunction && !p.inTesting {
+		return nil, errors.New("Return statement can only be used inside a function")
+	}
+
 	stmt := &ast.ReturnStatement{Token: p.currentToken}
 
 	if p.peekTokenIsOk(lexer.SEMI_COLON) {

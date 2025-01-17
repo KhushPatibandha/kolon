@@ -254,6 +254,12 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Obje
 }
 
 func evalMainFunc(node *ast.Function, env *object.Environment) (object.Object, bool, error) {
+	if len(node.Parameters) != 0 {
+		return NULL, true, errors.New("Main function can't have any parameters.")
+	}
+	if node.ReturnType != nil {
+		return NULL, true, errors.New("Main function can't have any return types.")
+	}
 	resObj, hasErr, err := Eval(node.Body, env)
 	if err != nil {
 		return resObj, hasErr, err
@@ -862,6 +868,8 @@ func assignOpHelper(node *ast.AssignmentExpression, injectObj bool, rightVal obj
 	var isVar bool
 	if leftSideVariable.Type == object.VAR {
 		isVar = true
+	} else if leftSideVariable.Type == object.FUNCTION {
+		return NULL, NULL, false, true, errors.New("Can't re-assign function.")
 	}
 
 	// If we are injecting than no need to evaluate the right side

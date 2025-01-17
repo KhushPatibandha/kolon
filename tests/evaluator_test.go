@@ -698,7 +698,7 @@ func Test39(t *testing.T) {
 
 func testEval(input string) (object.Object, bool, error) {
 	l := lexer.Tokenizer(input)
-	p := parser.New(l)
+	p := parser.New(l, true)
 	program, err := p.ParseProgram()
 	if err != nil {
 		return nil, true, err

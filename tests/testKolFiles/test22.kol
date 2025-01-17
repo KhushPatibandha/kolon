@@ -1,0 +1,8 @@
+fun: main() {
+    // fix this
+    callMe();
+}
+
+fun: callMe(): (int, bool) {
+    println(1);
+}
