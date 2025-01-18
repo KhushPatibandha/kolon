@@ -31,10 +31,16 @@ func main() {
 	// 	token.Help()
 	// }
 
-	parser := parser.New(tokens, false)
-	program, err := parser.ParseProgram()
+	p := parser.New(tokens, false)
+	program, err := p.ParseProgram()
 	if err != nil {
 		fmt.Println("Error parsing program:", err)
+		return
+	}
+	typeCheckerEnv := parser.NewEnvironment()
+	err = parser.TypeCheckProgram(program, typeCheckerEnv)
+	if err != nil {
+		fmt.Println("Error type checking program:", err)
 		return
 	}
 	env := object.NewEnvironment()

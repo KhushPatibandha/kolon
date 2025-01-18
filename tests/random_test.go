@@ -32,7 +32,7 @@ func TestRandom(t *testing.T) {
 	run(t, "./testKolFiles/test18.kol", "-1")
 	run(t, "./testKolFiles/test19.kol", "0\n-2")
 	run(t, "./testKolFiles/test20.kol", "110")
-	run(t, "./testKolFiles/test21.kol", "Expecting an error\nError evaluating program: Identifier not found: a")
+	run(t, "./testKolFiles/test21.kol", "Error type checking program: Variable a is undefined/not found")
 }
 
 func run(t *testing.T, filePath string, expectedOutput string) {

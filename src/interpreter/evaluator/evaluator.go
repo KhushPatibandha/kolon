@@ -200,7 +200,7 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 			// add all the functions in the code from function map to the environment.
 			for key, value := range parser.FunctionMap {
 				newLocalEnv := object.NewEnclosedEnvironment(env)
-				env.Set(key.Value, &object.Function{Name: value.Name, Parameters: value.Parameters, ReturnType: value.ReturnType, Body: value.Body, Env: newLocalEnv}, object.FUNCTION)
+				env.Set(key, &object.Function{Name: value.Name, Parameters: value.Parameters, ReturnType: value.ReturnType, Body: value.Body, Env: newLocalEnv}, object.FUNCTION)
 			}
 
 			// evaluate main function

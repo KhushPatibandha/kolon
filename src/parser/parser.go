@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	FunctionMap = make(map[*ast.Identifier]*ast.Function)
+	FunctionMap = make(map[string]*ast.Function)
 	inForLoop   = false
 	inFunction  = false
 )
@@ -440,6 +440,10 @@ func (p *Parser) parseFunctionStatement() (*ast.Function, error) {
 	}
 	stmt.Name = &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Value}
 
+	if _, ok := FunctionMap[stmt.Name.Value]; ok && !p.inTesting {
+		return nil, errors.New("Function with the same name already exists")
+	}
+
 	parameters, err := p.parseFunctionParameters()
 	if err != nil {
 		return nil, err
@@ -465,7 +469,7 @@ func (p *Parser) parseFunctionStatement() (*ast.Function, error) {
 	}
 	stmt.Body = funBody
 
-	FunctionMap[stmt.Name] = stmt
+	FunctionMap[stmt.Name.Value] = stmt
 	inFunction = false
 
 	return stmt, nil
@@ -1002,7 +1006,7 @@ func (p *Parser) parseVarStatement() (ast.Statement, error) {
 	}
 
 	if stmt.Type.IsArray && !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
-		return nil, errors.New("Array type must be initialized with values, for empty array use `[]")
+		return nil, errors.New("Array type must be initialized with values, for empty array use `[]`")
 	} else if stmt.Type.IsHash && !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
 		return nil, errors.New("Hashmap type must be initialized with values, for empty hashmap use `{}`")
 	} else if stmt.Token.Kind == lexer.CONST && !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {

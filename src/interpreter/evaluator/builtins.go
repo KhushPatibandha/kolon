@@ -272,7 +272,7 @@ var builtins = map[string]*object.Builtin{
 				}
 				if len(args) == 1 {
 					if len(arg.Elements) == 0 {
-						return NULL, false, nil
+						return NULL, true, errors.New("Array is empty, can't pop any elements")
 					}
 					popped := arg.Elements[len(arg.Elements)-1]
 					arg.Elements = arg.Elements[:len(arg.Elements)-1]
