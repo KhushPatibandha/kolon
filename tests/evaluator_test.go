@@ -501,7 +501,6 @@ func Test37(t *testing.T) {
 		{"var a: string = \"Hello \"; var b: string = \"World!\"; var c: string = a + b; return: c;", []object.Object{&object.String{Value: "\"Hello World!\""}}, false},
 		{"var a: string = \"Hello \"; var b: string = \"World!\"; a += b; return: a;", []object.Object{&object.String{Value: "\"Hello World!\""}}, false},
 		{"var a: char = 'c'; var b: char = 'c'; var c: string = a + b; return: c;", []object.Object{&object.String{Value: "\"cc\""}}, false},
-		{"var a: char = 'c'; var b: char = 'c'; a += b; return: a;", []object.Object{&object.String{Value: "\"cc\""}}, false},
 		{"const a: int = 1; return: a;", []object.Object{&object.Integer{Value: 1}}, false},
 		{"const a: float = 1.1; return: a;", []object.Object{&object.Float{Value: 1.1}}, false},
 		{"const a: bool = true; return: a;", []object.Object{evaluator.TRUE}, false},
@@ -637,6 +636,7 @@ func Test38(t *testing.T) {
 		{"var a: int = len(); return: a;", &object.Integer{Value: 0}, true},
 		{"var a: int[] = {1, \"hello\", 3, 4}; return: a;", &object.Array{Elements: []object.Object{&object.Integer{Value: 1}, &object.String{Value: "\"hello\""}, &object.Integer{Value: 3}, &object.Integer{Value: 4}}}, true},
 		{"var a: int[]; return: a;", &object.Array{Elements: []object.Object{}}, true},
+		{"var a: char = 'c'; var b: char = 'c'; a += b; return: a;", &object.String{Value: "\"cc\""}, true},
 	}
 
 	for _, tt := range varStmtErrTest {
@@ -702,6 +702,11 @@ func testEval(input string) (object.Object, bool, error) {
 	program, err := p.ParseProgram()
 	if err != nil {
 		return nil, true, err
+	}
+	typeCheckEnv := parser.NewEnvironment()
+	err = parser.TypeCheckProgram(program, typeCheckEnv, true)
+	if err != nil {
+		return evaluator.NULL, true, err
 	}
 	env := object.NewEnvironment()
 

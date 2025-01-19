@@ -26,6 +26,7 @@ var (
 		"values":      true,
 		"containsKey": true,
 	}
+	inTesting bool
 )
 
 type expType struct {
@@ -33,7 +34,9 @@ type expType struct {
 	CallExp bool
 }
 
-func TypeCheckProgram(program *ast.Program, env *Environment) error {
+func TypeCheckProgram(program *ast.Program, env *Environment, inTest bool) error {
+	inTesting = inTest
+
 	// before starting add all the functions from FunctionMap to the environment.
 	// because we might be calling functions that are written afterwards and because
 	// of that there will not be in the global environment
@@ -416,8 +419,14 @@ func checkMainFunStmt(node *ast.Function, env *Environment) error {
 }
 
 func checkReturnStmt(node *ast.ReturnStatement, env *Environment) error {
-	// first check if the function is main or not
-	// if function is main, than the return statement must be nil
+	if inTesting {
+		err := returnTypeCheckerHelper(node, env)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
 	if currFunction.Name.Value == "main" {
 		if node.Value != nil {
 			return errors.New("Can't return anything in main function")
@@ -436,23 +445,9 @@ func checkReturnStmt(node *ast.ReturnStatement, env *Environment) error {
 		return errors.New("Number of return values does not match the number of return types")
 	}
 
-	// traverse all the values, get the type and check with the same indexed value in the current function
-	for i, entry := range node.Value {
-		expType, err := getExpType(entry, env)
-		if err != nil {
-			return err
-		}
-		if expType.CallExp {
-			callFun := FunctionMap[entry.(*ast.CallExpression).Name.(*ast.Identifier).Value]
-			if len(callFun.ReturnType) != 1 {
-				return errors.New("Call expression must return only 1 value for return statement")
-			}
-			expType.Type = *callFun.ReturnType[0].ReturnType
-		}
-		err = varTypeCheckerHelper(*currFunction.ReturnType[i].ReturnType, expType.Type)
-		if err != nil {
-			return err
-		}
+	err := returnTypeCheckerHelper(node, env)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -460,7 +455,6 @@ func checkReturnStmt(node *ast.ReturnStatement, env *Environment) error {
 // -----------------------------------------------------------------------------
 // Expression checking
 // -----------------------------------------------------------------------------
-
 func checkArrayExp(node *ast.ArrayValue, env *Environment) (expType, error) {
 	if len(node.Values) == 0 {
 		return expType{Type: ast.Type{IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
@@ -1116,5 +1110,34 @@ func varTypeCheckerHelper(definedType ast.Type, expType ast.Type) error {
 		return errors.New("Defined type is " + definedType.Value + " but got: " + expType.Value)
 	}
 
+	return nil
+}
+
+func returnTypeCheckerHelper(node *ast.ReturnStatement, env *Environment) error {
+	for i, entry := range node.Value {
+		switch entry.(type) {
+		case *ast.Identifier, *ast.IntegerValue, *ast.FloatValue, *ast.StringValue, *ast.CharValue, *ast.BooleanValue, *ast.PrefixExpression, *ast.PostfixExpression, *ast.InfixExpression, *ast.ArrayValue, *ast.HashMap, *ast.CallExpression, *ast.IndexExpression:
+			expType, err := getExpType(entry, env)
+			if err != nil {
+				return err
+			}
+
+			if !inTesting {
+				if expType.CallExp {
+					callFun := FunctionMap[entry.(*ast.CallExpression).Name.(*ast.Identifier).Value]
+					if len(callFun.ReturnType) != 1 {
+						return errors.New("Call expression must return only 1 value for return statement")
+					}
+					expType.Type = *callFun.ReturnType[0].ReturnType
+				}
+				err = varTypeCheckerHelper(*currFunction.ReturnType[i].ReturnType, expType.Type)
+				if err != nil {
+					return err
+				}
+			}
+		default:
+			return errors.New("Can Only return expressions and datatypes. got: " + fmt.Sprintf("%T", entry))
+		}
+	}
 	return nil
 }

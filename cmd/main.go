@@ -38,7 +38,7 @@ func main() {
 		return
 	}
 	typeCheckerEnv := parser.NewEnvironment()
-	err = parser.TypeCheckProgram(program, typeCheckerEnv)
+	err = parser.TypeCheckProgram(program, typeCheckerEnv, false)
 	if err != nil {
 		fmt.Println("Error type checking program:", err)
 		return

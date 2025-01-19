@@ -54,52 +54,20 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 			return index, hasErr, err
 		}
 		if left.Type() == object.RETURN_VALUE_OBJ {
-			if len(left.(*object.ReturnValue).Value) != 1 {
-				return NULL, true, errors.New("Too many return values. Can only index a call expression with a single return value.")
-			}
 			left = left.(*object.ReturnValue).Value[0]
 		}
 		if index.Type() == object.RETURN_VALUE_OBJ {
-			if len(index.(*object.ReturnValue).Value) != 1 {
-				return NULL, true, errors.New("Too many return values. Can only use call expression as an index with a single return value.")
-			}
 			index = index.(*object.ReturnValue).Value[0]
 		}
 		return evalIndexExpression(left, index)
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	case *ast.PrefixExpression:
-		var right object.Object
-		if postfix, ok := node.Right.(*ast.PostfixExpression); ok {
-			left, hasErr, err := Eval(postfix.Left, env)
-			if err != nil {
-				return left, hasErr, err
-			}
-			if left.Type() == object.RETURN_VALUE_OBJ {
-				if len(left.(*object.ReturnValue).Value) != 1 {
-					return NULL, true, errors.New("Too many return values. Can only use prefix operation on a single return value.")
-				}
-				left = left.(*object.ReturnValue).Value[0]
-			}
-			operator := postfix.Operator
-			res, hasErr, err := evalPostfixExpression(operator, left)
-			if err != nil {
-				return res, hasErr, err
-			}
-
-			right = res
-		} else {
-			some, hasErr, err := Eval(node.Right, env)
-			if err != nil {
-				return right, hasErr, err
-			}
-			right = some
+		right, hasErr, err := Eval(node.Right, env)
+		if err != nil {
+			return right, hasErr, err
 		}
-
 		if right.Type() == object.RETURN_VALUE_OBJ {
-			if len(right.(*object.ReturnValue).Value) != 1 {
-				return NULL, true, errors.New("Too many return values. Can only use prefix operation on a single return value.")
-			}
 			right = right.(*object.ReturnValue).Value[0]
 		}
 		return evalPrefixExpression(node.Operator, right)
@@ -112,22 +80,12 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		if err != nil {
 			return right, hasErr, err
 		}
-
-		// if left or right is return value object, then convert it into the data type object first.
-		// but if the return value object has multiple values, then return error.
 		if left.Type() == object.RETURN_VALUE_OBJ {
-			if len(left.(*object.ReturnValue).Value) > 1 {
-				return NULL, true, errors.New("Can't use multiple return values in infix operation.")
-			}
 			left = left.(*object.ReturnValue).Value[0]
 		}
 		if right.Type() == object.RETURN_VALUE_OBJ {
-			if len(right.(*object.ReturnValue).Value) > 1 {
-				return NULL, true, errors.New("Can't use multiple return values in infix operation.")
-			}
 			right = right.(*object.ReturnValue).Value[0]
 		}
-
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.PostfixExpression:
 		left, hasErr, err := Eval(node.Left, env)
@@ -135,9 +93,6 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 			return left, hasErr, err
 		}
 		if left.Type() == object.RETURN_VALUE_OBJ {
-			if len(left.(*object.ReturnValue).Value) != 1 {
-				return NULL, true, errors.New("Too many return values. Can only use postfix operation on a single return value.")
-			}
 			left = left.(*object.ReturnValue).Value[0]
 		}
 
@@ -183,6 +138,9 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 			if err != nil {
 				return NULL, hasErr, err
 			}
+			if rsObj.Type() == object.RETURN_VALUE_OBJ {
+				rsObj = rsObj.(*object.ReturnValue).Value[0]
+			}
 			val = append(val, rsObj)
 		}
 
@@ -203,7 +161,6 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 				env.Set(key, &object.Function{Name: value.Name, Parameters: value.Parameters, ReturnType: value.ReturnType, Body: value.Body, Env: newLocalEnv}, object.FUNCTION)
 			}
 
-			// evaluate main function
 			funVar, _ := env.Get("main")
 			return evalMainFunc(node, funVar.Value.(*object.Function).Env)
 		}
@@ -254,21 +211,9 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Obje
 }
 
 func evalMainFunc(node *ast.Function, env *object.Environment) (object.Object, bool, error) {
-	if len(node.Parameters) != 0 {
-		return NULL, true, errors.New("Main function can't have any parameters.")
-	}
-	if node.ReturnType != nil {
-		return NULL, true, errors.New("Main function can't have any return types.")
-	}
 	resObj, hasErr, err := Eval(node.Body, env)
 	if err != nil {
 		return resObj, hasErr, err
-	}
-	if resObj != nil && resObj.Type() == object.RETURN_VALUE_OBJ {
-		// It must be nil, because you cant return anything in main function.
-		if resObj.(*object.ReturnValue).Value != nil {
-			return NULL, true, errors.New("Can't return anything in main function.")
-		}
 	}
 	return nil, false, nil
 }
@@ -276,10 +221,9 @@ func evalMainFunc(node *ast.Function, env *object.Environment) (object.Object, b
 func evalIndexExpression(left object.Object, index object.Object) (object.Object, bool, error) {
 	if left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ {
 		return evalArrayIndexExpression(left, index)
-	} else if left.Type() == object.HASH_OBJ {
+	} else {
 		return evalHashIndexExpression(left, index)
 	}
-	return NULL, true, errors.New("Index operator not supported: " + string(left.Type()) + "[" + string(index.Type()) + "]")
 }
 
 func evalArrayIndexExpression(array object.Object, index object.Object) (object.Object, bool, error) {
@@ -313,6 +257,9 @@ func evalCallArgs(args []ast.Expression, env *object.Environment) ([]object.Obje
 		if err != nil {
 			return nil, hasErr, err
 		}
+		if evaluated.Type() == object.RETURN_VALUE_OBJ {
+			evaluated = evaluated.(*object.ReturnValue).Value[0]
+		}
 		res = append(res, evaluated)
 	}
 	return res, false, nil
@@ -329,53 +276,6 @@ func applyFunction(fn object.Object, args []object.Object) (object.Object, bool,
 		}
 	}
 
-	// check if the type of the args and the type of the params are same or not.
-	if len(function.Parameters) != len(args) {
-		return NULL, true, errors.New("Number of arguments doesn't match.")
-	}
-	for i, param := range function.Parameters {
-		if args[i].Type() == object.RETURN_VALUE_OBJ {
-			args[i] = args[i].(*object.ReturnValue).Value[0]
-		}
-		if param.ParameterType.IsArray {
-			if args[i].Type() != object.ARRAY_OBJ {
-				return NULL, true, errors.New("Parameter type doesn't match. Expected: array at: " + strconv.Itoa(i+1) + "got: " + string(args[i].Type()))
-			}
-			arrayType := param.ParameterType.Value
-
-			// validate if the array has the object of type return type or not
-			_, err := validateArrayTypes(*args[i].(*object.Array), arrayType)
-			if err != nil {
-				return NULL, true, err
-			}
-			args[i].(*object.Array).TypeOf = arrayType
-		} else if param.ParameterType.IsHash {
-			if args[i].Type() != object.HASH_OBJ {
-				return NULL, true, errors.New("Parameter type doesn't match. Expected: hash at: " + strconv.Itoa(i+1) + "got: " + string(args[i].Type()))
-			}
-			keyType := param.ParameterType.SubTypes[0].Value
-			valueType := param.ParameterType.SubTypes[1].Value
-			for _, pair := range args[i].(*object.Hash).Pairs {
-				err := validateMapTypes(pair.Key, pair.Value, keyType, valueType)
-				if err != nil {
-					return NULL, true, err
-				}
-			}
-			args[i].(*object.Hash).KeyType = keyType
-			args[i].(*object.Hash).ValueType = valueType
-		} else if param.ParameterType.Value == "int" && args[i].Type() != object.INTEGER_OBJ {
-			return NULL, true, errors.New("Parameter type doesn't match. Expected: int at: " + strconv.Itoa(i+1) + "got: " + string(args[i].Type()))
-		} else if param.ParameterType.Value == "string" && args[i].Type() != object.STRING_OBJ {
-			return NULL, true, errors.New("Parameter type doesn't match. Expected: string at: " + strconv.Itoa(i+1) + "got: " + string(args[i].Type()))
-		} else if param.ParameterType.Value == "float" && args[i].Type() != object.FLOAT_OBJ {
-			return NULL, true, errors.New("Parameter type doesn't match. Expected: float at: " + strconv.Itoa(i+1) + "got: " + string(args[i].Type()))
-		} else if param.ParameterType.Value == "char" && args[i].Type() != object.CHAR_OBJ {
-			return NULL, true, errors.New("Parameter type doesn't match. Expected: char at: " + strconv.Itoa(i+1) + "got: " + string(args[i].Type()))
-		} else if param.ParameterType.Value == "bool" && args[i].Type() != object.BOOLEAN_OBJ {
-			return NULL, true, errors.New("Parameter type doesn't match. Expected: bool at: " + strconv.Itoa(i+1) + "got: " + string(args[i].Type()))
-		}
-	}
-
 	for i, param := range function.Parameters {
 		function.Env.Set(param.ParameterName.Value, args[i], object.VAR)
 	}
@@ -385,63 +285,9 @@ func applyFunction(fn object.Object, args []object.Object) (object.Object, bool,
 	}
 
 	if returnValue, ok := evaluated.(*object.ReturnValue); ok {
-
-		// first check if the return type is nil or not. because you can still use return stmt without any return types defined in the function.
-		// just like how we can use return stmt in main function.
-		// in this case the return type param in function will be nil and the returnObj.Value will also be nil
 		if returnValue.Value == nil && function.ReturnType == nil {
 			return nil, false, nil
 		}
-
-		// check if you are returning the correct number of values.
-		if len(returnValue.Value) != len(function.ReturnType) {
-			return NULL, true, errors.New("Number of return values doesn't match.")
-		}
-
-		// check if the return types are correct.
-		for i, ret := range returnValue.Value {
-			if ret.Type() == object.RETURN_VALUE_OBJ {
-				ret = ret.(*object.ReturnValue).Value[0]
-			}
-			if function.ReturnType[i].ReturnType.IsArray {
-				if ret.Type() != object.ARRAY_OBJ {
-					return NULL, true, errors.New("Return type doesn't match. Expected: array at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
-				}
-				arrayReturnType := function.ReturnType[i].ReturnType.Value
-
-				// validate if the array has the object of type return type or not
-				_, err := validateArrayTypes(*ret.(*object.Array), arrayReturnType)
-				if err != nil {
-					return NULL, true, err
-				}
-				ret.(*object.Array).TypeOf = arrayReturnType
-			} else if function.ReturnType[i].ReturnType.IsHash {
-				if ret.Type() != object.HASH_OBJ {
-					return NULL, true, errors.New("Return type doesn't match. Expected: hash at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
-				}
-				keyType := function.ReturnType[i].ReturnType.SubTypes[0].Value
-				valueType := function.ReturnType[i].ReturnType.SubTypes[1].Value
-				for _, pair := range ret.(*object.Hash).Pairs {
-					err := validateMapTypes(pair.Key, pair.Value, keyType, valueType)
-					if err != nil {
-						return NULL, true, err
-					}
-				}
-				ret.(*object.Hash).KeyType = keyType
-				ret.(*object.Hash).ValueType = valueType
-			} else if function.ReturnType[i].ReturnType.Value == "int" && ret.Type() != object.INTEGER_OBJ {
-				return NULL, true, errors.New("Return type doesn't match. Expected: int at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
-			} else if function.ReturnType[i].ReturnType.Value == "string" && ret.Type() != object.STRING_OBJ {
-				return NULL, true, errors.New("Return type doesn't match. Expected: string at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
-			} else if function.ReturnType[i].ReturnType.Value == "float" && ret.Type() != object.FLOAT_OBJ {
-				return NULL, true, errors.New("Return type doesn't match. Expected: float at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
-			} else if function.ReturnType[i].ReturnType.Value == "char" && ret.Type() != object.CHAR_OBJ {
-				return NULL, true, errors.New("Return type doesn't match. Expected: char at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
-			} else if function.ReturnType[i].ReturnType.Value == "bool" && ret.Type() != object.BOOLEAN_OBJ {
-				return NULL, true, errors.New("Return type doesn't match. Expected: bool at: " + strconv.Itoa(i+1) + "got: " + string(ret.Type()))
-			}
-		}
-
 		return returnValue, false, nil
 	}
 
@@ -458,36 +304,14 @@ func evalArrayValue(node *ast.ArrayValue, env *object.Environment) (object.Objec
 		res = append(res, evaluated)
 	}
 
-	arrayObj := object.Array{Elements: res}
+	arrayObj := &object.Array{Elements: res}
 
-	// we have the context.
 	if node.Type != nil {
-		_, err := validateArrayTypes(arrayObj, node.Type.Value)
-		if err != nil {
-			return NULL, true, err
-		}
 		arrayObj.TypeOf = node.Type.Value
-		return &arrayObj, false, nil
+		return arrayObj, false, nil
 	}
 
-	return &arrayObj, false, nil
-}
-
-func validateArrayTypes(arrayObj object.Array, typeOf string) (bool, error) {
-	for _, element := range arrayObj.Elements {
-		if typeOf == "int" && element.Type() != object.INTEGER_OBJ {
-			return false, errors.New("Array declared as int but got an element of type: " + string(element.Type()))
-		} else if typeOf == "string" && element.Type() != object.STRING_OBJ {
-			return false, errors.New("Array declared as string but got an element of type: " + string(element.Type()))
-		} else if typeOf == "float" && element.Type() != object.FLOAT_OBJ {
-			return false, errors.New("Array declared as float but got an element of type: " + string(element.Type()))
-		} else if typeOf == "char" && element.Type() != object.CHAR_OBJ {
-			return false, errors.New("Array declared as char but got an element of type: " + string(element.Type()))
-		} else if typeOf == "bool" && element.Type() != object.BOOLEAN_OBJ {
-			return false, errors.New("Array declared as bool but got an element of type: " + string(element.Type()))
-		}
-	}
-	return true, nil
+	return arrayObj, false, nil
 }
 
 func evalHashMap(node *ast.HashMap, env *object.Environment) (object.Object, bool, error) {
@@ -514,43 +338,10 @@ func evalHashMap(node *ast.HashMap, env *object.Environment) (object.Object, boo
 	}
 
 	if node.KeyType != nil && node.ValueType != nil {
-		// we are given the types so we should validate them.
-		for _, pair := range pairs {
-			err := validateMapTypes(pair.Key, pair.Value, node.KeyType.Value, node.ValueType.Value)
-			if err != nil {
-				return NULL, true, err
-			}
-		}
 		return &object.Hash{Pairs: pairs, KeyType: node.KeyType.Value, ValueType: node.ValueType.Value}, false, nil
 	}
 
 	return &object.Hash{Pairs: pairs}, false, nil
-}
-
-func validateMapTypes(key object.Object, value object.Object, keyType string, valueType string) error {
-	if keyType == "int" && key.Type() != object.INTEGER_OBJ {
-		return errors.New("Map declared with key as int but got key of type: " + string(key.Type()))
-	} else if keyType == "string" && key.Type() != object.STRING_OBJ {
-		return errors.New("Map declared with key as string but got key of type: " + string(key.Type()))
-	} else if keyType == "float" && key.Type() != object.FLOAT_OBJ {
-		return errors.New("Map declared with key as float but got key of type: " + string(key.Type()))
-	} else if keyType == "char" && key.Type() != object.CHAR_OBJ {
-		return errors.New("Map declared with key as char but got key of type: " + string(key.Type()))
-	} else if keyType == "bool" && key.Type() != object.BOOLEAN_OBJ {
-		return errors.New("Map declared with key as bool but got key of type: " + string(key.Type()))
-	}
-	if valueType == "int" && value.Type() != object.INTEGER_OBJ {
-		return errors.New("Map declared with value as int but got value of type: " + string(value.Type()))
-	} else if valueType == "string" && value.Type() != object.STRING_OBJ {
-		return errors.New("Map declared with value as string but got value of type: " + string(value.Type()))
-	} else if valueType == "float" && value.Type() != object.FLOAT_OBJ {
-		return errors.New("Map declared with value as float but got value of type: " + string(value.Type()))
-	} else if valueType == "char" && value.Type() != object.CHAR_OBJ {
-		return errors.New("Map declared with value as char but got value of type: " + string(value.Type()))
-	} else if valueType == "bool" && value.Type() != object.BOOLEAN_OBJ {
-		return errors.New("Map declared with value as bool but got value of type: " + string(value.Type()))
-	}
-	return nil
 }
 
 func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object, env *object.Environment) (object.Object, bool, error) {
@@ -567,41 +358,8 @@ func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object,
 		}
 	}
 
-	// The idea is, if we only have a single value on the left, then we can directly assign the 0th element of the return object to the val.
 	for val.Type() == object.RETURN_VALUE_OBJ {
-		if len(val.(*object.ReturnValue).Value) != 1 {
-			return NULL, true, errors.New("Too many return values. Can only assign a single return value to a variable.")
-		}
 		val = val.(*object.ReturnValue).Value[0]
-	}
-
-	if node.Type.IsArray {
-		if val.Type() != object.ARRAY_OBJ {
-			return NULL, true, errors.New("Identifier declared as array but got: " + string(val.Type()))
-		}
-		arrayType := node.Type.Value
-		if val.(*object.Array).TypeOf != arrayType {
-			return NULL, true, errors.New("Array type doesn't match. Expected: " + arrayType + " got: " + val.(*object.Array).TypeOf)
-		}
-	} else if node.Type.IsHash {
-		if val.Type() != object.HASH_OBJ {
-			return NULL, true, errors.New("Identifier declared as hash but got: " + string(val.Type()))
-		}
-		keyType := node.Type.SubTypes[0].Value
-		valueType := node.Type.SubTypes[1].Value
-		if val.(*object.Hash).KeyType != keyType || val.(*object.Hash).ValueType != valueType {
-			return NULL, true, errors.New("Hash type doesn't match. Expected: " + keyType + " -> " + valueType + " got: " + val.(*object.Hash).KeyType + " -> " + val.(*object.Hash).ValueType)
-		}
-	} else if node.Type.Value == "int" && val.Type() != object.INTEGER_OBJ {
-		return NULL, true, errors.New("Identifier declared as int but got: " + string(val.Type()))
-	} else if node.Type.Value == "string" && val.Type() != object.STRING_OBJ {
-		return NULL, true, errors.New("Identifier declared as string but got: " + string(val.Type()))
-	} else if node.Type.Value == "float" && val.Type() != object.FLOAT_OBJ {
-		return NULL, true, errors.New("Identifier declared as float but got: " + string(val.Type()))
-	} else if node.Type.Value == "char" && val.Type() != object.CHAR_OBJ {
-		return NULL, true, errors.New("Identifier declared as char but got: " + string(val.Type()))
-	} else if node.Type.Value == "bool" && val.Type() != object.BOOLEAN_OBJ {
-		return NULL, true, errors.New("Identifier declared as bool but got: " + string(val.Type()))
 	}
 
 	if node.Token.Kind == lexer.VAR {
@@ -658,9 +416,6 @@ func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Enviro
 		}
 		returnObjList := returnObj.(*object.ReturnValue).Value
 
-		// return object will always have the same number of elements that are required(i.e on the left side of the assignment)
-		// because we are checking that at the time of parsing.
-		// we just have to update the values of the variables.
 		for i, element := range node.Objects {
 			switch element := element.(type) {
 			case *ast.VarStatement:
@@ -669,7 +424,6 @@ func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Enviro
 					return NULL, hasErr, err
 				}
 			case *ast.ExpressionStatement:
-				// simply update the value of the variable.
 				_, hasErr, err := evalAssignmentExpression(element.Expression.(*ast.AssignmentExpression), true, returnObjList[i], env)
 				if err != nil {
 					return NULL, hasErr, err
@@ -684,34 +438,14 @@ func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Enviro
 func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Object, bool, error) {
 	inForLoop = true
 
-	// Evaluate the VAR stmt in the for loop(.)
 	varStmtObj, hasErr, err := Eval(node.Left, env)
 	if err != nil {
 		return varStmtObj, hasErr, err
 	}
 
-	// Get the variable type to check for VAR or CONST
-	varVariable, hasErr, err := getIdentifierVariable(node.Left.Name, env)
-	if err != nil {
-		return NULL, hasErr, err
-	}
-	if varVariable.Type != object.VAR {
-		return NULL, true, errors.New("Can't use CONST to define variable in FOR loop condition")
-	}
-
-	// Check if the variable is INT or not
-	if varStmtObj.Type() != object.INTEGER_OBJ {
-		return NULL, true, errors.New("Can only define variable in FOR loop condition as INT.")
-	}
-
-	// Eval infix operation
 	infixObj, hasErr, err := Eval(node.Middle, env)
 	if err != nil {
 		return infixObj, hasErr, err
-	}
-	// this infix obj should always result in a boolean.
-	if infixObj.Type() != object.BOOLEAN_OBJ {
-		return NULL, true, errors.New("Infix operation of FOR loop condition should always result in a BOOLEAN.")
 	}
 
 	for infixObj == TRUE {
@@ -745,12 +479,7 @@ func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Ob
 
 func evalReturnValue(rs *ast.ReturnStatement, idx int, env *object.Environment) (object.Object, bool, error) {
 	currNode := rs.Value[idx]
-	switch currNode.(type) {
-	case *ast.Identifier, *ast.IntegerValue, *ast.FloatValue, *ast.BooleanValue, *ast.StringValue, *ast.CharValue, *ast.PrefixExpression, *ast.PostfixExpression, *ast.InfixExpression, *ast.ArrayValue, *ast.HashMap, *ast.CallExpression, *ast.IndexExpression:
-		return Eval(currNode, env)
-	default:
-		return NULL, true, errors.New("Can Only return expressions and datatypes. got: " + fmt.Sprintf("%T", currNode))
-	}
+	return Eval(currNode, env)
 }
 
 func evalIdentifier(node *ast.Identifier, env *object.Environment) (object.Object, bool, error) {
@@ -822,6 +551,9 @@ func evalElseIfStatement(node *ast.ElseIfStatement, env *object.Environment) (ob
 }
 
 func execIf(obj object.Object) (bool, bool, error) {
+	if obj.Type() == object.RETURN_VALUE_OBJ {
+		return execIf(obj.(*object.ReturnValue).Value[0])
+	}
 	switch obj {
 	case TRUE:
 		return true, false, nil
@@ -854,103 +586,65 @@ func evalAssignmentExpression(node *ast.AssignmentExpression, injectObj bool, va
 	}
 }
 
-func assignOpHelper(node *ast.AssignmentExpression, injectObj bool, rightVal object.Object, env *object.Environment) (object.Object, object.Object, bool, bool, error) {
+func assignOpHelper(node *ast.AssignmentExpression, injectObj bool, rightVal object.Object, env *object.Environment) (object.Object, object.Object, bool, error) {
 	leftSideVariable, hasErr, err := getIdentifierVariable(node.Left, env)
 	if err != nil {
-		return NULL, NULL, false, hasErr, err
-	}
-
-	// Check if the variable is a constant. if so, return error.
-	if leftSideVariable.Type == object.CONST {
-		return NULL, NULL, false, true, errors.New("Can't re-assign CONST variables. variable '" + node.Left.Value + "' is a constant.")
-	}
-
-	var isVar bool
-	if leftSideVariable.Type == object.VAR {
-		isVar = true
-	} else if leftSideVariable.Type == object.FUNCTION {
-		return NULL, NULL, false, true, errors.New("Can't re-assign function.")
+		return NULL, NULL, hasErr, err
 	}
 
 	// If we are injecting than no need to evaluate the right side
 	if injectObj {
-		return leftSideVariable.Value, rightVal, isVar, false, nil
+		return leftSideVariable.Value, rightVal, false, nil
 	}
 
 	// If the variable is not constant, then evaluate the expression on the right.
 	rightSideObj, hasErr, err := Eval(node.Right, env)
 	if err != nil {
-		return NULL, NULL, isVar, hasErr, err
+		return NULL, NULL, hasErr, err
 	}
 
 	if rightSideObj.Type() == object.RETURN_VALUE_OBJ {
-		if len(rightSideObj.(*object.ReturnValue).Value) != 1 {
-			return NULL, NULL, isVar, true, errors.New("Too many return values. Can only assign a single return value to a variable.")
-		}
 		rightSideObj = rightSideObj.(*object.ReturnValue).Value[0]
 	}
 
-	return leftSideVariable.Value, rightSideObj, isVar, false, nil
+	return leftSideVariable.Value, rightSideObj, false, nil
 }
 
 func evalSymbolAssignOp(operator string, node *ast.AssignmentExpression, env *object.Environment) (object.Object, bool, error) {
-	leftSideObj, rightSideObj, isVar, hasErr, err := assignOpHelper(node, false, nil, env)
+	leftSideObj, rightSideObj, hasErr, err := assignOpHelper(node, false, nil, env)
 	if err != nil {
 		return NULL, hasErr, err
 	}
 
-	// Only exception.
-	if leftSideObj.Type() == object.INTEGER_OBJ && rightSideObj.Type() == object.FLOAT_OBJ {
-		return NULL, true, errors.New("Can't convert types. Variable on the left is of type INT and variable on the right is of type FLOAT.")
+	resObj, hasErr, err := evalInfixExpression(operator, leftSideObj, rightSideObj)
+	if err != nil {
+		return resObj, hasErr, err
 	}
-
-	if isVar {
-		resObj, hasErr, err := evalInfixExpression(operator, leftSideObj, rightSideObj)
-		if err != nil {
-			return resObj, hasErr, err
-		}
-		env.Update(node.Left.Value, resObj, object.VAR)
-		return resObj, false, nil
-	}
-	return NULL, true, errors.New("Something went wrong, in evalSymbolAssign.")
+	env.Update(node.Left.Value, resObj, object.VAR)
+	return resObj, false, nil
 }
 
 func evalAssignOp(node *ast.AssignmentExpression, injectObj bool, rightVal object.Object, env *object.Environment) (object.Object, bool, error) {
-	leftSideObj, rightSideObj, leftIsVar, hasErr, err := assignOpHelper(node, injectObj, rightVal, env)
+	_, rightSideObj, hasErr, err := assignOpHelper(node, injectObj, rightVal, env)
 	if err != nil {
 		return NULL, hasErr, err
 	}
-
-	leftSideObjType := leftSideObj.Type()
-	rightSideObjType := rightSideObj.Type()
-	if leftIsVar {
-		if leftSideObjType == rightSideObjType {
-			env.Update(node.Left.Value, rightSideObj, object.VAR)
-			return rightSideObj, false, nil
-		}
-	}
-	return NULL, true, errors.New("Can't convert types. Either re-assign the variable or keep the current type. Original type: " + string(leftSideObjType) + " new assigned value's type: " + string(rightSideObjType))
+	env.Update(node.Left.Value, rightSideObj, object.VAR)
+	return rightSideObj, false, nil
 }
 
 // -----------------------------------------------------------------------------
 // Prefix op
 // -----------------------------------------------------------------------------
 func evalPrefixExpression(operator string, right object.Object) (object.Object, bool, error) {
-	switch operator {
-	case "!":
+	if operator == "!" {
 		return evalBangOperatorExpression(right)
-	case "-":
+	} else {
 		return evalMinusOperatorExpression(right)
-	default:
-		return NULL, true, errors.New("Only 2 Prefix Operator's supported. !(Bang) and -(Dash/Minus). got: " + operator)
 	}
 }
 
 func evalMinusOperatorExpression(right object.Object) (object.Object, bool, error) {
-	if right.Type() != object.INTEGER_OBJ && right.Type() != object.FLOAT_OBJ {
-		return NULL, true, errors.New("Dash/Minus(-) operator can be only used with Integers(int) and Floats(float) entities. got: " + string(right.Type()))
-	}
-
 	if right.Type() == object.FLOAT_OBJ {
 		value := right.(*object.Float).Value
 		return &object.Float{Value: -value}, false, nil
@@ -960,15 +654,10 @@ func evalMinusOperatorExpression(right object.Object) (object.Object, bool, erro
 }
 
 func evalBangOperatorExpression(right object.Object) (object.Object, bool, error) {
-	switch right := right.(type) {
-	case *object.Boolean:
-		if right == TRUE {
-			return FALSE, false, nil
-		} else {
-			return TRUE, false, nil
-		}
-	default:
-		return NULL, true, errors.New("Bang Operator(!) can be only used with boolean(bool) entities. got: " + string(right.Type()))
+	if right == TRUE {
+		return FALSE, false, nil
+	} else {
+		return TRUE, false, nil
 	}
 }
 
@@ -976,39 +665,28 @@ func evalBangOperatorExpression(right object.Object) (object.Object, bool, error
 // Postfix op
 // -----------------------------------------------------------------------------
 func evalPostfixExpression(operator string, left object.Object) (object.Object, bool, error) {
-	switch {
-	case left.Type() == object.INTEGER_OBJ:
+	if left.Type() == object.INTEGER_OBJ {
 		return evalIntegerPostfixExpression(operator, left)
-	case left.Type() == object.FLOAT_OBJ:
+	} else {
 		return evalFloatPostfixExpression(operator, left)
-	default:
-		return NULL, true, errors.New("Only Integer and Float datatypes supported with Postfix operation. got: " + string(left.Type()))
 	}
 }
 
 func evalFloatPostfixExpression(operator string, left object.Object) (object.Object, bool, error) {
 	leftVal := left.(*object.Float).Value
-
-	switch operator {
-	case "++":
+	if operator == "++" {
 		return &object.Float{Value: leftVal + 1}, false, nil
-	case "--":
+	} else {
 		return &object.Float{Value: leftVal - 1}, false, nil
-	default:
-		return NULL, true, errors.New("Only ++ and -- Postfix operation supported. got: " + operator)
 	}
 }
 
 func evalIntegerPostfixExpression(operator string, left object.Object) (object.Object, bool, error) {
 	leftVal := left.(*object.Integer).Value
-
-	switch operator {
-	case "++":
+	if operator == "++" {
 		return &object.Integer{Value: leftVal + 1}, false, nil
-	case "--":
+	} else {
 		return &object.Integer{Value: leftVal - 1}, false, nil
-	default:
-		return NULL, true, errors.New("Only ++ and -- Postfix operation supported. got: " + operator)
 	}
 }
 
@@ -1039,9 +717,6 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 	case left.Type() == object.CHAR_OBJ && right.Type() == object.CHAR_OBJ:
 		return evalCharInfixExpression(operator, left, right)
 	case left.Type() == object.ARRAY_OBJ && right.Type() == object.ARRAY_OBJ:
-		if left.(*object.Array).TypeOf != right.(*object.Array).TypeOf {
-			return NULL, true, errors.New("Array types don't match. Expected: " + left.(*object.Array).TypeOf + " got: " + right.(*object.Array).TypeOf)
-		}
 		return evalArrayInfixExpression(operator, left, right)
 	default:
 		return NULL, true, errors.New("Invalid operation with variable types on left and right.")
