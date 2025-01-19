@@ -1,8 +1,11 @@
 fun: main() {
-    // fix this
-    callMe();
+    if: (callMe()): {
+        println(true);
+    } else: {
+        println(false);
+    }
 }
 
-fun: callMe(): (int, bool) {
+fun: callMe(): (bool) {
     println(1);
 }

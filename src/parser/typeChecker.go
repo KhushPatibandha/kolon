@@ -62,7 +62,6 @@ func typeCheckStmts(stmtNode ast.Statement, env *Environment) error {
 	case *ast.VarStatement:
 		return checkVarStmt(node, env)
 	case *ast.ReturnStatement:
-		// TODO: FIX the return statement bug
 		return checkReturnStmt(node, env)
 	case *ast.ContinueStatement:
 		if !inForLoop {
@@ -145,14 +144,11 @@ func checkStmts(stmts []ast.Statement, env *Environment) error {
 func checkVarStmt(node *ast.VarStatement, env *Environment) error {
 	definedType := node.Type
 
-	// get the type for the expression on the right
 	expType, err := getExpType(node.Value, env)
 	if err != nil {
 		return err
 	}
 
-	// if the expType is a call expression, then the function must return only 1 value
-	// we have to get the types from FunctionMap in parser
 	if expType.CallExp {
 		function := FunctionMap[node.Value.(*ast.CallExpression).Name.(*ast.Identifier).Value]
 		if len(function.ReturnType) != 1 {
@@ -161,13 +157,11 @@ func checkVarStmt(node *ast.VarStatement, env *Environment) error {
 		expType.Type = *function.ReturnType[0].ReturnType
 	}
 
-	// now we need to check the type of the variable with the expType.Type
 	err = varTypeCheckerHelper(*definedType, expType.Type)
 	if err != nil {
 		return err
 	}
 
-	// If everything is correct, then add the variable to the environment
 	if node.Token.Kind == lexer.VAR {
 		env.Set(node.Name.Value, *node.Name, *node.Type, VAR, nil)
 	} else if node.Token.Kind == lexer.CONST {
@@ -258,7 +252,6 @@ func checkExpStmt(node *ast.ExpressionStatement, env *Environment) error {
 func checkIfStmt(node *ast.IfStatement, env *Environment) error {
 	localEnvForIf := NewEnclosedEnvironment(env)
 
-	// Check the condition first. The condition must always result in a boolean value
 	expType, err := getExpType(node.Value, localEnvForIf)
 	if err != nil {
 		return err
@@ -275,16 +268,13 @@ func checkIfStmt(node *ast.IfStatement, env *Environment) error {
 		return errors.New("Condition for IF statements must result in a boolean value")
 	}
 
-	// Check the statements inside the IF block
 	err = checkStmts(node.Body.Statements, localEnvForIf)
 	if err != nil {
 		return err
 	}
 
-	// Check the else if blocks
 	if node.MultiConseq != nil {
 		for _, elseIfStmt := range node.MultiConseq {
-			// Do this for every else if block because we are going through all if, else if and else blocks. hence we don't want variables in "if" to be accessible in "else if"
 			localEnfForElseIf := NewEnclosedEnvironment(env)
 			expType, err := getExpType(elseIfStmt.Value, localEnfForElseIf)
 			if err != nil {
@@ -301,7 +291,6 @@ func checkIfStmt(node *ast.IfStatement, env *Environment) error {
 				return errors.New("Condition for ELSE IF statements must result in a boolean value")
 			}
 
-			// Check the statements inside the ELSE IF block
 			err = checkStmts(elseIfStmt.Body.Statements, localEnfForElseIf)
 			if err != nil {
 				return err
@@ -309,7 +298,6 @@ func checkIfStmt(node *ast.IfStatement, env *Environment) error {
 		}
 	}
 
-	// check the else block
 	if node.Consequence != nil {
 		localEnvForElse := NewEnclosedEnvironment(env)
 		err = checkStmts(node.Consequence.Body.Statements, localEnvForElse)
@@ -324,12 +312,10 @@ func checkIfStmt(node *ast.IfStatement, env *Environment) error {
 func checkForLoopStmt(node *ast.ForLoopStatement, env *Environment) error {
 	inForLoop = true
 
-	// first check the var statement
 	err := checkVarStmt(node.Left, env)
 	if err != nil {
 		return nil
 	}
-	// Get the variable type to check for VAR or CONST
 	varVariable, ok := env.Get(node.Left.Name.Value)
 	if !ok {
 		return errors.New("Variable in FOR loop condition not found")
@@ -337,12 +323,10 @@ func checkForLoopStmt(node *ast.ForLoopStatement, env *Environment) error {
 	if varVariable.VarType != VAR {
 		return errors.New("Can't use CONST to define variable in FOR loop condition")
 	}
-	// Check if the variable is INT or not
 	if varVariable.Type.Value != "int" {
 		return errors.New("Can only define variable in FOR loop condition as INT.")
 	}
 
-	// Check infix expression. The infix expression must result in a boolean value
 	expType, err := getExpType(node.Middle, env)
 	if err != nil {
 		return nil
@@ -351,7 +335,6 @@ func checkForLoopStmt(node *ast.ForLoopStatement, env *Environment) error {
 		return errors.New("Infix operation of FOR loop condition should always result in a BOOLEAN.")
 	}
 
-	// Check the postfix expression.
 	expType, err = getExpType(node.Right, env)
 	if err != nil {
 		return err
@@ -360,7 +343,6 @@ func checkForLoopStmt(node *ast.ForLoopStatement, env *Environment) error {
 		return errors.New("Postfix operation of FOR loop condition should always result in an INT.")
 	}
 
-	// Check the statements inside the FOR block
 	err = checkStmts(node.Body.Statements, env)
 	if err != nil {
 		return err
@@ -380,14 +362,49 @@ func checkFunStmt(node *ast.Function, env *Environment) error {
 	}
 	localFunEnv := funVariable.Env
 
-	// no need to check the parameters and return types. Because they are just bunch of types and also they are already checked in the parser
-
-	// check the body
 	err := checkStmts(node.Body.Statements, localFunEnv)
 	if err != nil {
 		return err
 	}
+
+	if node.ReturnType != nil {
+		err := checkAvailableReturnStmt(node.Body.Statements)
+		if err != nil {
+			return errors.New(err.Error() + " for function: " + node.Name.Value)
+		}
+	}
 	return nil
+}
+
+func checkAvailableReturnStmt(stmts []ast.Statement) error {
+	lastStmt := stmts[len(stmts)-1]
+	switch node := lastStmt.(type) {
+	case *ast.ReturnStatement:
+		return nil
+	case *ast.IfStatement:
+		if node.Consequence == nil {
+			return errors.New("Missing return statement")
+		}
+		ifErr := checkAvailableReturnStmt(node.Body.Statements)
+		if ifErr != nil {
+			return ifErr
+		}
+		if node.MultiConseq != nil {
+			for _, elseIfStmt := range node.MultiConseq {
+				elseIfErr := checkAvailableReturnStmt(elseIfStmt.Body.Statements)
+				if elseIfErr != nil {
+					return elseIfErr
+				}
+			}
+		}
+		elseErr := checkAvailableReturnStmt(node.Consequence.Body.Statements)
+		if elseErr != nil {
+			return elseErr
+		}
+		return nil
+	default:
+		return errors.New("Missing return statement")
+	}
 }
 
 func checkMainFunStmt(node *ast.Function, env *Environment) error {
@@ -400,17 +417,14 @@ func checkMainFunStmt(node *ast.Function, env *Environment) error {
 	}
 	localMainEnv := funVariable.Env
 
-	// First check the parameters. the list of parameters must be empty
 	if len(node.Parameters) != 0 {
 		return errors.New("Main function must not have any parameters")
 	}
 
-	// return type must be nil
 	if node.ReturnType != nil {
 		return errors.New("Can't return anything in main function")
 	}
 
-	// check the body
 	err := checkStmts(node.Body.Statements, localMainEnv)
 	if err != nil {
 		return err
