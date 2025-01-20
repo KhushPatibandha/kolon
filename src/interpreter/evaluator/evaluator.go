@@ -101,7 +101,6 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 			return resObj, hasErr, err
 		}
 
-		// will only update the identifier if the postfix is a stmt.
 		if node.IsStmt {
 			if id, ok := node.Left.(*ast.Identifier); ok {
 				idVariable, hasErr, err := getIdentifierVariable(id, env)
@@ -133,7 +132,6 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		var val []object.Object
 
 		for i := 0; i < len(node.Value); i++ {
-			// fmt.Println(node.Value[i])
 			rsObj, hasErr, err := evalReturnValue(node, i, env)
 			if err != nil {
 				return NULL, hasErr, err
@@ -153,9 +151,7 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		localEnv := object.NewEnclosedEnvironment(env)
 		return evalForLoop(node, localEnv)
 	case *ast.Function:
-		// skip all the function execpt main
 		if node.Name.Value == "main" {
-			// add all the functions in the code from function map to the environment.
 			for key, value := range parser.FunctionMap {
 				newLocalEnv := object.NewEnclosedEnvironment(env)
 				env.Set(key, &object.Function{Name: value.Name, Parameters: value.Parameters, ReturnType: value.ReturnType, Body: value.Body, Env: newLocalEnv}, object.FUNCTION)
@@ -182,7 +178,7 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 	case *ast.BreakStatement:
 		return BREAK, false, nil
 	default:
-		return nil, true, fmt.Errorf("No Eval function for given node type. got: %T", node)
+		return nil, true, fmt.Errorf("no eval function for given node type, got: %T", node)
 	}
 }
 
@@ -190,7 +186,6 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Obje
 	var result object.Object
 	var hasErr bool
 	var err error
-	// fmt.Println(stmts)
 	for _, statement := range stmts {
 		result, hasErr, err = Eval(statement, env)
 		if err != nil {
@@ -231,7 +226,7 @@ func evalArrayIndexExpression(array object.Object, index object.Object) (object.
 	idx := index.(*object.Integer).Value
 	maxIdx := int64(len(arrayObj.Elements) - 1)
 	if idx < 0 || idx > maxIdx {
-		return NULL, true, errors.New("Index out of range. Index: " + strconv.FormatInt(idx, 10) + " Max Index: " + strconv.FormatInt(maxIdx, 10))
+		return NULL, true, errors.New("index out of range, index: " + strconv.FormatInt(idx, 10) + " max index: " + strconv.FormatInt(maxIdx, 10))
 	}
 	return arrayObj.Elements[idx], false, nil
 }
@@ -272,7 +267,7 @@ func applyFunction(fn object.Object, args []object.Object) (object.Object, bool,
 		if ok {
 			return builtin.Fn(args...)
 		} else {
-			return NULL, true, errors.New("Not a function: " + string(fn.Type()))
+			return NULL, true, errors.New("not a function: " + string(fn.Type()))
 		}
 	}
 
@@ -373,7 +368,6 @@ func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object,
 
 func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Environment) (object.Object, bool, error) {
 	if !node.SingleCallExp {
-		// loop throught all the elements in the mvas object param and execute them.
 		for _, element := range node.Objects {
 			switch element := element.(type) {
 			case *ast.VarStatement:
@@ -382,7 +376,6 @@ func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Enviro
 					return NULL, hasErr, err
 				}
 			case *ast.ExpressionStatement:
-				// simply update the value of the variable.
 				_, hasErr, err := Eval(element.Expression.(*ast.AssignmentExpression), env)
 				if err != nil {
 					return NULL, hasErr, err
@@ -493,12 +486,11 @@ func evalIdentifier(node *ast.Identifier, env *object.Environment) (object.Objec
 func getIdentifierVariable(node *ast.Identifier, env *object.Environment) (*object.Variable, bool, error) {
 	variable, ok := env.Get(node.Value)
 	if !ok {
-		// if not found, check if builtin method exists.
 		builtin, ok := builtins[node.Value]
 		if ok {
 			return &object.Variable{Type: object.FUNCTION, Value: builtin}, false, nil
 		} else {
-			return &object.Variable{Type: object.VAR, Value: NULL}, true, errors.New("Identifier not found: " + node.Value)
+			return &object.Variable{Type: object.VAR, Value: NULL}, true, errors.New("identifier not found: " + node.Value)
 		}
 	}
 	return variable, false, nil
@@ -560,7 +552,7 @@ func execIf(obj object.Object) (bool, bool, error) {
 	case FALSE:
 		return false, false, nil
 	default:
-		return false, true, errors.New("Conditions for 'if' and 'else if' statements must result in a boolean. got: " + string(obj.Type()))
+		return false, true, errors.New("conditions for `if` and `else if` statements must result in a `bool`, got: " + string(obj.Type()))
 	}
 }
 
@@ -582,7 +574,7 @@ func evalAssignmentExpression(node *ast.AssignmentExpression, injectObj bool, va
 	case "%=":
 		return evalSymbolAssignOp("%", node, env)
 	default:
-		return NULL, true, errors.New("Only (=, +=, -=, *=, /=, %=) assignment operators are supported. got: " + node.Operator)
+		return NULL, true, errors.New("only `=`, `+=`, `-=`, `*=`, `/=`, `%=` `assignment` operators supported, got: " + node.Operator)
 	}
 }
 
@@ -592,12 +584,10 @@ func assignOpHelper(node *ast.AssignmentExpression, injectObj bool, rightVal obj
 		return NULL, NULL, hasErr, err
 	}
 
-	// If we are injecting than no need to evaluate the right side
 	if injectObj {
 		return leftSideVariable.Value, rightVal, false, nil
 	}
 
-	// If the variable is not constant, then evaluate the expression on the right.
 	rightSideObj, hasErr, err := Eval(node.Right, env)
 	if err != nil {
 		return NULL, NULL, hasErr, err
@@ -719,7 +709,7 @@ func evalInfixExpression(operator string, left object.Object, right object.Objec
 	case left.Type() == object.ARRAY_OBJ && right.Type() == object.ARRAY_OBJ:
 		return evalArrayInfixExpression(operator, left, right)
 	default:
-		return NULL, true, errors.New("Invalid operation with variable types on left and right.")
+		return NULL, true, errors.New("invalid `infix` operation with variable types on left and right, got: `" + string(left.Type()) + "` and `" + string(right.Type()) + "`")
 	}
 }
 
@@ -760,7 +750,7 @@ func evalArrayInfixExpression(operator string, left object.Object, right object.
 		}
 		return FALSE, false, nil
 	default:
-		return NULL, true, errors.New("Can only perform \"+\", \"==\", \"!=\" with arrays. got: " + operator)
+		return NULL, true, errors.New("can only use `+`, `==`, `!=` infix operators with 2 arrays, got: " + operator)
 	}
 }
 
@@ -784,7 +774,7 @@ func evalCharInfixExpression(operator string, left object.Object, right object.O
 		}
 		return FALSE, false, nil
 	default:
-		return NULL, true, errors.New("Can only perform \"+\", \"==\", \"!=\" with chars. got: " + operator)
+		return NULL, true, errors.New("can only use `+`, `==`, `!=` infix operators with 2 `char`, got: " + operator)
 	}
 }
 
@@ -808,7 +798,7 @@ func evalStringInfixExpression(operator string, left object.Object, right object
 		}
 		return FALSE, false, nil
 	default:
-		return NULL, true, errors.New("Can only perform \"+\", \"==\", \"!=\" with strings. got: " + operator)
+		return NULL, true, errors.New("can only use `+`, `==`, `!=` infix operators with 2 `string`, got: " + operator)
 	}
 }
 
@@ -858,7 +848,7 @@ func evalFloatInfixExpression(operator string, left object.Object, right object.
 		}
 		return FALSE, false, nil
 	default:
-		return NULL, true, errors.New("Can only perform \"+\", \"-\", \"/\", \"*\", \"%\", \">\", \"<\", \"<=\", \">=\", \"!=\", \"==\" with 2 Float var. got: " + operator)
+		return NULL, true, errors.New("can only use `+`, `-`, `*`, `/`, `%`, `>`, `<`, `<=`, `>=`, `!=`, `==` infix operators with 2 `float`, got: " + operator)
 	}
 }
 
@@ -912,7 +902,7 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 		}
 		return FALSE, false, nil
 	default:
-		return NULL, true, errors.New("Can only perform \"+\", \"-\", \"/\", \"*\", \"%\", \"&\", \"|\", \">\", \"<\", \"<=\", \">=\", \"!=\", \"==\" with 2 Integers. got: " + operator)
+		return NULL, true, errors.New("can only use `+`, `-`, `*`, `/`, `%`, `>`, `<`, `<=`, `>=`, `!=`, `==`, `|`, `&` infix operators with 2 `int`, got: " + operator)
 	}
 }
 
@@ -942,6 +932,6 @@ func evalBooleanInfixExpression(operator string, left object.Object, right objec
 		}
 		return FALSE, false, nil
 	default:
-		return NULL, true, errors.New("Can only perform \"&&\", \"||\", \"!=\", \"==\" with 2 Boolean values. got: " + operator)
+		return NULL, true, errors.New("can only use `==`, `!=`, `&&`, `||` infix operators with 2 `bool`, got: " + operator)
 	}
 }

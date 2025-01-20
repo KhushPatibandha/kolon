@@ -32,8 +32,8 @@ func TestRandom(t *testing.T) {
 	run(t, "./testKolFiles/test18.kol", "-1")
 	run(t, "./testKolFiles/test19.kol", "0\n-2")
 	run(t, "./testKolFiles/test20.kol", "110")
-	run(t, "./testKolFiles/test21.kol", "Error type checking program: Variable a is undefined/not found")
-	run(t, "./testKolFiles/test22.kol", "Error type checking program: Missing return statement for function: callMe")
+	run(t, "./testKolFiles/test21.kol", "Error type checking program: variable `a` is undefined/not found")
+	run(t, "./testKolFiles/test22.kol", "Error type checking program: missing `return` statement for function: callMe")
 }
 
 func run(t *testing.T, filePath string, expectedOutput string) {

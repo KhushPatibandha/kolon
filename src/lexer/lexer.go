@@ -33,7 +33,7 @@ func Tokenizer(source string) []Token {
 			}
 		}
 		if !matched {
-			panic(fmt.Sprintf("lexer error: unrecognized token '%v' near --> '%v'", lexer.remainder()[:1], lexer.remainder()))
+			panic(fmt.Sprintf("Lexer error: unrecognized token '%v' near --> '%v'", lexer.remainder()[:1], lexer.remainder()))
 		}
 	}
 	lexer.push(GetNewToken(EOF, "EOF"))
@@ -119,7 +119,7 @@ func floatHandler(k TokenKind) regexHandler {
 		matchedString := regex.FindString(lex.remainder())
 		_, err := strconv.ParseFloat(matchedString, 64)
 		if err != nil {
-			panic(fmt.Sprintf("Number Handler Error: %v", err))
+			panic(fmt.Sprintf("Lexer error: number handler error: %v", err))
 		}
 		lex.push(GetNewToken(k, matchedString))
 		lex.advanceN(len(matchedString))
@@ -135,7 +135,7 @@ func intHandler(k TokenKind) regexHandler {
 			if _, err := strconv.ParseUint(matchedString, 10, 64); err == nil {
 				lex.push(GetNewToken(k, matchedString))
 			} else {
-				panic(fmt.Sprintf("Number Handler Error: %v", err))
+				panic(fmt.Sprintf("Lexer error: number handler error: %v", err))
 			}
 		}
 		lex.advanceN(len(matchedString))

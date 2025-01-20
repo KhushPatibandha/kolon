@@ -2,6 +2,7 @@ package parser
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
@@ -34,24 +35,23 @@ type (
 )
 
 const (
-	_            int = iota
-	LOWEST           // Lowest precedence, used as default
-	ASSIGN           // Assignment operators like =, +=, -=
-	LOGICALOR        // Logical OR ||
-	LOGICALAND       // Logical AND &&
-	DOUBLEEQUALS     // Equality operators ==, !=
-	BITWISEORAND     // Bitwise AND/OR operators &, |
-	LESSGREATER      // Relational operators <, <=, >, >=
-	SUM              // Addition and subtraction +, -
-	PRODUCT          // Multiplication, division, modulus *, /, %
-	PREFIX           // Unary operators like - (negative), !
-	POSTFIX          // Postfix operators like ++, --
-	CALL             // Function calls, array indexing ()
-	INDEX            // Array indexing []
+	_ int = iota
+	LOWEST
+	ASSIGN
+	LOGICALOR
+	LOGICALAND
+	DOUBLEEQUALS
+	BITWISEORAND
+	LESSGREATER
+	SUM
+	PRODUCT
+	PREFIX
+	POSTFIX
+	CALL
+	INDEX
 )
 
 var precedences = map[lexer.TokenKind]int{
-	// Assignment operators
 	lexer.EQUAL_ASSIGN:  ASSIGN,
 	lexer.PLUS_EQUAL:    ASSIGN,
 	lexer.MINUS_EQUAL:   ASSIGN,
@@ -59,39 +59,31 @@ var precedences = map[lexer.TokenKind]int{
 	lexer.SLASH_EQUAL:   ASSIGN,
 	lexer.PERCENT_EQUAL: ASSIGN,
 
-	// Logical operators
-	lexer.OR_OR:   LOGICALOR,  // Logical OR ||
-	lexer.AND_AND: LOGICALAND, // Logical AND &&
+	lexer.OR_OR:   LOGICALOR,
+	lexer.AND_AND: LOGICALAND,
 
-	// Equality operators
-	lexer.DOUBLE_EQUAL: DOUBLEEQUALS, // Equality ==, !=
+	lexer.DOUBLE_EQUAL: DOUBLEEQUALS,
 	lexer.NOT_EQUAL:    DOUBLEEQUALS,
 
-	// Bitwise operators
-	lexer.AND: BITWISEORAND, // Bitwise AND &
-	lexer.OR:  BITWISEORAND, // Bitwise OR |
+	lexer.AND: BITWISEORAND,
+	lexer.OR:  BITWISEORAND,
 
-	// Relational operators
-	lexer.LESS_THAN_EQUAL:    LESSGREATER, // Relational <=, >=, <, >
+	lexer.LESS_THAN_EQUAL:    LESSGREATER,
 	lexer.GREATER_THAN_EQUAL: LESSGREATER,
 	lexer.LESS_THAN:          LESSGREATER,
 	lexer.GREATER_THAN:       LESSGREATER,
 
-	// Arithmetic operators
-	lexer.PLUS:    SUM, // Addition and subtraction
+	lexer.PLUS:    SUM,
 	lexer.DASH:    SUM,
-	lexer.STAR:    PRODUCT, // Multiplication, division, modulus
+	lexer.STAR:    PRODUCT,
 	lexer.SLASH:   PRODUCT,
 	lexer.PERCENT: PRODUCT,
 
-	// Postfix operators
-	lexer.PLUS_PLUS:   POSTFIX, // Postfix ++, --
+	lexer.PLUS_PLUS:   POSTFIX,
 	lexer.MINUS_MINUS: POSTFIX,
 
-	// Function calls and array indexing
 	lexer.OPEN_BRACKET: CALL,
 
-	// Array indexing
 	lexer.OPEN_SQUARE_BRACKET: INDEX,
 }
 
@@ -184,7 +176,7 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
 	prefix := p.prefixParseFns[p.currentToken.Kind]
 	if prefix == nil {
-		return nil, errors.New("no prefix parse function for " + lexer.TokenKindString(p.currentToken.Kind))
+		return nil, errors.New("no prefix parse function for: " + lexer.TokenKindString(p.currentToken.Kind))
 	}
 	leftExp, err := prefix()
 	if err != nil {
@@ -195,7 +187,7 @@ func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
 		if p.postfixParseFns[p.peekToken.Kind] != nil {
 			postfix := p.postfixParseFns[p.peekToken.Kind]
 			if postfix == nil {
-				return nil, errors.New("no postfix parse function for " + lexer.TokenKindString(p.peekToken.Kind))
+				return nil, errors.New("no postfix parse function for: " + lexer.TokenKindString(p.peekToken.Kind))
 			}
 			previousOfLeft := p.previousToken.Kind
 			p.nextToken()
@@ -220,9 +212,232 @@ func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
 	return leftExp, nil
 }
 
+// -----------------------------------------------------------------------------
+// Parsing Expressions
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+// Parsing Identifier Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parseIdentifier() (ast.Expression, error) {
+	return &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Value}, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Integer Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parseIntegerValue() (ast.Expression, error) {
+	intVal := &ast.IntegerValue{Token: p.currentToken}
+	value, err := strconv.ParseInt(p.currentToken.Value, 0, 64)
+	if err != nil {
+		return nil, errors.New("could not parse " + p.currentToken.Value + " as integer")
+	}
+	intVal.Value = value
+	return intVal, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Float Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parseFloatValue() (ast.Expression, error) {
+	floatVal := &ast.FloatValue{Token: p.currentToken}
+	value, err := strconv.ParseFloat(p.currentToken.Value, 64)
+	if err != nil {
+		return nil, errors.New("could not parse " + p.currentToken.Value + " as float")
+	}
+	floatVal.Value = value
+	return floatVal, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Boolean Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parseBooleanValue() (ast.Expression, error) {
+	val := p.currentToken.Value
+	if val == "true" {
+		return &ast.BooleanValue{Token: p.currentToken, Value: true}, nil
+	}
+	return &ast.BooleanValue{Token: p.currentToken, Value: false}, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing String Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parseStringValue() (ast.Expression, error) {
+	return &ast.StringValue{Token: p.currentToken, Value: p.currentToken.Value}, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Char Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parseCharValue() (ast.Expression, error) {
+	return &ast.CharValue{Token: p.currentToken, Value: p.currentToken.Value}, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Array Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parseArrayValues() (ast.Expression, error) {
+	if !p.currTokenIsOk(lexer.OPEN_SQUARE_BRACKET) {
+		return nil, errors.New("expected an open square bracket (`[`) for an array, got: " + lexer.TokenKindString(p.currentToken.Kind))
+	}
+	array := &ast.ArrayValue{Token: p.currentToken}
+	p.nextToken()
+
+	list := []ast.Expression{}
+	for !p.currTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
+		parsedExp, err := p.parseExpression(LOWEST)
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, parsedExp)
+		if p.peekTokenIsOk(lexer.COMMA) {
+			p.nextToken()
+			if p.peekTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
+				return nil, errors.New("expected a value after comma in an array, got: " + lexer.TokenKindString(p.peekToken.Kind))
+			}
+			p.nextToken()
+		} else if p.peekTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
+			p.nextToken()
+			break
+		} else {
+			return nil, errors.New("expected a comma (`,`) or a closing square bracket (`]`) after the value, got: " + lexer.TokenKindString(p.peekToken.Kind))
+		}
+	}
+	array.Values = list
+	return array, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Hashmap Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parseHashMapValues() (ast.Expression, error) {
+	if !p.currTokenIsOk(lexer.OPEN_CURLY_BRACKET) {
+		return nil, errors.New("expected an open curly bracket (`{`) for a hashmap, got: " + lexer.TokenKindString(p.currentToken.Kind))
+	}
+	hashMap := &ast.HashMap{Token: p.currentToken}
+	pairs := make(map[ast.Expression]ast.Expression)
+	p.nextToken()
+
+	for !p.currTokenIsOk(lexer.CLOSE_CURLY_BRACKET) {
+		parsedExp, err := p.parseExpression(LOWEST)
+		if err != nil {
+			return nil, err
+		}
+		key := parsedExp
+		if !p.expectedPeekToken(lexer.COLON) {
+			return nil, errors.New("expected a colon (`:`) after the key, got: " + lexer.TokenKindString(p.peekToken.Kind))
+		}
+		p.nextToken()
+		parsedExp, err = p.parseExpression(LOWEST)
+		if err != nil {
+			return nil, err
+		}
+		value := parsedExp
+		pairs[key] = value
+
+		if p.peekTokenIsOk(lexer.COMMA) {
+			p.nextToken()
+			if p.peekTokenIsOk(lexer.CLOSE_CURLY_BRACKET) {
+				return nil, errors.New("expected a value after comma, got: " + lexer.TokenKindString(p.peekToken.Kind))
+			}
+			p.nextToken()
+		} else if p.peekTokenIsOk(lexer.CLOSE_CURLY_BRACKET) {
+			p.nextToken()
+			break
+		} else {
+			return nil, errors.New("expected a comma (`,`) or a closing curly bracket (`}`) after the value, got: " + lexer.TokenKindString(p.peekToken.Kind))
+		}
+	}
+	hashMap.Pairs = pairs
+	return hashMap, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Prefix Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parsePrefixExpression() (ast.Expression, error) {
+	expression := &ast.PrefixExpression{
+		Token:    p.currentToken,
+		Operator: p.currentToken.Value,
+	}
+	p.nextToken()
+	parsedExp, err := p.parseExpression(PREFIX)
+	if err != nil {
+		return nil, err
+	}
+	expression.Right = parsedExp
+	return expression, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Infix Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parseInfixExpression(left ast.Expression) (ast.Expression, error) {
+	expression := &ast.InfixExpression{
+		Token:    p.currentToken,
+		Operator: p.currentToken.Value,
+		Left:     left,
+	}
+
+	precedence := p.currentPrecedence()
+	p.nextToken()
+	parsedExp, err := p.parseExpression(precedence)
+	if err != nil {
+		return nil, err
+	}
+	expression.Right = parsedExp
+	return expression, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Postfix Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parsePostfixExpression(left ast.Expression, previousOfLeft lexer.TokenKind) (ast.Expression, error) {
+	expression := &ast.PostfixExpression{
+		Token:    p.currentToken,
+		Operator: p.currentToken.Value,
+		Left:     left,
+	}
+
+	if p.peekTokenIsOk(lexer.SEMI_COLON) && previousOfLeft == lexer.SEMI_COLON || previousOfLeft == lexer.OPEN_CURLY_BRACKET {
+		expression.IsStmt = true
+	} else {
+		expression.IsStmt = false
+	}
+
+	return expression, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Assignment Expression
+// -----------------------------------------------------------------------------
+func (p *Parser) parseAssignmentExpression(left ast.Expression) (ast.Expression, error) {
+	identifier, ok := left.(*ast.Identifier)
+	if !ok {
+		return nil, errors.New("left side in an assignment operation must be an identifier, got: " + fmt.Sprintf("%T", left))
+	}
+	assignmentExpr := &ast.AssignmentExpression{
+		Token:    p.currentToken,
+		Left:     identifier,
+		Operator: p.currentToken.Value,
+	}
+
+	p.nextToken()
+	parsedExp, err := p.parseExpression(LOWEST)
+	if err != nil {
+		return nil, err
+	}
+	assignmentExpr.Right = parsedExp
+	return assignmentExpr, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Call Expression
+// -----------------------------------------------------------------------------
 func (p *Parser) parseCallExpression(left ast.Expression) (ast.Expression, error) {
 	exp := &ast.CallExpression{Token: p.currentToken, Name: left}
-	expArgs, err := p.parseCallArgs()
+	expArgs, err := p.parseCallArgs(left)
 	if err != nil {
 		return nil, err
 	}
@@ -230,7 +445,7 @@ func (p *Parser) parseCallExpression(left ast.Expression) (ast.Expression, error
 	return exp, nil
 }
 
-func (p *Parser) parseCallArgs() ([]ast.Expression, error) {
+func (p *Parser) parseCallArgs(left ast.Expression) ([]ast.Expression, error) {
 	var args []ast.Expression
 
 	if p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
@@ -256,32 +471,15 @@ func (p *Parser) parseCallArgs() ([]ast.Expression, error) {
 	}
 
 	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
-		return nil, errors.New("expected a closing bracket")
+		return nil, errors.New("expected a closing bracket (`)`) after the arguments in call expression " + left.(*ast.Identifier).Value + ", got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 
 	return args, nil
 }
 
-func (p *Parser) parseAssignmentExpression(left ast.Expression) (ast.Expression, error) {
-	identifier, ok := left.(*ast.Identifier)
-	if !ok {
-		return nil, errors.New("Left side of assignment must be an identifier")
-	}
-	assignmentExpr := &ast.AssignmentExpression{
-		Token:    p.currentToken,
-		Left:     identifier,
-		Operator: p.currentToken.Value,
-	}
-
-	p.nextToken()
-	parsedExp, err := p.parseExpression(LOWEST)
-	if err != nil {
-		return nil, err
-	}
-	assignmentExpr.Right = parsedExp
-	return assignmentExpr, nil
-}
-
+// -----------------------------------------------------------------------------
+// Parsing Index Expression
+// -----------------------------------------------------------------------------
 func (p *Parser) parseIndexExpression(left ast.Expression) (ast.Expression, error) {
 	exp := &ast.IndexExpression{Token: p.currentToken, Left: left}
 	p.nextToken()
@@ -291,11 +489,14 @@ func (p *Parser) parseIndexExpression(left ast.Expression) (ast.Expression, erro
 	}
 	exp.Index = idx
 	if !p.expectedPeekToken(lexer.CLOSE_SQUARE_BRACKET) {
-		return nil, errors.New("Expected a closing square bracket")
+		return nil, errors.New("expected a closing square bracket (`]`) after the index in index expression. got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	return exp, nil
 }
 
+// -----------------------------------------------------------------------------
+// Parsing Grouped Expression
+// -----------------------------------------------------------------------------
 func (p *Parser) parseGroupedExpression() (ast.Expression, error) {
 	p.nextToken()
 	exp, err := p.parseExpression(LOWEST)
@@ -303,145 +504,33 @@ func (p *Parser) parseGroupedExpression() (ast.Expression, error) {
 		return nil, err
 	}
 	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
-		return nil, errors.New("Expected a closing bracket")
+		return nil, errors.New("expected a closing bracket (`)`) after the grouped expression, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	return exp, nil
 }
 
-func (p *Parser) parsePrefixExpression() (ast.Expression, error) {
-	expression := &ast.PrefixExpression{
-		Token:    p.currentToken,
-		Operator: p.currentToken.Value,
-	}
-	p.nextToken()
-	parsedExp, err := p.parseExpression(PREFIX)
-	if err != nil {
-		return nil, err
-	}
-	expression.Right = parsedExp
-	return expression, nil
-}
-
-func (p *Parser) parseInfixExpression(left ast.Expression) (ast.Expression, error) {
-	expression := &ast.InfixExpression{
-		Token:    p.currentToken,
-		Operator: p.currentToken.Value,
-		Left:     left,
-	}
-
-	precedence := p.currentPrecedence()
-	p.nextToken()
-	parsedExp, err := p.parseExpression(precedence)
-	if err != nil {
-		return nil, err
-	}
-	expression.Right = parsedExp
-	return expression, nil
-}
-
-func (p *Parser) parsePostfixExpression(left ast.Expression, previousOfLeft lexer.TokenKind) (ast.Expression, error) {
-	expression := &ast.PostfixExpression{
-		Token:    p.currentToken,
-		Operator: p.currentToken.Value,
-		Left:     left,
-	}
-
-	if p.peekTokenIsOk(lexer.SEMI_COLON) && previousOfLeft == lexer.SEMI_COLON || previousOfLeft == lexer.OPEN_CURLY_BRACKET {
-		expression.IsStmt = true
-	} else {
-		expression.IsStmt = false
-	}
-
-	// p.nextToken()
-	return expression, nil
-}
-
-func (p *Parser) parseExpressionStatement() (ast.Statement, error) {
-	stmt := &ast.ExpressionStatement{Token: p.currentToken}
-
-	if p.peekTokenIsOk(lexer.COMMA) {
-		stmt.Expression = &ast.AssignmentExpression{
-			Token:    lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
-			Left:     &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Value},
-			Operator: "=",
-		}
-		list := []ast.Statement{}
-		list = append(list, stmt)
-		p.nextToken()
-		p.nextToken()
-		return p.parseMultipleAssignmentStatement(list)
-	}
-
-	parsedExp, err := p.parseExpression(LOWEST)
-	if err != nil {
-		return nil, err
-	}
-	stmt.Expression = parsedExp
-	if !p.expectedPeekToken(lexer.SEMI_COLON) {
-		return nil, errors.New("Expected a semicolon at the end of the statement")
-	}
-
-	return stmt, nil
-}
-
-func (p *Parser) parseIdentifier() (ast.Expression, error) {
-	return &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Value}, nil
-}
-
-func (p *Parser) parseIntegerValue() (ast.Expression, error) {
-	intVal := &ast.IntegerValue{Token: p.currentToken}
-	value, err := strconv.ParseInt(p.currentToken.Value, 0, 64)
-	if err != nil {
-		return nil, errors.New("could not parse " + p.currentToken.Value + " as integer")
-	}
-	intVal.Value = value
-	return intVal, nil
-}
-
-func (p *Parser) parseFloatValue() (ast.Expression, error) {
-	floatVal := &ast.FloatValue{Token: p.currentToken}
-	value, err := strconv.ParseFloat(p.currentToken.Value, 64)
-	if err != nil {
-		return nil, errors.New("could not parse " + p.currentToken.Value + " as float")
-	}
-	floatVal.Value = value
-	return floatVal, nil
-}
-
-func (p *Parser) parseBooleanValue() (ast.Expression, error) {
-	val := p.currentToken.Value
-	if val == "true" {
-		return &ast.BooleanValue{Token: p.currentToken, Value: true}, nil
-	}
-	return &ast.BooleanValue{Token: p.currentToken, Value: false}, nil
-}
-
-func (p *Parser) parseStringValue() (ast.Expression, error) {
-	return &ast.StringValue{Token: p.currentToken, Value: p.currentToken.Value}, nil
-}
-
-func (p *Parser) parseCharValue() (ast.Expression, error) {
-	return &ast.CharValue{Token: p.currentToken, Value: p.currentToken.Value}, nil
-}
+// -----------------------------------------------------------------------------
+// Parsing Statements
+// -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
-// Parsing Functions
+// Parsing Function Statement
 // -----------------------------------------------------------------------------
 func (p *Parser) parseFunctionStatement() (*ast.Function, error) {
 	inFunction = true
 	stmt := &ast.Function{Token: p.currentToken}
 
 	if !p.expectedPeekToken(lexer.COLON) {
-		return nil, errors.New("Expected a colon after the fun keyword")
+		return nil, errors.New("expected a colon (`:`) after the `fun` keyword, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 
 	if !p.expectedPeekToken(lexer.IDENTIFIER) {
-		return nil, errors.New("Expected a function name after the colon")
+		return nil, errors.New("expected an identifier(function name) after the colon (`:`), got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	stmt.Name = &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Value}
 
 	if _, ok := FunctionMap[stmt.Name.Value]; ok && !p.inTesting {
-		return nil, errors.New("Function with the same name already exists")
+		return nil, errors.New("can't declare a function twice, function with the same name `" + stmt.Name.Value + "`already exists")
 	}
 
 	parameters, err := p.parseFunctionParameters()
@@ -461,7 +550,7 @@ func (p *Parser) parseFunctionStatement() (*ast.Function, error) {
 	}
 
 	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
-		return nil, errors.New("Expected an open curly bracket after the function signature")
+		return nil, errors.New("expected an open curly bracket (`{`) after the function (`" + stmt.Name.Value + "`) signature, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	funBody, err := p.parseFunctionBody()
 	if err != nil {
@@ -476,115 +565,27 @@ func (p *Parser) parseFunctionStatement() (*ast.Function, error) {
 }
 
 // -----------------------------------------------------------------------------
-// Parsing Function Body
-// -----------------------------------------------------------------------------
-func (p *Parser) parseFunctionBody() (*ast.FunctionBody, error) {
-	block := &ast.FunctionBody{Token: p.currentToken}
-	block.Statements = []ast.Statement{}
-	p.nextToken()
-
-	for p.currentToken.Kind != lexer.CLOSE_CURLY_BRACKET && p.currentToken.Kind != lexer.EOF {
-		stmt, err := p.parseStatement()
-		if err != nil {
-			return nil, err
-		}
-		block.Statements = append(block.Statements, stmt)
-		p.nextToken()
-	}
-	return block, nil
-}
-
-// -----------------------------------------------------------------------------
-// Parsing Function Return Types
-// -----------------------------------------------------------------------------
-func (p *Parser) parseFunctionReturnTypes() ([]*ast.FunctionReturnType, error) {
-	var listToReturn []*ast.FunctionReturnType
-
-	if !p.expectedPeekToken(lexer.COLON) {
-		return nil, errors.New("Expected a colon after the function name and parameters")
-	}
-	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
-		return nil, errors.New("Expected an open bracket after the colon")
-	}
-
-	for !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
-		if !p.expectedPeekToken(lexer.TYPE) {
-			return nil, errors.New("Expected a type after the open bracket")
-		}
-
-		firstType := p.currentToken
-		param := &ast.FunctionReturnType{ReturnType: &ast.Type{Token: firstType, Value: firstType.Value}}
-		if p.peekTokenIsOk(lexer.OPEN_SQUARE_BRACKET) {
-			p.nextToken()
-			if p.peekTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
-				param.ReturnType.IsArray = true
-				param.ReturnType.IsHash = false
-				param.ReturnType.SubTypes = nil
-				p.nextToken()
-			} else if p.peekTokenIsOk(lexer.TYPE) {
-				p.nextToken()
-				param.ReturnType.IsArray = false
-				param.ReturnType.IsHash = true
-
-				subTypes := []*ast.Type{}
-				subTypes = append(subTypes, &ast.Type{Token: firstType, Value: firstType.Value, IsArray: false, IsHash: false, SubTypes: nil})
-				subTypes = append(subTypes, &ast.Type{Token: p.currentToken, Value: p.currentToken.Value, IsArray: false, IsHash: false, SubTypes: nil})
-				param.ReturnType.SubTypes = subTypes
-
-				if !p.expectedPeekToken(lexer.CLOSE_SQUARE_BRACKET) {
-					return nil, errors.New("Expected a closing square bracket after value type")
-				}
-			} else {
-				return nil, errors.New("Expected a closing square bracket for array or a type for hashmap. but got=" + p.peekToken.Value)
-			}
-		} else {
-			param.ReturnType.IsArray = false
-			param.ReturnType.IsHash = false
-			param.ReturnType.SubTypes = nil
-		}
-		listToReturn = append(listToReturn, param)
-
-		if p.peekTokenIsOk(lexer.COMMA) {
-			p.nextToken()
-			if p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
-				return nil, errors.New("Expected a value after comma, got " + p.peekToken.Value + " instead")
-			}
-		} else {
-			if !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
-				return nil, errors.New("Expected a closing bracket or a comma after the parameter type but got=" + p.peekToken.Value)
-			}
-		}
-	}
-
-	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
-		return nil, errors.New("Expected a closing bracket after the return types")
-	}
-
-	return listToReturn, nil
-}
-
-// -----------------------------------------------------------------------------
 // Parsing Function Parameters
 // -----------------------------------------------------------------------------
 func (p *Parser) parseFunctionParameters() ([]*ast.FunctionParameters, error) {
 	var listToReturn []*ast.FunctionParameters
 
 	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
-		return nil, errors.New("Expected an open bracket after the function name")
+		return nil, errors.New("expected an open bracket (`(`) after the function name, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 
 	for !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
 		if !p.expectedPeekToken(lexer.IDENTIFIER) {
-			return nil, errors.New("Expected an identifier or close bracket after the open bracket")
+			return nil, errors.New("expected an identifier or a close bracket (`)`) after the open bracket (`(`) for function parameters, got: " + lexer.TokenKindString(p.peekToken.Kind))
 		}
 		param := &ast.FunctionParameters{ParameterName: &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Value}}
 
 		if !p.expectedPeekToken(lexer.COLON) {
-			return nil, errors.New("Expected a colon after the parameter name")
+			return nil, errors.New("expected a colon (`:`) after the parameter " + param.ParameterName.Value + ", got: " + lexer.TokenKindString(p.peekToken.Kind))
 		}
 
 		if !p.expectedPeekToken(lexer.TYPE) {
-			return nil, errors.New("Expected a type after the colon")
+			return nil, errors.New("expected a type for parameter " + param.ParameterName.Value + " after the colon (`:`), got: " + lexer.TokenKindString(p.peekToken.Kind))
 		}
 		firstType := p.currentToken
 		param.ParameterType = &ast.Type{Token: firstType, Value: firstType.Value}
@@ -607,10 +608,10 @@ func (p *Parser) parseFunctionParameters() ([]*ast.FunctionParameters, error) {
 				param.ParameterType.SubTypes = subTypes
 
 				if !p.expectedPeekToken(lexer.CLOSE_SQUARE_BRACKET) {
-					return nil, errors.New("Expected a closing square bracket after value type")
+					return nil, errors.New("expected a closing square bracket (`]`) after value type for hashmap, got: " + lexer.TokenKindString(p.peekToken.Kind))
 				}
 			} else {
-				return nil, errors.New("Expected a closing square bracket for array or a type for hashmap. but got=" + p.peekToken.Value)
+				return nil, errors.New("Expected a closing square bracket (`]`) for array or a datatype for hashmap, got: " + lexer.TokenKindString(p.peekToken.Kind))
 			}
 		} else {
 			param.ParameterType.IsArray = false
@@ -623,123 +624,239 @@ func (p *Parser) parseFunctionParameters() ([]*ast.FunctionParameters, error) {
 		if p.peekTokenIsOk(lexer.COMMA) {
 			p.nextToken()
 			if p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
-				return nil, errors.New("Expected a value after comma got " + p.peekToken.Value + " instead")
+				return nil, errors.New("expected an identifier after comma (`,`) for function parameters, got: " + lexer.TokenKindString(p.peekToken.Kind))
 			}
 		} else {
 			if !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
-				return nil, errors.New("Expected a closing bracket or a comma after the parameter type but got=" + p.peekToken.Value)
+				return nil, errors.New("expected a closing bracket (`)`) or a comma (`,`) after the parameter type, got: " + lexer.TokenKindString(p.peekToken.Kind))
 			}
 		}
 	}
 
 	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
-		return nil, errors.New("Expected a closing bracket after the parameters")
+		return nil, errors.New("expected a closing bracket (`)`) after function parameters, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 
 	return listToReturn, nil
 }
 
 // -----------------------------------------------------------------------------
-// Parsing Return Statements
+// Parsing Function Return Types
 // -----------------------------------------------------------------------------
-func (p *Parser) parseReturnStatement() (*ast.ReturnStatement, error) {
-	if !inFunction && !p.inTesting {
-		return nil, errors.New("Return statement can only be used inside a function")
-	}
-
-	stmt := &ast.ReturnStatement{Token: p.currentToken}
-
-	if p.peekTokenIsOk(lexer.SEMI_COLON) {
-		stmt.Value = nil
-		p.nextToken()
-		return stmt, nil
-	}
+func (p *Parser) parseFunctionReturnTypes() ([]*ast.FunctionReturnType, error) {
+	var listToReturn []*ast.FunctionReturnType
 
 	if !p.expectedPeekToken(lexer.COLON) {
-		return nil, errors.New("Expected a colon after the return keyword")
+		return nil, errors.New("expected a colon (`:`) after function parameters, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
+		return nil, errors.New("expected an open bracket (`(`) after the colon (`:`), got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 
-	// We have multiple return values
-	if p.peekTokenIsOk(lexer.OPEN_BRACKET) {
-		p.nextToken()
-		if p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
-			return nil, errors.New("Expected values after open bracket")
+	for !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
+		if !p.expectedPeekToken(lexer.TYPE) {
+			return nil, errors.New("expected a datatype after the open bracket (`(`), got: " + lexer.TokenKindString(p.peekToken.Kind))
 		}
-		p.nextToken()
 
-		for !p.currTokenIsOk(lexer.CLOSE_BRACKET) {
-			parsedExp, err := p.parseExpression(LOWEST)
-			if err != nil {
-				return nil, err
-			}
-			stmt.Value = append(stmt.Value, parsedExp)
-			if p.peekTokenIsOk(lexer.COMMA) {
+		firstType := p.currentToken
+		param := &ast.FunctionReturnType{ReturnType: &ast.Type{Token: firstType, Value: firstType.Value}}
+		if p.peekTokenIsOk(lexer.OPEN_SQUARE_BRACKET) {
+			p.nextToken()
+			if p.peekTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
+				param.ReturnType.IsArray = true
+				param.ReturnType.IsHash = false
+				param.ReturnType.SubTypes = nil
 				p.nextToken()
-				if p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
-					return nil, errors.New("Expected a value after comma")
+			} else if p.peekTokenIsOk(lexer.TYPE) {
+				p.nextToken()
+				param.ReturnType.IsArray = false
+				param.ReturnType.IsHash = true
+
+				subTypes := []*ast.Type{}
+				subTypes = append(subTypes, &ast.Type{Token: firstType, Value: firstType.Value, IsArray: false, IsHash: false, SubTypes: nil})
+				subTypes = append(subTypes, &ast.Type{Token: p.currentToken, Value: p.currentToken.Value, IsArray: false, IsHash: false, SubTypes: nil})
+				param.ReturnType.SubTypes = subTypes
+
+				if !p.expectedPeekToken(lexer.CLOSE_SQUARE_BRACKET) {
+					return nil, errors.New("expected a closing square bracket (`]`) after value datatype for hashmap, got: " + lexer.TokenKindString(p.peekToken.Kind))
 				}
-				p.nextToken()
-			} else if p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
-				p.nextToken()
-				break
+			} else {
+				return nil, errors.New("expected a closing square bracket (`]`) for array or a datatype for hashmap, got: " + lexer.TokenKindString(p.peekToken.Kind))
 			}
+		} else {
+			param.ReturnType.IsArray = false
+			param.ReturnType.IsHash = false
+			param.ReturnType.SubTypes = nil
+		}
+		listToReturn = append(listToReturn, param)
+
+		if p.peekTokenIsOk(lexer.COMMA) {
+			p.nextToken()
+			if p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
+				return nil, errors.New("expected a datatype after comma (`,`), got: " + lexer.TokenKindString(p.peekToken.Kind))
+			}
+		} else {
+			if !p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
+				return nil, errors.New("expected a closing bracket (`)`) or a comma (`,`) after the parameter datatype, got: " + lexer.TokenKindString(p.peekToken.Kind))
+			}
+		}
+	}
+
+	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
+		return nil, errors.New("expected a closing bracket (`)`) after the return types, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+
+	return listToReturn, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Function Body
+// -----------------------------------------------------------------------------
+func (p *Parser) parseFunctionBody() (*ast.FunctionBody, error) {
+	block := &ast.FunctionBody{Token: p.currentToken}
+	block.Statements = []ast.Statement{}
+	p.nextToken()
+
+	for p.currentToken.Kind != lexer.CLOSE_CURLY_BRACKET && p.currentToken.Kind != lexer.EOF {
+		stmt, err := p.parseStatement()
+		if err != nil {
+			return nil, err
+		}
+		block.Statements = append(block.Statements, stmt)
+		p.nextToken()
+	}
+	return block, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing VAR and CONST Statement
+// -----------------------------------------------------------------------------
+func (p *Parser) parseVarStmtSig() (*ast.VarStatement, error) {
+	stmt := &ast.VarStatement{Token: p.currentToken}
+
+	if !p.expectedPeekToken(lexer.IDENTIFIER) {
+		if stmt.Token.Kind == lexer.CONST {
+			return nil, errors.New("expected an identifier after `const` keyword, got: " + lexer.TokenKindString(p.peekToken.Kind))
+		}
+		return nil, errors.New("expected an identifier after `var` keyword, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+	stmt.Name = &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Value}
+
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil, errors.New("expected a colon (`:`) after the identifier `" + stmt.Name.Value + "`, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+
+	if !p.expectedPeekToken(lexer.TYPE) {
+		return nil, errors.New("expected a datatype for identifier `" + stmt.Name.Value + "` after colon (`:`), got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+
+	firstType := p.currentToken
+	stmt.Type = &ast.Type{Token: firstType, Value: firstType.Value}
+
+	if p.peekTokenIsOk(lexer.OPEN_SQUARE_BRACKET) {
+		p.nextToken()
+		if p.peekTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
+			stmt.Type.IsArray = true
+			stmt.Type.IsHash = false
+			stmt.Type.SubTypes = nil
+			p.nextToken()
+		} else if p.peekTokenIsOk(lexer.TYPE) {
+			p.nextToken()
+			stmt.Type.IsArray = false
+			stmt.Type.IsHash = true
+
+			subTypes := []*ast.Type{}
+			subTypes = append(subTypes, &ast.Type{Token: firstType, Value: firstType.Value, IsArray: false, IsHash: false, SubTypes: nil})
+			subTypes = append(subTypes, &ast.Type{Token: p.currentToken, Value: p.currentToken.Value, IsArray: false, IsHash: false, SubTypes: nil})
+			stmt.Type.SubTypes = subTypes
+
+			if !p.expectedPeekToken(lexer.CLOSE_SQUARE_BRACKET) {
+				return nil, errors.New("expected a closing square bracket (`]`) after value datatype for hashmap, got: " + lexer.TokenKindString(p.peekToken.Kind))
+			}
+		} else {
+			return nil, errors.New("expected a closing square bracket (`]`) for array or a value datatype for hashmap, got: " + lexer.TokenKindString(p.peekToken.Kind))
 		}
 	} else {
-		// only 1 return value
+		stmt.Type.IsArray = false
+		stmt.Type.IsHash = false
+		stmt.Type.SubTypes = nil
+	}
+
+	return stmt, nil
+}
+
+func (p *Parser) parseVarStatement() (ast.Statement, error) {
+	stmt, err := p.parseVarStmtSig()
+	if err != nil {
+		return nil, err
+	}
+
+	if p.peekTokenIsOk(lexer.COMMA) {
+		list := []ast.Statement{}
+		list = append(list, stmt)
+		p.nextToken()
+		p.nextToken()
+		return p.parseMultipleAssignmentStatement(list)
+	}
+
+	if stmt.Type.IsArray && !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
+		return nil, errors.New("array `" + stmt.Name.Value + "` must always be initialized while declaring, for empty array use `[]`")
+	} else if stmt.Type.IsHash && !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
+		return nil, errors.New("hashmap `" + stmt.Name.Value + "` must always be initialized while declaring, for empty hashmap use `{}`")
+	} else if stmt.Token.Kind == lexer.CONST && !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
+		return nil, errors.New("const variable `" + stmt.Name.Value + "` must be initialized while declaring")
+	}
+
+	if p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
+		p.nextToken()
 		p.nextToken()
 		parsedExp, err := p.parseExpression(LOWEST)
 		if err != nil {
 			return nil, err
 		}
-		stmt.Value = append(stmt.Value, parsedExp)
-		if p.peekTokenIsOk(lexer.COMMA) {
-			return nil, errors.New("Expected a semicolon, got a COMMA insted. To return multiple values, use `return: (val1, val2, ...)`")
+		stmt.Value = parsedExp
+
+		if stmt.Type.IsArray {
+			if array, ok := stmt.Value.(*ast.ArrayValue); ok {
+				array.Type = stmt.Type
+				stmt.Value = array
+			}
+		} else if stmt.Type.IsHash {
+			if hash, ok := stmt.Value.(*ast.HashMap); ok {
+				hash.KeyType = stmt.Type.SubTypes[0]
+				hash.ValueType = stmt.Type.SubTypes[1]
+				stmt.Value = hash
+			}
+		}
+	} else {
+		switch stmt.Type.Value {
+		case "int":
+			stmt.Value = &ast.IntegerValue{Token: lexer.Token{Kind: lexer.INT, Value: "0"}, Value: 0}
+		case "float":
+			stmt.Value = &ast.FloatValue{Token: lexer.Token{Kind: lexer.FLOAT, Value: "0.0"}, Value: 0.0}
+		case "bool":
+			stmt.Value = &ast.BooleanValue{Token: lexer.Token{Kind: lexer.BOOL, Value: "false"}, Value: false}
+		case "string":
+			stmt.Value = &ast.StringValue{Token: lexer.Token{Kind: lexer.STRING, Value: ""}, Value: ""}
+		case "char":
+			stmt.Value = &ast.CharValue{Token: lexer.Token{Kind: lexer.CHAR, Value: ""}, Value: ""}
 		}
 	}
 
 	if !p.expectedPeekToken(lexer.SEMI_COLON) {
-		return nil, errors.New("Expected a semicolon at the end of the statement")
-	}
-
-	return stmt, nil
-}
-
-// -----------------------------------------------------------------------------
-// Parsing Continue Statements
-// -----------------------------------------------------------------------------
-func (p *Parser) parseContinueStatement() (*ast.ContinueStatement, error) {
-	if !inForLoop {
-		return nil, errors.New("Continue statement can only be used inside a for loop")
-	}
-	stmt := &ast.ContinueStatement{Token: p.currentToken}
-	if !p.expectedPeekToken(lexer.SEMI_COLON) {
-		return nil, errors.New("Expected a semicolon at the end of the statement")
+		return nil, errors.New("expected a semicolon (`;`) at the end of the statement after variable declaration, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	return stmt, nil
 }
 
 // -----------------------------------------------------------------------------
-// Parsing Break Statements
-// -----------------------------------------------------------------------------
-func (p *Parser) parseBreakStatement() (*ast.BreakStatement, error) {
-	if !inForLoop {
-		return nil, errors.New("Break statement can only be used inside a for loop")
-	}
-	stmt := &ast.BreakStatement{Token: p.currentToken}
-	if !p.expectedPeekToken(lexer.SEMI_COLON) {
-		return nil, errors.New("Expected a semicolon at the end of the statement")
-	}
-	return stmt, nil
-}
-
-// -----------------------------------------------------------------------------
-// Parsing Multiple assignment statement
+// Parsing Multiple Assignment Statement
 // -----------------------------------------------------------------------------
 func (p *Parser) parseMultipleAssignmentStatement(list []ast.Statement) (*ast.MultiValueAssignStmt, error) {
 	stmt := &ast.MultiValueAssignStmt{Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="}}
 
 	if p.currTokenIsOk(lexer.EQUAL_ASSIGN) {
-		return nil, errors.New("Expected an identifier or a var/const keyword, got " + p.currentToken.Value + " instead")
+		return nil, errors.New("expected an identifier or a `var`/`const` keyword after the comma (`,`), got: " + lexer.TokenKindString(p.currentToken.Kind))
 	}
 
 	for !p.currTokenIsOk(lexer.EQUAL_ASSIGN) {
@@ -762,16 +879,18 @@ func (p *Parser) parseMultipleAssignmentStatement(list []ast.Statement) (*ast.Mu
 			list = append(list, expStmt)
 			p.nextToken()
 		} else {
-			return nil, errors.New("Expected an identifier or a var/const keyword, got " + p.currentToken.Value + " instead")
+			return nil, errors.New("expected an identifier or a `var`/`const` keyword, got: " + lexer.TokenKindString(p.currentToken.Kind))
 		}
 
 		if p.currTokenIsOk(lexer.COMMA) {
 			if p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
-				return nil, errors.New("Expected an identifier or a var/const keyword, got " + p.peekToken.Value + " instead")
+				return nil, errors.New("expected an identifier or a `var`/`const` keyword after the comma (`,`), got: " + lexer.TokenKindString(p.peekToken.Kind))
 			}
 			p.nextToken()
 		} else if p.currTokenIsOk(lexer.EQUAL_ASSIGN) {
 			break
+		} else {
+			return nil, errors.New("expected a comma (`,`) or an equal sign (`=`) after identifier, got: " + lexer.TokenKindString(p.currentToken.Kind))
 		}
 	}
 
@@ -786,13 +905,16 @@ func (p *Parser) parseMultipleAssignmentStatement(list []ast.Statement) (*ast.Mu
 		valueList = append(valueList, parsedExp)
 		p.nextToken()
 		if p.currTokenIsOk(lexer.COMMA) {
+			if p.peekTokenIsOk(lexer.SEMI_COLON) {
+				return nil, errors.New("expected an expression after comma (`,`) in multi-value assignment statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
+			}
 			p.nextToken()
+		} else {
+			if !p.currTokenIsOk(lexer.SEMI_COLON) {
+				return nil, errors.New("expected a comma (`,`) or a semicolon (`;`) after the expression, got: " + lexer.TokenKindString(p.currentToken.Kind))
+			}
 		}
 	}
-
-	// ValueList could have a CallExpression, or it would have equal number of expressions as the number of objects in the list
-	// if we have a call expression, traverse the object list and assign the call expression to each object
-	// if we have equal number of expressions, assign each expression to the corresponding object
 
 	if len(valueList) == 1 {
 		stmt.SingleCallExp = true
@@ -815,12 +937,11 @@ func (p *Parser) parseMultipleAssignmentStatement(list []ast.Statement) (*ast.Mu
 				}
 			}
 		} else {
-			return nil, errors.New("Number of expressions on the right do not match the number of decelaraions on the left")
+			return nil, errors.New("number of expressions on the right side of multi-assignment = 1, expected a function call, got: " + fmt.Sprintf("%T", valueList[0]))
 		}
 	} else {
-		// there are multiple expressions
 		if len(valueList) != len(list) {
-			return nil, errors.New("Number of expressions on the right do not match the number of decelaraions on the left")
+			return nil, errors.New("number of expression on the right side of multi-assignment do not match the number of declarations on the left, left=" + fmt.Sprint(len(list)) + ", right=" + fmt.Sprint(len(valueList)))
 		}
 		stmt.SingleCallExp = false
 
@@ -846,7 +967,7 @@ func (p *Parser) parseMultipleAssignmentStatement(list []ast.Statement) (*ast.Mu
 						list[i] = expStmtObj
 					}
 				} else {
-					return nil, errors.New("Expected an variable identifier or a var/const statement, got " + p.currentToken.Value + " instead")
+					return nil, errors.New("expected an identifier or a `var`/`const` keyword, got: " + fmt.Sprintf("%T", obj))
 				}
 			}
 		}
@@ -857,147 +978,17 @@ func (p *Parser) parseMultipleAssignmentStatement(list []ast.Statement) (*ast.Mu
 }
 
 // -----------------------------------------------------------------------------
-// Parsing Arrays {...}
+// Parsing Expression Statement
 // -----------------------------------------------------------------------------
-func (p *Parser) parseArrayValues() (ast.Expression, error) {
-	if !p.currTokenIsOk(lexer.OPEN_SQUARE_BRACKET) {
-		return nil, errors.New("Expected an open square bracket, got " + p.currentToken.Value + " instead")
-	}
-	array := &ast.ArrayValue{Token: p.currentToken}
-	p.nextToken()
+func (p *Parser) parseExpressionStatement() (ast.Statement, error) {
+	stmt := &ast.ExpressionStatement{Token: p.currentToken}
 
-	list := []ast.Expression{}
-	for !p.currTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
-		parsedExp, err := p.parseExpression(LOWEST)
-		if err != nil {
-			return nil, err
-		}
-		list = append(list, parsedExp)
-		if p.peekTokenIsOk(lexer.COMMA) {
-			p.nextToken()
-			if p.peekTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
-				return nil, errors.New("Expected a value after comma, got " + p.peekToken.Value + " instead")
-			}
-			p.nextToken()
-		} else if p.peekTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
-			p.nextToken()
-			break
-		}
-	}
-	array.Values = list
-	return array, nil
-}
-
-// -----------------------------------------------------------------------------
-// Parsing HashMap {...}
-// -----------------------------------------------------------------------------
-func (p *Parser) parseHashMapValues() (ast.Expression, error) {
-	if !p.currTokenIsOk(lexer.OPEN_CURLY_BRACKET) {
-		return nil, errors.New("Expected an open curly bracket, got " + p.currentToken.Value + " instead")
-	}
-	hashMap := &ast.HashMap{Token: p.currentToken}
-	pairs := make(map[ast.Expression]ast.Expression)
-	p.nextToken()
-
-	for !p.currTokenIsOk(lexer.CLOSE_CURLY_BRACKET) {
-		parsedExp, err := p.parseExpression(LOWEST)
-		if err != nil {
-			return nil, err
-		}
-		key := parsedExp
-		if !p.expectedPeekToken(lexer.COLON) {
-			return nil, errors.New("Expected a colon after the key")
-		}
-		p.nextToken()
-		parsedExp, err = p.parseExpression(LOWEST)
-		if err != nil {
-			return nil, err
-		}
-		value := parsedExp
-		pairs[key] = value
-
-		if p.peekTokenIsOk(lexer.COMMA) {
-			p.nextToken()
-			if p.peekTokenIsOk(lexer.CLOSE_CURLY_BRACKET) {
-				return nil, errors.New("Expected a value after comma, got " + p.peekToken.Value + " instead")
-			}
-			p.nextToken()
-		} else if p.peekTokenIsOk(lexer.CLOSE_CURLY_BRACKET) {
-			p.nextToken()
-			break
-		}
-	}
-	hashMap.Pairs = pairs
-	return hashMap, nil
-}
-
-// -----------------------------------------------------------------------------
-// Parsing Var and Const Statements
-// -----------------------------------------------------------------------------
-func (p *Parser) parseVarStmtSig() (*ast.VarStatement, error) {
-	stmt := &ast.VarStatement{Token: p.currentToken}
-
-	if !p.expectedPeekToken(lexer.IDENTIFIER) {
-		if stmt.Token.Kind == lexer.CONST {
-			return nil, errors.New("Expected an identifier after const keyword")
-		}
-		return nil, errors.New("Expected an identifier after var keyword")
-	}
-	stmt.Name = &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Value}
-
-	if !p.expectedPeekToken(lexer.COLON) {
-		return nil, errors.New("Expected a colon after the identifier")
-	}
-
-	if !p.expectedPeekToken(lexer.TYPE) {
-		return nil, errors.New("Expected a type after the colon")
-	}
-
-	firstType := p.currentToken
-	stmt.Type = &ast.Type{Token: firstType, Value: firstType.Value}
-
-	// check for array
-	if p.peekTokenIsOk(lexer.OPEN_SQUARE_BRACKET) {
-		p.nextToken()
-		if p.peekTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
-			// is an array
-			stmt.Type.IsArray = true
-			stmt.Type.IsHash = false
-			stmt.Type.SubTypes = nil
-			p.nextToken()
-		} else if p.peekTokenIsOk(lexer.TYPE) {
-			// is a hashmap
-			p.nextToken()
-			stmt.Type.IsArray = false
-			stmt.Type.IsHash = true
-
-			subTypes := []*ast.Type{}
-			subTypes = append(subTypes, &ast.Type{Token: firstType, Value: firstType.Value, IsArray: false, IsHash: false, SubTypes: nil})
-			subTypes = append(subTypes, &ast.Type{Token: p.currentToken, Value: p.currentToken.Value, IsArray: false, IsHash: false, SubTypes: nil})
-			stmt.Type.SubTypes = subTypes
-
-			if !p.expectedPeekToken(lexer.CLOSE_SQUARE_BRACKET) {
-				return nil, errors.New("Expected a closing square bracket")
-			}
-		}
-	} else {
-		// no array or hashmap, just simple type
-		stmt.Type.IsArray = false
-		stmt.Type.IsHash = false
-		stmt.Type.SubTypes = nil
-	}
-
-	return stmt, nil
-}
-
-func (p *Parser) parseVarStatement() (ast.Statement, error) {
-	stmt, err := p.parseVarStmtSig()
-	if err != nil {
-		return nil, err
-	}
-
-	// we have multiple assignments
 	if p.peekTokenIsOk(lexer.COMMA) {
+		stmt.Expression = &ast.AssignmentExpression{
+			Token:    lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+			Left:     &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Value},
+			Operator: "=",
+		}
 		list := []ast.Statement{}
 		list = append(list, stmt)
 		p.nextToken()
@@ -1005,69 +996,122 @@ func (p *Parser) parseVarStatement() (ast.Statement, error) {
 		return p.parseMultipleAssignmentStatement(list)
 	}
 
-	if stmt.Type.IsArray && !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
-		return nil, errors.New("Array type must be initialized with values, for empty array use `[]`")
-	} else if stmt.Type.IsHash && !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
-		return nil, errors.New("Hashmap type must be initialized with values, for empty hashmap use `{}`")
-	} else if stmt.Token.Kind == lexer.CONST && !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
-		return nil, errors.New("Const " + stmt.Name.Value + " must be initialized")
+	parsedExp, err := p.parseExpression(LOWEST)
+	if err != nil {
+		return nil, err
+	}
+	stmt.Expression = parsedExp
+	if !p.expectedPeekToken(lexer.SEMI_COLON) {
+		return nil, errors.New("expected a semicolon (`;`) at the end of the statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 
-	if p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
+	return stmt, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Return Statement
+// -----------------------------------------------------------------------------
+func (p *Parser) parseReturnStatement() (*ast.ReturnStatement, error) {
+	if !inFunction && !p.inTesting {
+		return nil, errors.New("return statement can only be used inside a function")
+	}
+
+	stmt := &ast.ReturnStatement{Token: p.currentToken}
+
+	if p.peekTokenIsOk(lexer.SEMI_COLON) {
+		stmt.Value = nil
 		p.nextToken()
+		return stmt, nil
+	}
+
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil, errors.New("expected a colon (`:`) after the `return` keyword, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+
+	if p.peekTokenIsOk(lexer.OPEN_BRACKET) {
+		p.nextToken()
+		if p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
+			return nil, errors.New("expected values after open bracket (`(`) in `return` statement")
+		}
+		p.nextToken()
+
+		for !p.currTokenIsOk(lexer.CLOSE_BRACKET) {
+			parsedExp, err := p.parseExpression(LOWEST)
+			if err != nil {
+				return nil, err
+			}
+			stmt.Value = append(stmt.Value, parsedExp)
+			if p.peekTokenIsOk(lexer.COMMA) {
+				p.nextToken()
+				if p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
+					return nil, errors.New("expected an expression after comma (`,`) in `return` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
+				}
+				p.nextToken()
+			} else if p.peekTokenIsOk(lexer.CLOSE_BRACKET) {
+				p.nextToken()
+				break
+			} else {
+				return nil, errors.New("expected a comma (`,`) or a closing bracket (`)`) after the expression, got: " + lexer.TokenKindString(p.peekToken.Kind))
+			}
+		}
+	} else {
 		p.nextToken()
 		parsedExp, err := p.parseExpression(LOWEST)
 		if err != nil {
 			return nil, err
 		}
-		stmt.Value = parsedExp
-
-		// if the type has isArray = true, exec this:
-		if stmt.Type.IsArray {
-			if array, ok := stmt.Value.(*ast.ArrayValue); ok {
-				array.Type = stmt.Type
-				stmt.Value = array
-			}
-		} else if stmt.Type.IsHash {
-			if hash, ok := stmt.Value.(*ast.HashMap); ok {
-				hash.KeyType = stmt.Type.SubTypes[0]
-				hash.ValueType = stmt.Type.SubTypes[1]
-				stmt.Value = hash
-			}
-		}
-	} else {
-		// If the value is not assigned, then the default value will be assigned
-		switch stmt.Type.Value {
-		case "int":
-			stmt.Value = &ast.IntegerValue{Token: lexer.Token{Kind: lexer.INT, Value: "0"}, Value: 0}
-		case "float":
-			stmt.Value = &ast.FloatValue{Token: lexer.Token{Kind: lexer.FLOAT, Value: "0.0"}, Value: 0.0}
-		case "bool":
-			stmt.Value = &ast.BooleanValue{Token: lexer.Token{Kind: lexer.BOOL, Value: "false"}, Value: false}
-		case "string":
-			stmt.Value = &ast.StringValue{Token: lexer.Token{Kind: lexer.STRING, Value: ""}, Value: ""}
-		case "char":
-			stmt.Value = &ast.CharValue{Token: lexer.Token{Kind: lexer.CHAR, Value: ""}, Value: ""}
+		stmt.Value = append(stmt.Value, parsedExp)
+		if p.peekTokenIsOk(lexer.COMMA) {
+			return nil, errors.New("expected a semicolon (`;`), got: " + lexer.TokenKindString(p.peekToken.Kind) + ". To return multiple values, use `return: (val1, val2, ...)`")
 		}
 	}
 
 	if !p.expectedPeekToken(lexer.SEMI_COLON) {
-		return nil, errors.New("Expected a semicolon at the end of the statement")
+		return nil, errors.New("expected a semicolon (`;`) at the end of `return` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+
+	return stmt, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing Continue Statement
+// -----------------------------------------------------------------------------
+func (p *Parser) parseContinueStatement() (*ast.ContinueStatement, error) {
+	if !inForLoop {
+		return nil, errors.New("continue statement can only be used inside a `for loop`")
+	}
+	stmt := &ast.ContinueStatement{Token: p.currentToken}
+	if !p.expectedPeekToken(lexer.SEMI_COLON) {
+		return nil, errors.New("expected a semicolon (`;`) at the end of `continue` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	return stmt, nil
 }
 
 // -----------------------------------------------------------------------------
-// Parsing If statements
+// Parsing Break Statement
+// -----------------------------------------------------------------------------
+func (p *Parser) parseBreakStatement() (*ast.BreakStatement, error) {
+	if !inForLoop {
+		return nil, errors.New("break statement can only be used inside a `for loop`")
+	}
+	stmt := &ast.BreakStatement{Token: p.currentToken}
+	if !p.expectedPeekToken(lexer.SEMI_COLON) {
+		return nil, errors.New("expected a semicolon (`;`) at the end of `break` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+	return stmt, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing If statement
 // -----------------------------------------------------------------------------
 func (p *Parser) parseIfStatement() (*ast.IfStatement, error) {
 	stmt := &ast.IfStatement{Token: p.currentToken}
 
 	if !p.expectedPeekToken(lexer.COLON) {
-		return nil, errors.New("Expected a colon after `if` keyword")
+		return nil, errors.New("expected a colon (`:`) after `if` keyword, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
-		return nil, errors.New("Expected an open bracket after the colon")
+		return nil, errors.New("expected an open bracket (`(`) after the colon (`:`) in `if` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 
 	groupedExpValue, err := p.parseGroupedExpression()
@@ -1077,10 +1121,10 @@ func (p *Parser) parseIfStatement() (*ast.IfStatement, error) {
 	stmt.Value = groupedExpValue
 
 	if !p.expectedPeekToken(lexer.COLON) {
-		return nil, errors.New("Expected a colon after the expression")
+		return nil, errors.New("expected a colon (`:`) after grouped expression for `if` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
-		return nil, errors.New("Expected an open curly bracket after the colon")
+		return nil, errors.New("expected an open curly bracket (`{`) after the colon (`:`) in `if` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 
 	body, err := p.parseFunctionBody()
@@ -1099,10 +1143,10 @@ func (p *Parser) parseIfStatement() (*ast.IfStatement, error) {
 			elseIfStmt := &ast.ElseIfStatement{Token: p.currentToken}
 
 			if !p.expectedPeekToken(lexer.COLON) {
-				return nil, errors.New("Expected a colon after the else if keyword")
+				return nil, errors.New("expected a colon (`:`) after the `else if` keyword, got: " + lexer.TokenKindString(p.peekToken.Kind))
 			}
 			if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
-				return nil, errors.New("Expected an open bracket after the colon")
+				return nil, errors.New("expected an open bracket (`(`) after the colon (`:`) in `else if` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 			}
 
 			elseIfValue, err := p.parseGroupedExpression()
@@ -1112,10 +1156,10 @@ func (p *Parser) parseIfStatement() (*ast.IfStatement, error) {
 			elseIfStmt.Value = elseIfValue
 
 			if !p.expectedPeekToken(lexer.COLON) {
-				return nil, errors.New("Expected a colon after the grouped expression")
+				return nil, errors.New("expected a colon (`:`) after grouped expression for `else if` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 			}
 			if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
-				return nil, errors.New("Expected an open curly bracket after the colon")
+				return nil, errors.New("expected an open curly bracket (`{`) after the colon (`:`) in `else if` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 			}
 
 			elseIFBody, err := p.parseFunctionBody()
@@ -1139,10 +1183,10 @@ func (p *Parser) parseIfStatement() (*ast.IfStatement, error) {
 		elseStmt := &ast.ElseStatement{Token: p.currentToken}
 
 		if !p.expectedPeekToken(lexer.COLON) {
-			return nil, errors.New("Expected a colon after the else keyword")
+			return nil, errors.New("expected a colon (`:`) after the `else` keyword, got: " + lexer.TokenKindString(p.peekToken.Kind))
 		}
 		if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
-			return nil, errors.New("Expected an open curly bracket after the colon")
+			return nil, errors.New("expected an open curly bracket (`{`) after the colon (`:`) in `else` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 		}
 		elseBody, err := p.parseFunctionBody()
 		if err != nil {
@@ -1165,14 +1209,14 @@ func (p *Parser) parseForLoop() (*ast.ForLoopStatement, error) {
 	stmt := &ast.ForLoopStatement{Token: p.currentToken}
 
 	if !p.expectedPeekToken(lexer.COLON) {
-		return nil, errors.New("Expected a colon after the for keyword")
+		return nil, errors.New("expected a colon (`:`) after the `for` keyword, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
-		return nil, errors.New("Expected an open bracket after the colon")
+		return nil, errors.New("expected an open bracket (`(`) after the colon (`:`) in `for loop` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 
 	if !p.expectedPeekToken(lexer.VAR) {
-		return nil, errors.New("Expected a var keyword after the open bracket")
+		return nil, errors.New("expected a `var` keyword after an open bracket (`(`) in `for loop` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	varStmt, err := p.parseVarStatement()
 	if err != nil {
@@ -1187,7 +1231,9 @@ func (p *Parser) parseForLoop() (*ast.ForLoopStatement, error) {
 	}
 	stmt.Middle = parsedExp.(*ast.InfixExpression)
 
-	p.nextToken()
+	if !p.expectedPeekToken(lexer.SEMI_COLON) {
+		return nil, errors.New("expected a semicolon (`;`) after infix expression in `for loop` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
 	p.nextToken()
 
 	parsedExp, err = p.parseExpression(LOWEST)
@@ -1197,13 +1243,13 @@ func (p *Parser) parseForLoop() (*ast.ForLoopStatement, error) {
 	stmt.Right = parsedExp.(*ast.PostfixExpression)
 
 	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
-		return nil, errors.New("Expected a closing bracket after the postfix expression")
+		return nil, errors.New("expected a closing bracket (`)`) after the postfix expression in `for loop`, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	if !p.expectedPeekToken(lexer.COLON) {
-		return nil, errors.New("Expected a colon after the closing bracket")
+		return nil, errors.New("expected a colon (`:`) after the closing bracket (`)`) in `for loop`, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
-		return nil, errors.New("Expected an open curly bracket after the colon")
+		return nil, errors.New("expected an open curly bracket (`{`) after the colon (`:`) in `for loop`, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	stmtBody, err := p.parseFunctionBody()
 	if err != nil {
@@ -1218,7 +1264,6 @@ func (p *Parser) parseForLoop() (*ast.ForLoopStatement, error) {
 // -----------------------------------------------------------------------------
 // Helper Methods
 // -----------------------------------------------------------------------------
-
 func (p *Parser) nextToken() {
 	p.previousToken = p.currentToken
 	p.currentToken = p.peekToken
