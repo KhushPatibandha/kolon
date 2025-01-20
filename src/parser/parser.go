@@ -786,6 +786,9 @@ func (p *Parser) parseVarStmtSig() (*ast.VarStatement, error) {
 }
 
 func (p *Parser) parseVarStatement() (ast.Statement, error) {
+	if !inFunction && !p.inTesting {
+		return nil, errors.New("can't declare a variable outside a function")
+	}
 	stmt, err := p.parseVarStmtSig()
 	if err != nil {
 		return nil, err
@@ -853,6 +856,9 @@ func (p *Parser) parseVarStatement() (ast.Statement, error) {
 // Parsing Multiple Assignment Statement
 // -----------------------------------------------------------------------------
 func (p *Parser) parseMultipleAssignmentStatement(list []ast.Statement) (*ast.MultiValueAssignStmt, error) {
+	if !inFunction && !p.inTesting {
+		return nil, errors.New("can't declare a variable outside a function")
+	}
 	stmt := &ast.MultiValueAssignStmt{Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="}}
 
 	if p.currTokenIsOk(lexer.EQUAL_ASSIGN) {
@@ -981,6 +987,9 @@ func (p *Parser) parseMultipleAssignmentStatement(list []ast.Statement) (*ast.Mu
 // Parsing Expression Statement
 // -----------------------------------------------------------------------------
 func (p *Parser) parseExpressionStatement() (ast.Statement, error) {
+	if !inFunction && !p.inTesting {
+		return nil, errors.New("everything must be inside a function")
+	}
 	stmt := &ast.ExpressionStatement{Token: p.currentToken}
 
 	if p.peekTokenIsOk(lexer.COMMA) {
@@ -1105,6 +1114,9 @@ func (p *Parser) parseBreakStatement() (*ast.BreakStatement, error) {
 // Parsing If statement
 // -----------------------------------------------------------------------------
 func (p *Parser) parseIfStatement() (*ast.IfStatement, error) {
+	if !inFunction && !p.inTesting {
+		return nil, errors.New("if statement can only be used inside a function")
+	}
 	stmt := &ast.IfStatement{Token: p.currentToken}
 
 	if !p.expectedPeekToken(lexer.COLON) {
@@ -1205,6 +1217,9 @@ func (p *Parser) parseIfStatement() (*ast.IfStatement, error) {
 // Parsing For Loop
 // -----------------------------------------------------------------------------
 func (p *Parser) parseForLoop() (*ast.ForLoopStatement, error) {
+	if !inFunction && !p.inTesting {
+		return nil, errors.New("for loop can only be used inside a function")
+	}
 	inForLoop = true
 	stmt := &ast.ForLoopStatement{Token: p.currentToken}
 
