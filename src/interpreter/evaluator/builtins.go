@@ -636,4 +636,31 @@ var builtins = map[string]*object.Builtin{
 			}
 		},
 	},
+	"typeOf": {
+		Fn: func(args ...object.Object) (object.Object, bool, error) {
+			if len(args) != 1 {
+				return NULL, true, errors.New("wrong number of arguments for `typeOf`, got: " + strconv.Itoa(len(args)) + ", want: 1")
+			}
+			switch arg := args[0].(type) {
+			case *object.Array:
+				res := "\"" + arg.TypeOf + "[]\""
+				return &object.String{Value: res}, false, nil
+			case *object.Hash:
+				res := "\"" + arg.KeyType + "[" + arg.ValueType + "]\""
+				return &object.String{Value: res}, false, nil
+			case *object.Integer:
+				return &object.String{Value: "\"int\""}, false, nil
+			case *object.Float:
+				return &object.String{Value: "\"float\""}, false, nil
+			case *object.Boolean:
+				return &object.String{Value: "\"bool\""}, false, nil
+			case *object.String:
+				return &object.String{Value: "\"string\""}, false, nil
+			case *object.Char:
+				return &object.String{Value: "\"char\""}, false, nil
+			default:
+				return NULL, true, errors.New("data structure not supported by `typeOf`, got: " + string(args[0].Type()))
+			}
+		},
+	},
 }

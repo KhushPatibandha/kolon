@@ -1,6 +1,10 @@
 package parser
 
-import "github.com/KhushPatibandha/Kolon/src/ast"
+import (
+	"errors"
+
+	"github.com/KhushPatibandha/Kolon/src/ast"
+)
 
 type VariableType int
 
@@ -41,11 +45,18 @@ func (e *Environment) Get(name string) (*Variable, bool) {
 	return variable, ok
 }
 
-func (e *Environment) Set(name string, ident ast.Identifier, identType ast.Type, identVarType VariableType, env *Environment) {
+func (e *Environment) Set(name string, ident ast.Identifier, identType ast.Type, identVarType VariableType, env *Environment) error {
+	variable, ok := e.Get(ident.Value)
+	if ok {
+		if variable.VarType == CONST {
+			return errors.New("variable `" + ident.Value + "` is a constant, can't re-declare const variables")
+		}
+	}
 	e.store[name] = &Variable{
 		Ident:   ident,
 		Type:    identType,
 		VarType: identVarType,
 		Env:     env,
 	}
+	return nil
 }

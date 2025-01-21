@@ -35,6 +35,8 @@ func TestRandom(t *testing.T) {
 	run(t, "./testKolFiles/test21.kol", "Error type checking program: variable `a` is undefined/not found")
 	run(t, "./testKolFiles/test22.kol", "Error type checking program: missing `return` statement for function: callMe")
 	run(t, "./testKolFiles/test23.kol", "Error parsing program: everything must be inside a function")
+	run(t, "./testKolFiles/test24.kol", "Error type checking program: variable `b` is a constant, can't re-declare const variables")
+	run(t, "./testKolFiles/test25.kol", "int\nfloat\nstring\nchar\nbool\nint[]\nstring[int]")
 }
 
 func run(t *testing.T, filePath string, expectedOutput string) {

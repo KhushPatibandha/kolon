@@ -25,6 +25,7 @@ var (
 		"keys":        true,
 		"values":      true,
 		"containsKey": true,
+		"typeOf":      true,
 	}
 	inTesting bool
 )
@@ -39,9 +40,15 @@ func TypeCheckProgram(program *ast.Program, env *Environment, inTest bool) error
 	for key, value := range FunctionMap {
 		newLocalEnv := NewEnclosedEnvironment(env)
 		for _, param := range value.Parameters {
-			newLocalEnv.Set(param.ParameterName.Value, *param.ParameterName, *param.ParameterType, VAR, nil)
+			err := newLocalEnv.Set(param.ParameterName.Value, *param.ParameterName, *param.ParameterType, VAR, nil)
+			if err != nil {
+				return err
+			}
 		}
-		env.Set(key, *value.Name, ast.Type{}, FUNCTION, newLocalEnv)
+		err := env.Set(key, *value.Name, ast.Type{}, FUNCTION, newLocalEnv)
+		if err != nil {
+			return err
+		}
 	}
 	return checkStmts(program.Statements, env)
 }
@@ -156,9 +163,15 @@ func checkVarStmt(node *ast.VarStatement, env *Environment) error {
 	}
 
 	if node.Token.Kind == lexer.VAR {
-		env.Set(node.Name.Value, *node.Name, *node.Type, VAR, nil)
+		err := env.Set(node.Name.Value, *node.Name, *node.Type, VAR, nil)
+		if err != nil {
+			return err
+		}
 	} else if node.Token.Kind == lexer.CONST {
-		env.Set(node.Name.Value, *node.Name, *node.Type, CONST, nil)
+		err := env.Set(node.Name.Value, *node.Name, *node.Type, CONST, nil)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -211,9 +224,15 @@ func checkMultiAssignStmt(node *ast.MultiValueAssignStmt, env *Environment) erro
 					return nil
 				}
 				if obj.Token.Kind == lexer.VAR {
-					env.Set(obj.Name.Value, *obj.Name, *obj.Type, VAR, nil)
+					err := env.Set(obj.Name.Value, *obj.Name, *obj.Type, VAR, nil)
+					if err != nil {
+						return err
+					}
 				} else if obj.Token.Kind == lexer.CONST {
-					env.Set(obj.Name.Value, *obj.Name, *obj.Type, CONST, nil)
+					err := env.Set(obj.Name.Value, *obj.Name, *obj.Type, CONST, nil)
+					if err != nil {
+						return err
+					}
 				}
 			case *ast.ExpressionStatement:
 				variable, ok := env.Get(obj.Expression.(*ast.AssignmentExpression).Left.Value)
@@ -1073,6 +1092,15 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("data structure not supported by `containsKey`, got: array, want: hashmap")
 		} else {
 			return expType{}, errors.New("data structure not supported by `containsKey`, got: " + argTypes[0].Type.Value + ", want: hashmap")
+		}
+	case "typeOf":
+		if len(callExp.Args) != 1 {
+			return expType{}, errors.New("wrong number of arguments for `typeOf`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1")
+		}
+		if argTypes[0].Type.IsArray || argTypes[0].Type.IsHash || argTypes[0].Type.Value == "int" || argTypes[0].Type.Value == "float" || argTypes[0].Type.Value == "char" || argTypes[0].Type.Value == "string" || argTypes[0].Type.Value == "bool" {
+			return expType{Type: ast.Type{Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+		} else {
+			return expType{}, errors.New("data structure not supported by `typeOf`, got: " + argTypes[0].Type.Value)
 		}
 	default:
 		return expType{}, errors.New("unknown builtin function `" + callExp.Name.(*ast.Identifier).Value + "`")

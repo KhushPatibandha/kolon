@@ -506,7 +506,6 @@ func Test37(t *testing.T) {
 		{"const a: bool = true; return: a;", []object.Object{evaluator.TRUE}, false},
 		{"const a: string = \"a\"; return: a;", []object.Object{&object.String{Value: "\"a\""}}, false},
 		{"const a: char = 'a'; return: a;", []object.Object{&object.Char{Value: "'a'"}}, false},
-		{"const a: int = 1; const a: bool = true; return: a;", []object.Object{evaluator.TRUE}, false},
 		{"var a: int = 0; for: (var i: int = 0; i < 2; i++): { a++; } return: a;", []object.Object{&object.Integer{Value: 2}}, false},
 		{`
 		    var a: int = 1;
@@ -637,6 +636,7 @@ func Test38(t *testing.T) {
 		{"var a: int[] = {1, \"hello\", 3, 4}; return: a;", &object.Array{Elements: []object.Object{&object.Integer{Value: 1}, &object.String{Value: "\"hello\""}, &object.Integer{Value: 3}, &object.Integer{Value: 4}}}, true},
 		{"var a: int[]; return: a;", &object.Array{Elements: []object.Object{}}, true},
 		{"var a: char = 'c'; var b: char = 'c'; a += b; return: a;", &object.String{Value: "\"cc\""}, true},
+		{"const a: int = 1; const a: bool = true; return: a;", &object.ReturnValue{Value: []object.Object{evaluator.TRUE}}, true},
 	}
 
 	for _, tt := range varStmtErrTest {
