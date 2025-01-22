@@ -18,13 +18,24 @@ You can install **Kolon** using one of the two methods below:
 1. Visit the [Releases Page](https://github.com/KhushPatibandha/Kolon/releases).
 2. Download the prebuilt binary for your operating system:
    - **Linux**: `kolon_x86_64`
-3. Make the binary executable (Linux):
+   - **MacOS**: `kolon_mac_arm`
+3. Make the binary executable:
+   - **Linux**
    ```bash
    chmod +x kolon_x86_64
    ```
+   - **MacOS**
+   ```bash
+   chmod +x kolon_mac_arm
+   ```
 4. Move the binary to a directory in your `PATH` (e.g., `~/.local/bin/`):
+   - **Linux**
    ```bash
    sudo mv kolon_x86_64 ~/.local/bin/kolon
+   ```
+   - **MacOS**
+   ```bash
+   sudo mv kolon_mac_arm ~/.local/bin/kolon
    ```
 5. Verify the installation:
    ```bash
