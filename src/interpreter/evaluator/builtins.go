@@ -663,4 +663,95 @@ var builtins = map[string]*object.Builtin{
 			}
 		},
 	},
+	"slice": {
+		Fn: func(args ...object.Object) (object.Object, bool, error) {
+			if len(args) != 3 && len(args) != 4 {
+				return NULL, true, errors.New("wrong number of arguments for `slice`, got: " + strconv.Itoa(len(args)) + ", want: 3 or 4. `slice(array/string, start, end)` or `slice(array/string, start, end, step)`")
+			}
+			switch arg := args[0].(type) {
+			case *object.Array:
+				start, ok := args[1].(*object.Integer)
+				if !ok {
+					return NULL, true, errors.New("start index must be an `int` for `slice`, got: " + string(args[1].Type()))
+				}
+				end, ok := args[2].(*object.Integer)
+				if !ok {
+					return NULL, true, errors.New("end index must be an `int` for `slice`, got: " + string(args[2].Type()))
+				}
+				if start.Value < 0 || start.Value >= int64(len(arg.Elements)) || end.Value < 0 || end.Value > int64(len(arg.Elements)) {
+					return NULL, true, errors.New("index out of bounds for `slice` operation")
+				}
+				if start.Value > end.Value {
+					return NULL, true, errors.New("start index must be less than end index for `slice` operation")
+				}
+				if len(args) == 3 {
+					newArr := &object.Array{TypeOf: arg.TypeOf}
+					slicedElement := arg.Elements[start.Value:end.Value]
+					newArr.Elements = slicedElement
+					return newArr, false, nil
+				} else {
+					step, ok := args[3].(*object.Integer)
+					if !ok {
+						return NULL, true, errors.New("step must be an `int` for `slice`, got: " + string(args[3].Type()))
+					}
+					if step.Value == 0 {
+						return NULL, true, errors.New("step cannot be zero for `slice` operation")
+					}
+					if step.Value < 0 {
+						return NULL, true, errors.New("step cannot be negative for `slice` operation")
+					}
+					newArr := &object.Array{TypeOf: arg.TypeOf}
+					var slicedElement []object.Object
+					for i := start.Value; i < end.Value; i += step.Value {
+						slicedElement = append(slicedElement, arg.Elements[i])
+					}
+					newArr.Elements = slicedElement
+					return newArr, false, nil
+				}
+			case *object.String:
+				start, ok := args[1].(*object.Integer)
+				if !ok {
+					return NULL, true, errors.New("start index must be an `int` for `slice`, got: " + string(args[1].Type()))
+				}
+				end, ok := args[2].(*object.Integer)
+				if !ok {
+					return NULL, true, errors.New("end index must be an `int` for `slice`, got: " + string(args[2].Type()))
+				}
+				if start.Value < 0 || start.Value >= int64(len(arg.Value)) || end.Value < 0 || end.Value > int64(len(arg.Value)) {
+					return NULL, true, errors.New("index out of bounds for `slice` operation")
+				}
+				if start.Value > end.Value {
+					return NULL, true, errors.New("start index must be less than end index for `slice` operation")
+				}
+				if len(args) == 3 {
+					oldStr := arg.Value
+					oldStr = oldStr[1 : len(oldStr)-1]
+					newStr := oldStr[start.Value:end.Value]
+					newStr = "\"" + newStr + "\""
+					return &object.String{Value: newStr}, false, nil
+				} else {
+					step, ok := args[3].(*object.Integer)
+					if !ok {
+						return NULL, true, errors.New("step must be an `int` for `slice`, got: " + string(args[3].Type()))
+					}
+					if step.Value == 0 {
+						return NULL, true, errors.New("step cannot be zero for `slice` operation")
+					}
+					if step.Value < 0 {
+						return NULL, true, errors.New("step cannot be negative for `slice` operation")
+					}
+					oldStr := arg.Value
+					oldStr = oldStr[1 : len(oldStr)-1]
+					newStr := ""
+					for i := start.Value; i < end.Value; i += step.Value {
+						newStr += string(oldStr[i])
+					}
+					newStr = "\"" + newStr + "\""
+					return &object.String{Value: newStr}, false, nil
+				}
+			default:
+				return NULL, true, errors.New("data structure not supported by `slice`, got: " + string(args[0].Type()) + ", want: array or string")
+			}
+		},
+	},
 }

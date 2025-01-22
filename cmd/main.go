@@ -16,6 +16,10 @@ func main() {
 		return
 	} else if len(os.Args) == 3 && os.Args[1] == "run:" {
 		filePath := os.Args[2]
+		if filePath[len(filePath)-3:] != ".kol" {
+			fmt.Println("Error: File should have .kol extension")
+			return
+		}
 		bytes, err := os.ReadFile(filePath)
 		if err != nil {
 			fmt.Println("Error reading file:", err)

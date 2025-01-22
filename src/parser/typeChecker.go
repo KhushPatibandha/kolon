@@ -26,6 +26,7 @@ var (
 		"values":      true,
 		"containsKey": true,
 		"typeOf":      true,
+		"slice":       true,
 	}
 	inTesting bool
 )
@@ -922,10 +923,10 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("data structure not supported by `push`, got: " + argTypes[0].Type.Value + ", want: array or hashmap")
 		}
 	case "pop":
+		if len(callExp.Args) != 1 && len(callExp.Args) != 2 {
+			return expType{}, errors.New("wrong number of arguments for `pop` for array, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1 or 2. `pop(array)` or `pop(array, index)`")
+		}
 		if argTypes[0].Type.IsArray {
-			if len(callExp.Args) != 1 && len(callExp.Args) != 2 {
-				return expType{}, errors.New("wrong number of arguments for `pop` for array, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1 or 2. `pop(array)` or `pop(array, index)`")
-			}
 			if len(callExp.Args) == 1 {
 				return expType{Type: ast.Type{Value: argTypes[0].Type.Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 			} else {
@@ -944,11 +945,10 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("data structure not supported by `pop`, got: " + argTypes[0].Type.Value + ", want: array")
 		}
 	case "insert":
+		if len(callExp.Args) != 3 {
+			return expType{}, errors.New("wrong number of arguments for `insert` for array, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 3. `insert(array, index, element)`")
+		}
 		if argTypes[0].Type.IsArray {
-			if len(callExp.Args) != 3 {
-				return expType{}, errors.New("wrong number of arguments for `insert` for array, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 3. `insert(array, index, element)`")
-			}
-
 			if argTypes[1].Type.IsArray {
 				return expType{}, errors.New("index must be an integer for `insert`, got: array")
 			} else if argTypes[1].Type.IsHash {
@@ -1022,11 +1022,10 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("data structure not supported by `remove`, got: " + argTypes[0].Type.Value + ", want: array or hashmap")
 		}
 	case "getIndex":
+		if len(callExp.Args) != 2 {
+			return expType{}, errors.New("wrong number of arguments for `getIndex` for array, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 2. `getIndex(array, element)`")
+		}
 		if argTypes[0].Type.IsArray {
-			if len(callExp.Args) != 2 {
-				return expType{}, errors.New("wrong number of arguments for `getIndex` for array, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 2. `getIndex(array, element)`")
-			}
-
 			arrayType := argTypes[0].Type.Value
 			if arrayType == "int" || arrayType == "float" || arrayType == "string" || arrayType == "char" || arrayType == "bool" {
 				if argTypes[1].Type.IsArray {
@@ -1048,10 +1047,10 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("data structure not supported by `getIndex`, got: " + argTypes[0].Type.Value + ", want: array")
 		}
 	case "keys":
+		if len(callExp.Args) != 1 {
+			return expType{}, errors.New("wrong number of arguments for `keys` for hashmap, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1. `keys(map)`")
+		}
 		if argTypes[0].Type.IsHash {
-			if len(callExp.Args) != 1 {
-				return expType{}, errors.New("wrong number of arguments for `keys` for hashmap, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1. `keys(map)`")
-			}
 			return expType{Type: ast.Type{Value: argTypes[0].Type.SubTypes[0].Value, IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if argTypes[0].Type.IsArray {
 			return expType{}, errors.New("data structure not supported by `keys`, got: array, want: hashmap")
@@ -1059,10 +1058,10 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("data structure not supported by `keys`, got: " + argTypes[0].Type.Value + ", want: hashmap")
 		}
 	case "values":
+		if len(callExp.Args) != 1 {
+			return expType{}, errors.New("wrong number of arguments for `values` for hashmap, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1. `values(map)`")
+		}
 		if argTypes[0].Type.IsHash {
-			if len(callExp.Args) != 1 {
-				return expType{}, errors.New("wrong number of arguments for `values` for hashmap, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1. `values(map)`")
-			}
 			return expType{Type: ast.Type{Value: argTypes[0].Type.SubTypes[1].Value, IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if argTypes[0].Type.IsArray {
 			return expType{}, errors.New("data structure not supported by `keys`, got: array, want: hashmap")
@@ -1070,10 +1069,10 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("data structure not supported by `values`, got: " + argTypes[0].Type.Value + ", want: hashmap")
 		}
 	case "containsKey":
+		if len(callExp.Args) != 2 {
+			return expType{}, errors.New("wrong number of arguments for `containsKey` for hashmap, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 2. `containsKey(map, key)`")
+		}
 		if argTypes[0].Type.IsHash {
-			if len(callExp.Args) != 2 {
-				return expType{}, errors.New("wrong number of arguments for `containsKey` for hashmap, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 2. `containsKey(map, key)`")
-			}
 			keyType := argTypes[0].Type.SubTypes[0].Value
 			if keyType == "int" || keyType == "float" || keyType == "string" || keyType == "char" || keyType == "bool" {
 				if argTypes[1].Type.IsArray {
@@ -1101,6 +1100,53 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{Type: ast.Type{Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("data structure not supported by `typeOf`, got: " + argTypes[0].Type.Value)
+		}
+	case "slice":
+		if len(callExp.Args) != 3 && len(callExp.Args) != 4 {
+			return expType{}, errors.New("wrong number of arguments for `slice`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 3 or 4. `slice(array/string, start, end)` or `slice(array/string, start, end, step)`")
+		}
+
+		if argTypes[1].Type.IsArray {
+			return expType{}, errors.New("start index must be an `int` for `slice`, got: array")
+		} else if argTypes[1].Type.IsHash {
+			return expType{}, errors.New("start index must be an `int` for `slice`, got: hashmap")
+		} else {
+			if argTypes[1].Type.Value != "int" {
+				return expType{}, errors.New("start index must be an `int` for `slice`, got: " + argTypes[1].Type.Value)
+			}
+		}
+
+		if argTypes[2].Type.IsArray {
+			return expType{}, errors.New("end index must be an `int` for `slice`, got: array")
+		} else if argTypes[2].Type.IsHash {
+			return expType{}, errors.New("end index must be an `int` for `slice`, got: hashmap")
+		} else {
+			if argTypes[2].Type.Value != "int" {
+				return expType{}, errors.New("end index must be an `int` for `slice`, got: " + argTypes[2].Type.Value)
+			}
+		}
+
+		if len(callExp.Args) == 4 {
+			if argTypes[3].Type.IsArray {
+				return expType{}, errors.New("step must be an `int` for `slice`, got: array")
+			} else if argTypes[3].Type.IsHash {
+				return expType{}, errors.New("step must be an `int` for `slice`, got: hashmap")
+			} else {
+				if argTypes[3].Type.Value != "int" {
+					return expType{}, errors.New("step must be an `int` for `slice`, got: " + argTypes[3].Type.Value)
+				}
+			}
+		}
+
+		if argTypes[0].Type.IsArray {
+			return argTypes[0], nil
+		} else if argTypes[0].Type.IsHash {
+			return expType{}, errors.New("data structure not supported by `slice`, got: hashmap, want: array or string")
+		} else {
+			if argTypes[0].Type.Value != "string" {
+				return expType{}, errors.New("data structure not supported by `slice`, got: " + argTypes[0].Type.Value + ", want: array or string")
+			}
+			return argTypes[0], nil
 		}
 	default:
 		return expType{}, errors.New("unknown builtin function `" + callExp.Name.(*ast.Identifier).Value + "`")
@@ -1137,8 +1183,15 @@ func varTypeCheckerHelper(definedType ast.Type, expType ast.Type) error {
 		if definedType.SubTypes[1].Value != expType.SubTypes[1].Value {
 			return errors.New("hashmap value type declared as `" + definedType.SubTypes[1].Value + "`, got: " + expType.SubTypes[1].Value)
 		}
-	} else if definedType.Value != expType.Value {
-		return errors.New("defined type is `" + definedType.Value + "`, got: " + expType.Value)
+	} else {
+		if expType.IsArray {
+			return errors.New("defined type is `" + definedType.Value + "`, got: array")
+		} else if expType.IsHash {
+			return errors.New("defined type is `" + definedType.Value + "`, got: hashmap")
+		}
+		if definedType.Value != expType.Value {
+			return errors.New("defined type is `" + definedType.Value + "`, got: " + expType.Value)
+		}
 	}
 
 	return nil

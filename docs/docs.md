@@ -38,7 +38,7 @@ fun: main() {
 
 ## Variables and Types
 
-Kolon is a strongly typed language, and hence the type of a variable must be declared when defining the variable.
+Kolon is a strongly and statically typed language, and hence the type of a variable must be declared when defining the variable and that will be checked before runtime.
 
 ### Data Types
 
@@ -71,6 +71,9 @@ fun: main() {
     const someString: string = "Hello, World";
     const someChar: char = 'c';
     const someBool: bool = true;
+
+    const someInt: int = 100; // Error! Cannot re-declare a constant
+    someInt = 100; // Error! Cannot re-assign a constant
 }
 ```
 
@@ -93,7 +96,7 @@ On the other hand, a variable declared with the `const` keyword MUST be initiali
 ```kolon
 fun: main() {
     const someInt: int = 10; // Won't throw an error
-    const someOtherInt: int; // will throw an error
+    const someOtherInt: int; // Will throw an error
 }
 ```
 
@@ -151,7 +154,7 @@ Additionally, an empty map must be defined with `{}`.
 ```kolon
 fun: main() {
     var a: string[int] = {"kolon": 1, "hello": 2};
-    var b: string[int]; // not valid, will throw an error
+    var b: string[int]; // Not valid, will throw an error
     var c: string[int] = {}; // Won't throw and error
 }
 ```
@@ -353,6 +356,31 @@ fun: main() {
 }
 ```
 
+#### typeOf()
+
+| **Num of Args** | **Type of Args**                         | **Returns** | **Description**                        |
+| --------------- | ---------------------------------------- | ----------- | -------------------------------------- |
+| 1               | int/float/bool/char/string/array/hashmap | string      | Returns the type of the given argument |
+
+```kolon
+fun: main() {
+    var a: int = 10;
+    var b: float = 10.1;
+    var c: string = "someString";
+    var d: char = 'a';
+    var e: bool = true;
+    var f: int[] = [1, 2, 3, 4];
+    var g: string[int] = {"Khush": 1};
+    println(typeOf(a)); // int
+    println(typeOf(b)); // float
+    println(typeOf(c)); // string
+    println(typeOf(d)); // char
+    println(typeOf(e)); // bool
+    println(typeOf(f)); // int[]
+    println(typeOf(g)); // string[int]
+}
+```
+
 #### push()
 
 | **Data Structure** | **Num of Args** | **Type of Args**                                | **Returns** | **Format**             | **Description**                          |
@@ -403,6 +431,15 @@ fun: main() {
 | **Data Structure** | **Num of Args** | **Type of Args**                       | **Returns** | **Format**             | **Description**                                                            |
 | ------------------ | --------------- | -------------------------------------- | ----------- | ---------------------- | -------------------------------------------------------------------------- |
 | Hash               | 2               | hash, key (int/float/string/bool/char) | bool        | containsKey(map, key); | Returns `true` if the given key exists in the hash map, otherwise `false`. |
+
+#### slice()
+
+| **Data Structure** | **Num of Args** | **Type of Args**      | **Returns** | **Format**                       | **Description**                                                                                   |
+| ------------------ | --------------- | --------------------- | ----------- | -------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Array              | 3               | array, int, int       | array       | slice(array, start, end);        | Returns an array with element from start index (inclusive) to end index (exclusive)               |
+| Array              | 4               | array, int, int, int  | array       | slice(array, start, end, step);  | Returns an array with element from start index (inclusive) to end index (exclusive) with steps    |
+| string             | 3               | string, int, int      | string      | slice(string, start, end);       | Returns a string with characters from start index (inclusive) to end index (exclusive)            |
+| string             | 4               | string, int, int, int | string      | slice(string, start, end, step); | Returns a string with characters from start index (inclusive) to end index (exclusive) with steps |
 
 ### Overriding Built-in functions
 

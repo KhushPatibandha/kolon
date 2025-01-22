@@ -37,6 +37,7 @@ func TestRandom(t *testing.T) {
 	run(t, "./testKolFiles/test23.kol", "Error parsing program: everything must be inside a function")
 	run(t, "./testKolFiles/test24.kol", "Error type checking program: variable `b` is a constant, can't re-declare const variables")
 	run(t, "./testKolFiles/test25.kol", "int\nfloat\nstring\nchar\nbool\nint[]\nstring[int]")
+	run(t, "./testKolFiles/test26.kol", "[2, 3, 4]\n[2, 4]\nhus\nhs")
 }
 
 func run(t *testing.T, filePath string, expectedOutput string) {
