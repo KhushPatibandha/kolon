@@ -12,7 +12,7 @@ import (
 
 func main() {
 	if len(os.Args) == 2 && os.Args[1] == "--version" {
-		fmt.Println("Kolon v0.0.4")
+		fmt.Println("Kolon v1.0.0")
 		return
 	} else if len(os.Args) == 3 && os.Args[1] == "run:" {
 		filePath := os.Args[2]
