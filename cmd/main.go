@@ -16,7 +16,7 @@ func main() {
 		return
 	} else if len(os.Args) == 3 && os.Args[1] == "run:" {
 		filePath := os.Args[2]
-		if filePath[len(filePath)-3:] != ".kol" {
+		if filePath[len(filePath)-4:] != ".kol" {
 			fmt.Println("Error: File should have .kol extension")
 			return
 		}
