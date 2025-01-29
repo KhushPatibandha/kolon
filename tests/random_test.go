@@ -38,6 +38,10 @@ func TestRandom(t *testing.T) {
 	run(t, "./testKolFiles/test24.kol", "Error type checking program: variable `b` is a constant, can't re-declare const variables")
 	run(t, "./testKolFiles/test25.kol", "int\nfloat\nstring\nchar\nbool\nint[]\nstring[int]")
 	run(t, "./testKolFiles/test26.kol", "[2, 3, 4]\n[2, 4]\nhus\nhs")
+	run(t, "./testKolFiles/test27.kol", "Error type checking program: call expression must return only 1 value for `var` statement, got: 0")
+	run(t, "./testKolFiles/test28.kol", "102\nhello\nhello\n123\n10")
+	run(t, "./testKolFiles/test29.kol", "{}\n{\"khush\": 1}")
+	run(t, "./testKolFiles/test30.kol", "hello!!\n10\ntrue\nHello\nw\n1.1\nhello!!")
 }
 
 func run(t *testing.T, filePath string, expectedOutput string) {

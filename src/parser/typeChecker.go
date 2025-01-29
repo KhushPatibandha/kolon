@@ -507,6 +507,9 @@ func checkArrayExp(node *ast.ArrayValue, env *Environment) (expType, error) {
 }
 
 func checkHashmapExp(hashmap *ast.HashMap, env *Environment) (expType, error) {
+	if len(hashmap.Pairs) == 0 {
+		return expType{Type: ast.Type{IsArray: false, IsHash: true, SubTypes: nil}, CallExp: false}, nil
+	}
 	keyTypeStr := ""
 	valueTypeStr := ""
 	for key, value := range hashmap.Pairs {
@@ -793,6 +796,8 @@ func checkCallExp(callExp *ast.CallExpression, env *Environment) (expType, error
 	if len(function.Parameters) != len(callExp.Args) {
 		return expType{}, errors.New("number of arguments does not match the number of parameters for function `" + function.Name.Value + "`, got: " + strconv.Itoa(len(callExp.Args)) + ", expected: " + strconv.Itoa(len(function.Parameters)))
 	}
+
+	var subTypes []*ast.Type
 	for i, arg := range callExp.Args {
 		argType, err := getExpType(arg, env)
 		if err != nil {
@@ -809,11 +814,12 @@ func checkCallExp(callExp *ast.CallExpression, env *Environment) (expType, error
 		if err != nil {
 			return expType{}, err
 		}
+		subTypes = append(subTypes, &argType.Type)
 	}
-	if len(function.ReturnType) != 1 {
-		return expType{}, errors.New("function `" + function.Name.Value + "` must return only 1 value")
+	if function.ReturnType == nil {
+		return expType{CallExp: true}, nil
 	}
-	return expType{Type: *function.ReturnType[0].ReturnType, CallExp: true}, nil
+	return expType{Type: ast.Type{IsArray: false, IsHash: false, SubTypes: subTypes}, CallExp: true}, nil
 }
 
 func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, error) {
@@ -1176,6 +1182,9 @@ func varTypeCheckerHelper(definedType ast.Type, expType ast.Type) error {
 				return errors.New("defined type is of hashmap, but got: array")
 			}
 			return errors.New("defined type is of hashmap, got: " + expType.Value)
+		}
+		if expType.SubTypes == nil {
+			return nil // means it is defined empty and can hold anytype
 		}
 		if definedType.SubTypes[0].Value != expType.SubTypes[0].Value {
 			return errors.New("hashmap key type declared as `" + definedType.SubTypes[0].Value + "`, got: " + expType.SubTypes[0].Value)

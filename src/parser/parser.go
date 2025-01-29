@@ -1009,6 +1009,17 @@ func (p *Parser) parseExpressionStatement() (ast.Statement, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if !p.inTesting {
+		if _, ok := parsedExp.(*ast.CallExpression); !ok {
+			if _, ok = parsedExp.(*ast.PostfixExpression); !ok {
+				if _, ok = parsedExp.(*ast.AssignmentExpression); !ok {
+					return nil, errors.New("expected a function call, postfix expression or an assignment expression for expressions as statements, got: " + fmt.Sprintf("%T", parsedExp))
+				}
+			}
+		}
+	}
+
 	stmt.Expression = parsedExp
 	if !p.expectedPeekToken(lexer.SEMI_COLON) {
 		return nil, errors.New("expected a semicolon (`;`) at the end of the statement, got: " + lexer.TokenKindString(p.peekToken.Kind))

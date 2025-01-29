@@ -12,12 +12,13 @@ import (
 )
 
 var (
-	NULL      = &object.Null{}
-	CONTINUE  = &object.Continue{}
-	BREAK     = &object.Break{}
-	TRUE      = &object.Boolean{Value: true}
-	FALSE     = &object.Boolean{Value: false}
-	inForLoop = false
+	NULL       = &object.Null{}
+	CONTINUE   = &object.Continue{}
+	BREAK      = &object.Break{}
+	TRUE       = &object.Boolean{Value: true}
+	FALSE      = &object.Boolean{Value: false}
+	inForLoop  = false
+	mustReturn = false
 )
 
 func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
@@ -127,6 +128,7 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		return evalIfStatements(node, localEnv)
 	case *ast.ReturnStatement:
 		if node.Value == nil {
+			mustReturn = true
 			return &object.ReturnValue{Value: nil}, false, nil
 		}
 		var val []object.Object
@@ -142,6 +144,7 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 			val = append(val, rsObj)
 		}
 
+		mustReturn = true
 		return &object.ReturnValue{Value: val}, false, nil
 	case *ast.VarStatement:
 		return evalVarStatement(node, false, nil, env)
@@ -192,7 +195,7 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Obje
 			return NULL, hasErr, err
 		}
 
-		if result != nil && result.Type() == object.RETURN_VALUE_OBJ {
+		if mustReturn && result != nil && result.Type() == object.RETURN_VALUE_OBJ {
 			return result, hasErr, err
 		}
 
@@ -280,6 +283,7 @@ func applyFunction(fn object.Object, args []object.Object) (object.Object, bool,
 	}
 
 	if returnValue, ok := evaluated.(*object.ReturnValue); ok {
+		mustReturn = false
 		if returnValue.Value == nil && function.ReturnType == nil {
 			return nil, false, nil
 		}
