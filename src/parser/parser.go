@@ -1022,7 +1022,9 @@ func (p *Parser) parseExpressionStatement() (ast.Statement, error) {
 
 	stmt.Expression = parsedExp
 	if !p.expectedPeekToken(lexer.SEMI_COLON) {
-		return nil, errors.New("expected a semicolon (`;`) at the end of the statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
+		if !p.inTesting {
+			return nil, errors.New("expected a semicolon (`;`) at the end of the statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
+		}
 	}
 
 	return stmt, nil

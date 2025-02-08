@@ -819,8 +819,6 @@ func evalFloatInfixExpression(operator string, left object.Object, right object.
 		return &object.Float{Value: leftVal / rightVal}, false, nil
 	case "*":
 		return &object.Float{Value: leftVal * rightVal}, false, nil
-	case "%":
-		return &object.Float{Value: float64(int(leftVal) % int(rightVal))}, false, nil
 	case ">":
 		if leftVal > rightVal {
 			return TRUE, false, nil
@@ -852,7 +850,7 @@ func evalFloatInfixExpression(operator string, left object.Object, right object.
 		}
 		return FALSE, false, nil
 	default:
-		return NULL, true, errors.New("can only use `+`, `-`, `*`, `/`, `%`, `>`, `<`, `<=`, `>=`, `!=`, `==` infix operators with 2 `float`, got: " + operator)
+		return NULL, true, errors.New("can only use `+`, `-`, `*`, `/`, `>`, `<`, `<=`, `>=`, `!=`, `==` infix operators with 2 `float`, got: " + operator)
 	}
 }
 
@@ -866,6 +864,9 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 	case "-":
 		return &object.Integer{Value: leftVal - rightVal}, false, nil
 	case "/":
+		if rightVal == 0 {
+			return NULL, true, errors.New("integer divide by zero")
+		}
 		return &object.Integer{Value: leftVal / rightVal}, false, nil
 	case "*":
 		return &object.Integer{Value: leftVal * rightVal}, false, nil

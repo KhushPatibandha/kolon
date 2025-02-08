@@ -565,19 +565,18 @@ NOTE: If the left and right operands are call expressions that return a value, t
 
 ### Left: `float`, Right: `float`
 
-| Operator | Description       | Example    | Output Type |
-| -------- | ----------------- | ---------- | ----------- |
-| +        | Addition          | 5.2 + 3.1  | Float       |
-| -        | Subtraction       | 5.2 - 3.1  | Float       |
-| /        | Division          | 6.4 / 2.0  | Float       |
-| \*       | Multiplication    | 5.5 \* 3.2 | Float       |
-| %        | Modulus (integer) | 5.5 % 3.2  | Float       |
-| >        | Greater than      | 5.5 > 3.2  | Boolean     |
-| <        | Less than         | 3.2 < 5.5  | Boolean     |
-| >=       | Greater or equal  | 5.5 >= 5.5 | Boolean     |
-| <=       | Less or equal     | 3.2 <= 5.5 | Boolean     |
-| ==       | Equal             | 5.5 == 5.5 | Boolean     |
-| !=       | Not equal         | 5.5 != 3.2 | Boolean     |
+| Operator | Description      | Example    | Output Type |
+| -------- | ---------------- | ---------- | ----------- |
+| +        | Addition         | 5.2 + 3.1  | Float       |
+| -        | Subtraction      | 5.2 - 3.1  | Float       |
+| /        | Division         | 6.4 / 2.0  | Float       |
+| \*       | Multiplication   | 5.5 \* 3.2 | Float       |
+| >        | Greater than     | 5.5 > 3.2  | Boolean     |
+| <        | Less than        | 3.2 < 5.5  | Boolean     |
+| >=       | Greater or equal | 5.5 >= 5.5 | Boolean     |
+| <=       | Less or equal    | 3.2 <= 5.5 | Boolean     |
+| ==       | Equal            | 5.5 == 5.5 | Boolean     |
+| !=       | Not equal        | 5.5 != 3.2 | Boolean     |
 
 ### Left: `bool`, Right: `bool`
 

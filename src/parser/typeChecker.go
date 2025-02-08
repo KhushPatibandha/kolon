@@ -652,12 +652,12 @@ func checkInfixExp(infix *ast.InfixExpression, env *Environment) (expType, error
 			return expType{}, errors.New("can only use `+`, `-`, `*`, `/`, `%`, `>`, `<`, `<=`, `>=`, `!=`, `==`, `|`, `&` infix operators with 2 `int`, got: " + infix.Operator)
 		}
 	case leftExpType.Type.Value == "float" && rightExpType.Type.Value == "float", (leftExpType.Type.Value == "int" && rightExpType.Type.Value == "float") || (leftExpType.Type.Value == "float" && rightExpType.Type.Value == "int"):
-		if infix.Operator == "+" || infix.Operator == "-" || infix.Operator == "*" || infix.Operator == "/" || infix.Operator == "%" {
+		if infix.Operator == "+" || infix.Operator == "-" || infix.Operator == "*" || infix.Operator == "/" {
 			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.FLOAT, Value: "float"}, Value: "float", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if infix.Operator == ">" || infix.Operator == "<" || infix.Operator == "<=" || infix.Operator == ">=" || infix.Operator == "==" || infix.Operator == "!=" {
 			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
-			return expType{}, errors.New("can only use `+`, `-`, `*`, `/`, `%`, `>`, `<`, `<=`, `>=`, `!=`, `==` infix operators with 2 `float`, got: " + infix.Operator)
+			return expType{}, errors.New("can only use `+`, `-`, `*`, `/`, `>`, `<`, `<=`, `>=`, `!=`, `==` infix operators with 2 `float`, got: " + infix.Operator)
 		}
 	case leftExpType.Type.Value == "string" && rightExpType.Type.Value == "string":
 		if infix.Operator == "+" {
