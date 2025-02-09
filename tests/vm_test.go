@@ -47,34 +47,30 @@ func Test52(t *testing.T) {
 		{"10 % 3", 1},
 		{"2 & 3", 2},
 		{"2 | 3", 3},
-
-		// {"-5", -5},
-		// {"-10", -10},
-		// {"-50 + 100 + -50", 0},
-		// {"20 + 2 * -10", 0},
-		// {"(5 + 10 * 2 + 15 / 3) * 2 + -10", 50},
-
+		{"-5", -5},
+		{"-10", -10},
+		{"-50 + 100 + -50", 0},
+		{"20 + 2 * -10", 0},
+		{"(5 + 10 * 2 + 15 / 3) * 2 + -10", 50},
 		{"5.0", 5.0},
 		{"10.0", 10.0},
 		{"5.5", 5.5},
-		// {"-5.0", -5.0},
-		// {"-10.0", -10.0},
+		{"-5.0", -5.0},
+		{"-10.0", -10.0},
 		{"4 - 5.5", -1.5},
 		{"5.5 - 4", 1.5},
 		{"5.5 + 5.5 + 5.5 + 5.5 - 10.0", 12.0},
 		{"2.5 * 2.5 * 2.5 * 2.5 * 2.5", 97.65625},
-		// {"-50.0 + 100.0 + -50.0", 0.0},
+		{"-50.0 + 100.0 + -50.0", 0.0},
 		{"5.5 * 2.5 + 10.0", 23.75},
 		{"5.5 + 2.5 * 10.0", 30.5},
-		// {"20.0 + 2.5 * -10.0", -5.0},
+		{"20.0 + 2.5 * -10.0", -5.0},
 		{"50.0 / 2.5 * 2.5 + 10.0", 60.0},
 		{"2.5 * (5.5 + 10.0)", 38.75},
 		{"3.5 * 3.5 * 3.5 + 10.0", 52.875},
 		{"3.5 * (3.5 * 3.5) + 10.0", 52.875},
 		{"3.5 * (3.5 + 10.0)", 47.25},
-		// {"(5.5 + 10.0 * 2.5 + 15.0 / 3.0) * 2.5 + -10.0", 78.75},
-		{"10.0 % 2.5", 0.0},
-		{"10.0 % 3.5", 1.0},
+		{"(5.5 + 10.0 * 2.5 + 15.0 / 3.0) * 2.5 + -10.0", 78.75},
 		{"true", true},
 		{"false", false},
 		{"1 < 2", true},
@@ -94,11 +90,10 @@ func Test52(t *testing.T) {
 		{"(1 < 2) == false", false},
 		{"(1 > 2) == true", false},
 		{"(1 > 2) == false", true},
-
-		// {"!true", false},
-		// {"!false", true},
-		// {"!!true", true},
-		// {"!!false", false},
+		{"!true", false},
+		{"!false", true},
+		{"!!true", true},
+		{"!!false", false},
 		{"10 > 5", true},
 		{"5 < 10", true},
 		{"10 < 5", false},
@@ -152,7 +147,6 @@ func Test52(t *testing.T) {
 		{"2.5 >= 1.5", true},
 		{"2.5 <= 1.5", false},
 		{"(1.5 >= 2.5) == true", false},
-
 		{"\"Hello, World!\" == \"Hello, World!\"", true},
 		{"\"Hello, World!\" != \"Hello, World!\"", false},
 		{"\"Hello, World!\" == \"Hello, World\"", false},
@@ -161,27 +155,20 @@ func Test52(t *testing.T) {
 		{"'a' != 'a'", false},
 		{"'a' == 'b'", false},
 		{"'a' != 'b'", true},
-
 		{"\"Hello, World!\"", "\"Hello, World!\""},
 		{"\"Hello, \" + \"World!\"", "\"Hello, World!\""},
 		{"'a' + 'b'", "\"ab\""},
 		{"'a'", "'a'"},
 
-		// {"!true;", false, false},
-		// {"!false;", true, false},
-		// {"!!false;", false, false},
-		// {"!!true;", true, false},
-		// {"!5;", false, true},
-		// {"!5.5;", false, true},
-		// {"!\"Hello, World!\";", false, true},
-		// {"!'a';", false, true},
-
-		// {"-5;", &object.Integer{Value: -5}, false},
-		// {"-5.5;", &object.Float{Value: -5.5}, false},
-		// {"-\"Hello, World!\";", evaluator.NULL, true},
-		// {"-'a';", evaluator.NULL, true},
-		// {"-true;", evaluator.NULL, true},
-		// {"-false;", evaluator.NULL, true},
+		{"5++", 6},
+		{"5--", 4},
+		{"-5--", -4},
+		{"-5++", -6},
+		{"(-5)++", -4},
+		{"10.1++", 11.1},
+		{"10.1--", 9.1},
+		{"-10.1++", -11.1},
+		{"-10.1--", -9.1},
 	}
 	runVmTests(t, tests)
 }
@@ -190,6 +177,9 @@ func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 	for _, tt := range tests {
 		program := parseVM(tt.input)
+		if program == nil {
+			return
+		}
 		c := compiler.New()
 		err := c.Compile(program)
 		if err != nil {

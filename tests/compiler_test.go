@@ -222,6 +222,52 @@ func Test49(t *testing.T) {
 				code.Make(code.OpPop),
 			},
 		},
+		{
+			input:             "-1",
+			expectedConstants: []interface{}{1},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpMinus),
+				code.Make(code.OpPop),
+			},
+		},
+
+		{
+			input:             "-1.12",
+			expectedConstants: []interface{}{1.12},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpMinus),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input:             "!true",
+			expectedConstants: []interface{}{},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpTrue),
+				code.Make(code.OpNot),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input:             "10++",
+			expectedConstants: []interface{}{10},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpPlusPlus),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input:             "10.1--",
+			expectedConstants: []interface{}{10.1},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpMinusMinus),
+				code.Make(code.OpPop),
+			},
+		},
 	}
 	runCompilerTests(t, tests)
 }

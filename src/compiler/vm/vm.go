@@ -78,6 +78,21 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpNot:
+			err := vm.execNotOp()
+			if err != nil {
+				return err
+			}
+		case code.OpMinus:
+			err := vm.execMinusOp()
+			if err != nil {
+				return err
+			}
+		case code.OpMinusMinus, code.OpPlusPlus:
+			err := vm.execPostfixOp(op)
+			if err != nil {
+				return err
+			}
 		case code.OpTrue:
 			err := vm.push(TRUE)
 			if err != nil {
@@ -173,6 +188,42 @@ func (vm *VM) execComparisonOp(op code.Opcode) error {
 	return fmt.Errorf("unsupported types for comparison operation: %s %s", lType, rType)
 }
 
+func (vm *VM) execNotOp() error {
+	operand := vm.pop()
+	if operand == TRUE {
+		return vm.push(FALSE)
+	} else {
+		return vm.push(TRUE)
+	}
+}
+
+func (vm *VM) execMinusOp() error {
+	right := vm.pop()
+	if right.Type() == object.FLOAT_OBJ {
+		return vm.push(&object.Float{Value: -right.(*object.Float).Value})
+	}
+	return vm.push(&object.Integer{Value: -right.(*object.Integer).Value})
+}
+
+func (vm *VM) execPostfixOp(op code.Opcode) error {
+	left := vm.pop()
+	if left.Type() == object.INTEGER_OBJ {
+		leftVal := left.(*object.Integer).Value
+		if op == code.OpPlusPlus {
+			return vm.push(&object.Integer{Value: leftVal + 1})
+		} else {
+			return vm.push(&object.Integer{Value: leftVal - 1})
+		}
+	} else {
+		leftVal := left.(*object.Float).Value
+		if op == code.OpPlusPlus {
+			return vm.push(&object.Float{Value: leftVal + 1})
+		} else {
+			return vm.push(&object.Float{Value: leftVal - 1})
+		}
+	}
+}
+
 func (vm *VM) execBinaryIntegerOp(op code.Opcode, left object.Object, right object.Object) error {
 	leftVal := left.(*object.Integer).Value
 	rightVal := right.(*object.Integer).Value
@@ -213,8 +264,6 @@ func (vm *VM) execBinaryFloatOp(op code.Opcode, left object.Object, right object
 		res = leftVal * rightVal
 	case code.OpDiv:
 		res = leftVal / rightVal
-	case code.OpMod:
-		res = float64(int(leftVal) % int(rightVal))
 	default:
 		return fmt.Errorf("unknown float operator %d", op)
 	}
