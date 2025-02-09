@@ -864,9 +864,6 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 	case "-":
 		return &object.Integer{Value: leftVal - rightVal}, false, nil
 	case "/":
-		if rightVal == 0 {
-			return NULL, true, errors.New("integer divide by zero")
-		}
 		return &object.Integer{Value: leftVal / rightVal}, false, nil
 	case "*":
 		return &object.Integer{Value: leftVal * rightVal}, false, nil
