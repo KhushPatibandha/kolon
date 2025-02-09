@@ -708,7 +708,7 @@ func testEval(input string) (object.Object, bool, error) {
 	}
 	env := object.NewEnvironment()
 
-	return evaluator.Eval(program, env)
+	return evaluator.Eval(program, env, true)
 }
 
 func testNil(t *testing.T, obj object.Object) bool {

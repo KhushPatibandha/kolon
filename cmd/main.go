@@ -43,7 +43,7 @@ func main() {
 			return
 		}
 		env := object.NewEnvironment()
-		_, _, err = evaluator.Eval(program, env)
+		_, _, err = evaluator.Eval(program, env, false)
 		if err != nil {
 			fmt.Println("Error evaluating program:", err)
 			return

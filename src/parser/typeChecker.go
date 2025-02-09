@@ -835,7 +835,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 		if argType.CallExp {
 			function := FunctionMap[arg.(*ast.CallExpression).Name.(*ast.Identifier).Value]
 			if len(function.ReturnType) != 1 {
-				return expType{}, errors.New("call expression must return only 1 value to be used as an argument for `call expression`, got: " + strconv.Itoa(len(function.ReturnType)))
+				return expType{}, errors.New("call expression must return only 1 value to be used as an argument for `built-in methods`, got: " + strconv.Itoa(len(function.ReturnType)))
 			}
 			argType.Type = *function.ReturnType[0].ReturnType
 		}

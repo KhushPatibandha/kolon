@@ -1,0 +1,13 @@
+fun: main() {
+    println("here " + toString(callMe()));
+}
+
+fun: callMe(): (int) {
+    for: (var i: int = 0; i < 10; i++): {
+        if: (i == 2): {
+            return: i;
+        }
+        println(i);
+    }
+    return: -1;
+}

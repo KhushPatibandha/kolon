@@ -19,14 +19,15 @@ var (
 	FALSE      = &object.Boolean{Value: false}
 	inForLoop  = false
 	mustReturn = false
+	inTesting  = false
 )
 
-func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
+func Eval(node ast.Node, env *object.Environment, inTest bool) (object.Object, bool, error) {
+	inTesting = inTest
 	switch node := node.(type) {
 	case *ast.Program:
 		return evalStatements(node.Statements, env)
-	case *ast.ExpressionStatement:
-		return Eval(node.Expression, env)
+
 	case *ast.IntegerValue:
 		return &object.Integer{Value: node.Value}, false, nil
 	case *ast.FloatValue:
@@ -45,26 +46,10 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		return evalArrayValue(node, env)
 	case *ast.HashMap:
 		return evalHashMap(node, env)
-	case *ast.IndexExpression:
-		left, hasErr, err := Eval(node.Left, env)
-		if err != nil {
-			return left, hasErr, err
-		}
-		index, hasErr, err := Eval(node.Index, env)
-		if err != nil {
-			return index, hasErr, err
-		}
-		if left.Type() == object.RETURN_VALUE_OBJ {
-			left = left.(*object.ReturnValue).Value[0]
-		}
-		if index.Type() == object.RETURN_VALUE_OBJ {
-			index = index.(*object.ReturnValue).Value[0]
-		}
-		return evalIndexExpression(left, index)
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	case *ast.PrefixExpression:
-		right, hasErr, err := Eval(node.Right, env)
+		right, hasErr, err := Eval(node.Right, env, inTesting)
 		if err != nil {
 			return right, hasErr, err
 		}
@@ -73,11 +58,11 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		}
 		return evalPrefixExpression(node.Operator, right)
 	case *ast.InfixExpression:
-		left, hasErr, err := Eval(node.Left, env)
+		left, hasErr, err := Eval(node.Left, env, inTesting)
 		if err != nil {
 			return left, hasErr, err
 		}
-		right, hasErr, err := Eval(node.Right, env)
+		right, hasErr, err := Eval(node.Right, env, inTesting)
 		if err != nil {
 			return right, hasErr, err
 		}
@@ -89,7 +74,7 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		}
 		return evalInfixExpression(node.Operator, left, right)
 	case *ast.PostfixExpression:
-		left, hasErr, err := Eval(node.Left, env)
+		left, hasErr, err := Eval(node.Left, env, inTesting)
 		if err != nil {
 			return left, hasErr, err
 		}
@@ -119,13 +104,60 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 				}
 			}
 		}
-
 		return resObj, false, nil
+	case *ast.AssignmentExpression:
+		return evalAssignmentExpression(node, false, nil, env)
+	case *ast.CallExpression:
+		function, hasErr, err := Eval(node.Name, env, inTesting)
+		if err != nil {
+			return function, hasErr, err
+		}
+		args, hasErr, err := evalCallArgs(node.Args, env)
+		if err != nil {
+			return NULL, hasErr, err
+		}
+		return applyFunction(function, args)
+	case *ast.IndexExpression:
+		left, hasErr, err := Eval(node.Left, env, inTesting)
+		if err != nil {
+			return left, hasErr, err
+		}
+		index, hasErr, err := Eval(node.Index, env, inTesting)
+		if err != nil {
+			return index, hasErr, err
+		}
+		if left.Type() == object.RETURN_VALUE_OBJ {
+			left = left.(*object.ReturnValue).Value[0]
+		}
+		if index.Type() == object.RETURN_VALUE_OBJ {
+			index = index.(*object.ReturnValue).Value[0]
+		}
+		return evalIndexExpression(left, index)
+
+	case *ast.ExpressionStatement:
+		res, hasErr, err := Eval(node.Expression, env, inTesting)
+		if err != nil {
+			return NULL, hasErr, err
+		}
+		if inTesting {
+			return res, hasErr, err
+		}
+		return nil, false, nil
 	case *ast.FunctionBody:
 		return evalStatements(node.Statements, env)
 	case *ast.IfStatement:
 		localEnv := object.NewEnclosedEnvironment(env)
-		return evalIfStatements(node, localEnv)
+		res, hasErr, err := evalIfStatements(node, localEnv)
+		if err != nil {
+			return NULL, hasErr, err
+		}
+		if inTesting {
+			return res, hasErr, err
+		}
+		if (mustReturn && res.Type() == object.RETURN_VALUE_OBJ) || res == BREAK || res == CONTINUE {
+			return res, hasErr, err
+		}
+		return nil, false, nil
 	case *ast.ReturnStatement:
 		if node.Value == nil {
 			mustReturn = true
@@ -148,8 +180,6 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 		return &object.ReturnValue{Value: val}, false, nil
 	case *ast.VarStatement:
 		return evalVarStatement(node, false, nil, env)
-	case *ast.AssignmentExpression:
-		return evalAssignmentExpression(node, false, nil, env)
 	case *ast.ForLoopStatement:
 		localEnv := object.NewEnclosedEnvironment(env)
 		return evalForLoop(node, localEnv)
@@ -164,16 +194,6 @@ func Eval(node ast.Node, env *object.Environment) (object.Object, bool, error) {
 			return evalMainFunc(node, funVar.Value.(*object.Function).Env)
 		}
 		return nil, false, nil
-	case *ast.CallExpression:
-		function, hasErr, err := Eval(node.Name, env)
-		if err != nil {
-			return function, hasErr, err
-		}
-		args, hasErr, err := evalCallArgs(node.Args, env)
-		if err != nil {
-			return NULL, hasErr, err
-		}
-		return applyFunction(function, args)
 	case *ast.MultiValueAssignStmt:
 		return evalMultiValueAssignStmt(node, env)
 	case *ast.ContinueStatement:
@@ -190,7 +210,7 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Obje
 	var hasErr bool
 	var err error
 	for _, statement := range stmts {
-		result, hasErr, err = Eval(statement, env)
+		result, hasErr, err = Eval(statement, env, inTesting)
 		if err != nil {
 			return NULL, hasErr, err
 		}
@@ -205,11 +225,15 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Obje
 			return CONTINUE, false, nil
 		}
 	}
-	return result, hasErr, err
+
+	if inTesting {
+		return result, hasErr, err
+	}
+	return nil, false, nil
 }
 
 func evalMainFunc(node *ast.Function, env *object.Environment) (object.Object, bool, error) {
-	resObj, hasErr, err := Eval(node.Body, env)
+	resObj, hasErr, err := Eval(node.Body, env, inTesting)
 	if err != nil {
 		return resObj, hasErr, err
 	}
@@ -251,7 +275,7 @@ func evalHashIndexExpression(hash object.Object, index object.Object) (object.Ob
 func evalCallArgs(args []ast.Expression, env *object.Environment) ([]object.Object, bool, error) {
 	var res []object.Object
 	for _, e := range args {
-		evaluated, hasErr, err := Eval(e, env)
+		evaluated, hasErr, err := Eval(e, env, inTesting)
 		if err != nil {
 			return nil, hasErr, err
 		}
@@ -277,7 +301,7 @@ func applyFunction(fn object.Object, args []object.Object) (object.Object, bool,
 	for i, param := range function.Parameters {
 		function.Env.Set(param.ParameterName.Value, args[i], object.VAR)
 	}
-	evaluated, hasErr, err := Eval(function.Body, function.Env)
+	evaluated, hasErr, err := Eval(function.Body, function.Env, inTesting)
 	if err != nil {
 		return evaluated, hasErr, err
 	}
@@ -296,7 +320,7 @@ func applyFunction(fn object.Object, args []object.Object) (object.Object, bool,
 func evalArrayValue(node *ast.ArrayValue, env *object.Environment) (object.Object, bool, error) {
 	var res []object.Object
 	for _, e := range node.Values {
-		evaluated, hasErr, err := Eval(e, env)
+		evaluated, hasErr, err := Eval(e, env, inTesting)
 		if err != nil {
 			return NULL, hasErr, err
 		}
@@ -317,7 +341,7 @@ func evalHashMap(node *ast.HashMap, env *object.Environment) (object.Object, boo
 	pairs := make(map[object.HashKey]object.HashPair)
 
 	for keyNode, valueNode := range node.Pairs {
-		key, hasErr, err := Eval(keyNode, env)
+		key, hasErr, err := Eval(keyNode, env, inTesting)
 		if err != nil {
 			return NULL, hasErr, err
 		}
@@ -327,7 +351,7 @@ func evalHashMap(node *ast.HashMap, env *object.Environment) (object.Object, boo
 			return NULL, true, errors.New("unusable as hash key: " + string(key.Type()))
 		}
 
-		value, hasErr, err := Eval(valueNode, env)
+		value, hasErr, err := Eval(valueNode, env, inTesting)
 		if err != nil {
 			return NULL, hasErr, err
 		}
@@ -351,7 +375,7 @@ func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object,
 	if injectObj {
 		val = obj
 	} else if !injectObj {
-		val, hasErr, err = Eval(node.Value, env)
+		val, hasErr, err = Eval(node.Value, env, inTesting)
 		if err != nil {
 			return val, hasErr, err
 		}
@@ -367,7 +391,7 @@ func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object,
 		env.Set(node.Name.Value, val, object.CONST)
 	}
 
-	return val, false, nil
+	return nil, false, nil
 }
 
 func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Environment) (object.Object, bool, error) {
@@ -375,12 +399,12 @@ func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Enviro
 		for _, element := range node.Objects {
 			switch element := element.(type) {
 			case *ast.VarStatement:
-				_, hasErr, err := Eval(element, env)
+				_, hasErr, err := Eval(element, env, inTesting)
 				if err != nil {
 					return NULL, hasErr, err
 				}
 			case *ast.ExpressionStatement:
-				_, hasErr, err := Eval(element.Expression.(*ast.AssignmentExpression), env)
+				_, hasErr, err := Eval(element.Expression.(*ast.AssignmentExpression), env, inTesting)
 				if err != nil {
 					return NULL, hasErr, err
 				}
@@ -399,13 +423,13 @@ func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Enviro
 
 		var returnObj object.Object
 		if isVar {
-			newObj, hasErr, err := Eval(varEntry.Value, env)
+			newObj, hasErr, err := Eval(varEntry.Value, env, inTesting)
 			if err != nil {
 				return NULL, hasErr, err
 			}
 			returnObj = newObj
 		} else {
-			newObj, hasErr, err := Eval(expStmtEntry, env)
+			newObj, hasErr, err := Eval(expStmtEntry, env, inTesting)
 			if err != nil {
 				return NULL, hasErr, err
 			}
@@ -435,12 +459,12 @@ func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Enviro
 func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Object, bool, error) {
 	inForLoop = true
 
-	varStmtObj, hasErr, err := Eval(node.Left, env)
+	varStmtObj, hasErr, err := Eval(node.Left, env, inTesting)
 	if err != nil {
 		return varStmtObj, hasErr, err
 	}
 
-	infixObj, hasErr, err := Eval(node.Middle, env)
+	infixObj, hasErr, err := Eval(node.Middle, env, inTesting)
 	if err != nil {
 		return infixObj, hasErr, err
 	}
@@ -453,15 +477,18 @@ func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Ob
 
 		if resStmtObj == BREAK {
 			break
+		} else if resReturnObj, ok := resStmtObj.(*object.ReturnValue); ok {
+			inForLoop = false
+			return resReturnObj, false, nil
 		}
 
-		postfixObj, hasErr, err := Eval(node.Right, env)
+		postfixObj, hasErr, err := Eval(node.Right, env, inTesting)
 		if err != nil {
 			return postfixObj, hasErr, err
 		}
 
 		env.Update(node.Left.Name.Value, postfixObj, object.VAR)
-		infixObj, hasErr, err = Eval(node.Middle, env)
+		infixObj, hasErr, err = Eval(node.Middle, env, inTesting)
 		if err != nil {
 			return infixObj, hasErr, err
 		}
@@ -476,7 +503,7 @@ func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Ob
 
 func evalReturnValue(rs *ast.ReturnStatement, idx int, env *object.Environment) (object.Object, bool, error) {
 	currNode := rs.Value[idx]
-	return Eval(currNode, env)
+	return Eval(currNode, env, inTesting)
 }
 
 func evalIdentifier(node *ast.Identifier, env *object.Environment) (object.Object, bool, error) {
@@ -501,7 +528,7 @@ func getIdentifierVariable(node *ast.Identifier, env *object.Environment) (*obje
 }
 
 func evalIfStatements(node *ast.IfStatement, env *object.Environment) (object.Object, bool, error) {
-	condition, hasErr, err := Eval(node.Value, env)
+	condition, hasErr, err := Eval(node.Value, env, inTesting)
 	if err != nil {
 		return condition, hasErr, err
 	}
@@ -512,7 +539,7 @@ func evalIfStatements(node *ast.IfStatement, env *object.Environment) (object.Ob
 	}
 
 	if conditionRes {
-		return Eval(node.Body, env)
+		return Eval(node.Body, env, inTesting)
 	} else if node.MultiConseq != nil {
 		for i := 0; i < len(node.MultiConseq); i++ {
 			resObj, hasErr, err := evalElseIfStatement(node.MultiConseq[i], env)
@@ -532,7 +559,7 @@ func evalIfStatements(node *ast.IfStatement, env *object.Environment) (object.Ob
 }
 
 func evalElseIfStatement(node *ast.ElseIfStatement, env *object.Environment) (object.Object, bool, error) {
-	condition, hasErr, err := Eval(node.Value, env)
+	condition, hasErr, err := Eval(node.Value, env, inTesting)
 	if err != nil {
 		return condition, hasErr, err
 	}
@@ -541,7 +568,7 @@ func evalElseIfStatement(node *ast.ElseIfStatement, env *object.Environment) (ob
 		return NULL, hasErr, err
 	}
 	if conditionRes {
-		return Eval(node.Body, env)
+		return Eval(node.Body, env, inTesting)
 	}
 	return nil, false, nil
 }
@@ -592,7 +619,7 @@ func assignOpHelper(node *ast.AssignmentExpression, injectObj bool, rightVal obj
 		return leftSideVariable.Value, rightVal, false, nil
 	}
 
-	rightSideObj, hasErr, err := Eval(node.Right, env)
+	rightSideObj, hasErr, err := Eval(node.Right, env, inTesting)
 	if err != nil {
 		return NULL, NULL, hasErr, err
 	}
