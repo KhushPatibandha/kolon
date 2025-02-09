@@ -321,8 +321,8 @@ func Test34(t *testing.T) {
 		{"(-5)++;", &object.Integer{Value: -4}, false},
 		{"10.1++;", &object.Float{Value: 11.1}, false},
 		{"10.1--;", &object.Float{Value: 9.1}, false},
-		{"-10.1--;", &object.Float{Value: -11.1}, false},
-		{"-10.1++;", &object.Float{Value: -9.1}, false},
+		{"-10.1--;", &object.Float{Value: -9.1}, false},
+		{"-10.1++;", &object.Float{Value: -11.1}, false},
 		{"true++;", &object.Null{}, true},
 	}
 
@@ -348,6 +348,8 @@ func Test34(t *testing.T) {
 		}
 		if tt.object.Type() == object.INTEGER_OBJ {
 			testIntegerObject(t, evaluated, tt.object.(*object.Integer).Value)
+		} else if tt.object.Type() == object.FLOAT_OBJ {
+			testFloatObject(t, evaluated, tt.object.(*object.Float).Value)
 		}
 	}
 }
