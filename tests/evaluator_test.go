@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/KhushPatibandha/Kolon/src/interpreter/evaluator"
-	"github.com/KhushPatibandha/Kolon/src/interpreter/object"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
+	"github.com/KhushPatibandha/Kolon/src/object"
 	"github.com/KhushPatibandha/Kolon/src/parser"
 )
 

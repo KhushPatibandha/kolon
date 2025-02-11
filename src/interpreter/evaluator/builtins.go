@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/KhushPatibandha/Kolon/src/interpreter/object"
+	"github.com/KhushPatibandha/Kolon/src/object"
 )
 
 var builtins = map[string]*object.Builtin{

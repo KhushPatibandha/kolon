@@ -3,11 +3,10 @@ package evaluator
 import (
 	"errors"
 	"fmt"
-	"strconv"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
-	"github.com/KhushPatibandha/Kolon/src/interpreter/object"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
+	"github.com/KhushPatibandha/Kolon/src/object"
 	"github.com/KhushPatibandha/Kolon/src/parser"
 )
 
@@ -51,7 +50,7 @@ func Eval(node ast.Node, env *object.Environment, inTest bool) (object.Object, b
 	case *ast.PrefixExpression:
 		right, hasErr, err := Eval(node.Right, env, inTesting)
 		if err != nil {
-			return right, hasErr, err
+			return NULL, hasErr, err
 		}
 		if right.Type() == object.RETURN_VALUE_OBJ {
 			right = right.(*object.ReturnValue).Value[0]
@@ -60,11 +59,11 @@ func Eval(node ast.Node, env *object.Environment, inTest bool) (object.Object, b
 	case *ast.InfixExpression:
 		left, hasErr, err := Eval(node.Left, env, inTesting)
 		if err != nil {
-			return left, hasErr, err
+			return NULL, hasErr, err
 		}
 		right, hasErr, err := Eval(node.Right, env, inTesting)
 		if err != nil {
-			return right, hasErr, err
+			return NULL, hasErr, err
 		}
 		if left.Type() == object.RETURN_VALUE_OBJ {
 			left = left.(*object.ReturnValue).Value[0]
@@ -76,22 +75,20 @@ func Eval(node ast.Node, env *object.Environment, inTest bool) (object.Object, b
 	case *ast.PostfixExpression:
 		left, hasErr, err := Eval(node.Left, env, inTesting)
 		if err != nil {
-			return left, hasErr, err
+			return NULL, hasErr, err
 		}
 		if left.Type() == object.RETURN_VALUE_OBJ {
 			left = left.(*object.ReturnValue).Value[0]
 		}
-
 		resObj, hasErr, err := evalPostfixExpression(node.Operator, left)
 		if err != nil {
-			return resObj, hasErr, err
+			return NULL, hasErr, err
 		}
-
 		if node.IsStmt {
 			if id, ok := node.Left.(*ast.Identifier); ok {
 				idVariable, hasErr, err := getIdentifierVariable(id, env)
 				if err != nil {
-					return idVariable.Value, hasErr, err
+					return NULL, hasErr, err
 				}
 				var isVar bool
 				if idVariable.Type == object.VAR {
@@ -110,7 +107,7 @@ func Eval(node ast.Node, env *object.Environment, inTest bool) (object.Object, b
 	case *ast.CallExpression:
 		function, hasErr, err := Eval(node.Name, env, inTesting)
 		if err != nil {
-			return function, hasErr, err
+			return NULL, hasErr, err
 		}
 		args, hasErr, err := evalCallArgs(node.Args, env)
 		if err != nil {
@@ -120,11 +117,11 @@ func Eval(node ast.Node, env *object.Environment, inTest bool) (object.Object, b
 	case *ast.IndexExpression:
 		left, hasErr, err := Eval(node.Left, env, inTesting)
 		if err != nil {
-			return left, hasErr, err
+			return NULL, hasErr, err
 		}
 		index, hasErr, err := Eval(node.Index, env, inTesting)
 		if err != nil {
-			return index, hasErr, err
+			return NULL, hasErr, err
 		}
 		if left.Type() == object.RETURN_VALUE_OBJ {
 			left = left.(*object.ReturnValue).Value[0]
@@ -145,44 +142,6 @@ func Eval(node ast.Node, env *object.Environment, inTest bool) (object.Object, b
 		return nil, false, nil
 	case *ast.FunctionBody:
 		return evalStatements(node.Statements, env)
-	case *ast.IfStatement:
-		localEnv := object.NewEnclosedEnvironment(env)
-		res, hasErr, err := evalIfStatements(node, localEnv)
-		if err != nil {
-			return NULL, hasErr, err
-		}
-		if inTesting {
-			return res, hasErr, err
-		}
-		if (mustReturn && res.Type() == object.RETURN_VALUE_OBJ) || res == BREAK || res == CONTINUE {
-			return res, hasErr, err
-		}
-		return nil, false, nil
-	case *ast.ReturnStatement:
-		if node.Value == nil {
-			mustReturn = true
-			return &object.ReturnValue{Value: nil}, false, nil
-		}
-		var val []object.Object
-
-		for i := 0; i < len(node.Value); i++ {
-			rsObj, hasErr, err := evalReturnValue(node, i, env)
-			if err != nil {
-				return NULL, hasErr, err
-			}
-			if rsObj.Type() == object.RETURN_VALUE_OBJ {
-				rsObj = rsObj.(*object.ReturnValue).Value[0]
-			}
-			val = append(val, rsObj)
-		}
-
-		mustReturn = true
-		return &object.ReturnValue{Value: val}, false, nil
-	case *ast.VarStatement:
-		return evalVarStatement(node, false, nil, env)
-	case *ast.ForLoopStatement:
-		localEnv := object.NewEnclosedEnvironment(env)
-		return evalForLoop(node, localEnv)
 	case *ast.Function:
 		if node.Name.Value == "main" {
 			for key, value := range parser.FunctionMap {
@@ -194,14 +153,49 @@ func Eval(node ast.Node, env *object.Environment, inTest bool) (object.Object, b
 			return evalMainFunc(node, funVar.Value.(*object.Function).Env)
 		}
 		return nil, false, nil
+	case *ast.VarStatement:
+		return evalVarStatement(node, false, nil, env)
 	case *ast.MultiValueAssignStmt:
 		return evalMultiValueAssignStmt(node, env)
+	case *ast.ReturnStatement:
+		if node.Value == nil {
+			mustReturn = true
+			return &object.ReturnValue{Value: nil}, false, nil
+		}
+		var val []object.Object
+
+		for i := 0; i < len(node.Value); i++ {
+			rsObj, hasErr, err := evalReturnStatement(node, i, env)
+			if err != nil {
+				return NULL, hasErr, err
+			}
+			if rsObj.Type() == object.RETURN_VALUE_OBJ {
+				rsObj = rsObj.(*object.ReturnValue).Value[0]
+			}
+			val = append(val, rsObj)
+		}
+
+		mustReturn = true
+		return &object.ReturnValue{Value: val}, false, nil
+	case *ast.IfStatement:
+		localEnv := object.NewEnclosedEnvironment(env)
+		res, hasErr, err := evalIfStatements(node, localEnv)
+		if err != nil {
+			return NULL, hasErr, err
+		}
+		if inTesting || ((mustReturn && res.Type() == object.RETURN_VALUE_OBJ) || res == BREAK || res == CONTINUE) {
+			return res, hasErr, err
+		}
+		return nil, false, nil
+	case *ast.ForLoopStatement:
+		localEnv := object.NewEnclosedEnvironment(env)
+		return evalForLoop(node, localEnv)
 	case *ast.ContinueStatement:
 		return CONTINUE, false, nil
 	case *ast.BreakStatement:
 		return BREAK, false, nil
 	default:
-		return nil, true, fmt.Errorf("no eval function for given node type, got: %T", node)
+		return NULL, true, fmt.Errorf("no eval function for given node type, got: %T", node)
 	}
 }
 
@@ -233,138 +227,11 @@ func evalStatements(stmts []ast.Statement, env *object.Environment) (object.Obje
 }
 
 func evalMainFunc(node *ast.Function, env *object.Environment) (object.Object, bool, error) {
-	resObj, hasErr, err := Eval(node.Body, env, inTesting)
+	_, hasErr, err := Eval(node.Body, env, inTesting)
 	if err != nil {
-		return resObj, hasErr, err
+		return NULL, hasErr, err
 	}
 	return nil, false, nil
-}
-
-func evalIndexExpression(left object.Object, index object.Object) (object.Object, bool, error) {
-	if left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ {
-		return evalArrayIndexExpression(left, index)
-	} else {
-		return evalHashIndexExpression(left, index)
-	}
-}
-
-func evalArrayIndexExpression(array object.Object, index object.Object) (object.Object, bool, error) {
-	arrayObj := array.(*object.Array)
-	idx := index.(*object.Integer).Value
-	maxIdx := int64(len(arrayObj.Elements) - 1)
-	if idx < 0 || idx > maxIdx {
-		return NULL, true, errors.New("index out of range, index: " + strconv.FormatInt(idx, 10) + " max index: " + strconv.FormatInt(maxIdx, 10))
-	}
-	return arrayObj.Elements[idx], false, nil
-}
-
-func evalHashIndexExpression(hash object.Object, index object.Object) (object.Object, bool, error) {
-	hashObj := hash.(*object.Hash)
-
-	key, ok := index.(object.Hashable)
-	if !ok {
-		return NULL, true, errors.New("unusable as hash key: " + string(index.Type()))
-	}
-	pair, ok := hashObj.Pairs[key.HashKey()]
-	if !ok {
-		return NULL, true, errors.New("key not found: " + index.Inspect())
-	}
-	return pair.Value, false, nil
-}
-
-func evalCallArgs(args []ast.Expression, env *object.Environment) ([]object.Object, bool, error) {
-	var res []object.Object
-	for _, e := range args {
-		evaluated, hasErr, err := Eval(e, env, inTesting)
-		if err != nil {
-			return nil, hasErr, err
-		}
-		if evaluated.Type() == object.RETURN_VALUE_OBJ {
-			evaluated = evaluated.(*object.ReturnValue).Value[0]
-		}
-		res = append(res, evaluated)
-	}
-	return res, false, nil
-}
-
-func applyFunction(fn object.Object, args []object.Object) (object.Object, bool, error) {
-	function, ok := fn.(*object.Function)
-	if !ok {
-		builtin, ok := fn.(*object.Builtin)
-		if ok {
-			return builtin.Fn(args...)
-		} else {
-			return NULL, true, errors.New("not a function: " + string(fn.Type()))
-		}
-	}
-
-	for i, param := range function.Parameters {
-		function.Env.Set(param.ParameterName.Value, args[i], object.VAR)
-	}
-	evaluated, hasErr, err := Eval(function.Body, function.Env, inTesting)
-	if err != nil {
-		return evaluated, hasErr, err
-	}
-
-	if returnValue, ok := evaluated.(*object.ReturnValue); ok {
-		mustReturn = false
-		if returnValue.Value == nil && function.ReturnType == nil {
-			return nil, false, nil
-		}
-		return returnValue, false, nil
-	}
-
-	return evaluated, false, nil
-}
-
-func evalArrayValue(node *ast.ArrayValue, env *object.Environment) (object.Object, bool, error) {
-	var res []object.Object
-	for _, e := range node.Values {
-		evaluated, hasErr, err := Eval(e, env, inTesting)
-		if err != nil {
-			return NULL, hasErr, err
-		}
-		res = append(res, evaluated)
-	}
-
-	arrayObj := &object.Array{Elements: res}
-
-	if node.Type != nil {
-		arrayObj.TypeOf = node.Type.Value
-		return arrayObj, false, nil
-	}
-
-	return arrayObj, false, nil
-}
-
-func evalHashMap(node *ast.HashMap, env *object.Environment) (object.Object, bool, error) {
-	pairs := make(map[object.HashKey]object.HashPair)
-
-	for keyNode, valueNode := range node.Pairs {
-		key, hasErr, err := Eval(keyNode, env, inTesting)
-		if err != nil {
-			return NULL, hasErr, err
-		}
-
-		hashKey, ok := key.(object.Hashable)
-		if !ok {
-			return NULL, true, errors.New("unusable as hash key: " + string(key.Type()))
-		}
-
-		value, hasErr, err := Eval(valueNode, env, inTesting)
-		if err != nil {
-			return NULL, hasErr, err
-		}
-
-		hashed := hashKey.HashKey()
-		pairs[hashed] = object.HashPair{Key: key, Value: value}
-	}
-
-	if node.KeyType != nil && node.ValueType != nil {
-		return &object.Hash{Pairs: pairs, KeyType: node.KeyType.Value, ValueType: node.ValueType.Value}, false, nil
-	}
-
-	return &object.Hash{Pairs: pairs}, false, nil
 }
 
 func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object, env *object.Environment) (object.Object, bool, error) {
@@ -377,7 +244,7 @@ func evalVarStatement(node *ast.VarStatement, injectObj bool, obj object.Object,
 	} else if !injectObj {
 		val, hasErr, err = Eval(node.Value, env, inTesting)
 		if err != nil {
-			return val, hasErr, err
+			return NULL, hasErr, err
 		}
 	}
 
@@ -456,23 +323,58 @@ func evalMultiValueAssignStmt(node *ast.MultiValueAssignStmt, env *object.Enviro
 	return nil, false, nil
 }
 
+func evalReturnStatement(rs *ast.ReturnStatement, idx int, env *object.Environment) (object.Object, bool, error) {
+	currNode := rs.Value[idx]
+	return Eval(currNode, env, inTesting)
+}
+
+func evalIfStatements(node *ast.IfStatement, env *object.Environment) (object.Object, bool, error) {
+	condition, hasErr, err := Eval(node.Value, env, inTesting)
+	if err != nil {
+		return NULL, hasErr, err
+	}
+
+	conditionRes, hasErr, err := execIf(condition)
+	if err != nil {
+		return NULL, hasErr, err
+	}
+
+	if conditionRes == TRUE {
+		return evalStatements(node.Body.Statements, env)
+	} else if node.MultiConseq != nil {
+		for i := 0; i < len(node.MultiConseq); i++ {
+			obj, success, hasErr, err := evalElseIfStatement(node.MultiConseq[i], env)
+			if err != nil {
+				return NULL, hasErr, err
+			}
+			if success {
+				return obj, false, nil
+			}
+		}
+	}
+	if node.Consequence != nil {
+		return evalStatements(node.Consequence.Body.Statements, env)
+	}
+	return nil, false, nil
+}
+
 func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Object, bool, error) {
 	inForLoop = true
 
-	varStmtObj, hasErr, err := Eval(node.Left, env, inTesting)
+	_, hasErr, err := Eval(node.Left, env, inTesting)
 	if err != nil {
-		return varStmtObj, hasErr, err
+		return NULL, hasErr, err
 	}
 
 	infixObj, hasErr, err := Eval(node.Middle, env, inTesting)
 	if err != nil {
-		return infixObj, hasErr, err
+		return NULL, hasErr, err
 	}
 
 	for infixObj == TRUE {
 		resStmtObj, hasErr, err := evalStatements(node.Body.Statements, env)
 		if err != nil {
-			return resStmtObj, hasErr, err
+			return NULL, hasErr, err
 		}
 
 		if resStmtObj == BREAK {
@@ -484,13 +386,13 @@ func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Ob
 
 		postfixObj, hasErr, err := Eval(node.Right, env, inTesting)
 		if err != nil {
-			return postfixObj, hasErr, err
+			return NULL, hasErr, err
 		}
 
 		env.Update(node.Left.Name.Value, postfixObj, object.VAR)
 		infixObj, hasErr, err = Eval(node.Middle, env, inTesting)
 		if err != nil {
-			return infixObj, hasErr, err
+			return NULL, hasErr, err
 		}
 		if infixObj == FALSE {
 			break
@@ -501,466 +403,35 @@ func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Ob
 	return nil, false, nil
 }
 
-func evalReturnValue(rs *ast.ReturnStatement, idx int, env *object.Environment) (object.Object, bool, error) {
-	currNode := rs.Value[idx]
-	return Eval(currNode, env, inTesting)
-}
-
-func evalIdentifier(node *ast.Identifier, env *object.Environment) (object.Object, bool, error) {
-	variable, hasErr, err := getIdentifierVariable(node, env)
-	if err != nil {
-		return NULL, hasErr, err
-	}
-	return variable.Value, false, nil
-}
-
-func getIdentifierVariable(node *ast.Identifier, env *object.Environment) (*object.Variable, bool, error) {
-	variable, ok := env.Get(node.Value)
-	if !ok {
-		builtin, ok := builtins[node.Value]
-		if ok {
-			return &object.Variable{Type: object.FUNCTION, Value: builtin}, false, nil
-		} else {
-			return &object.Variable{Type: object.VAR, Value: NULL}, true, errors.New("identifier not found: " + node.Value)
-		}
-	}
-	return variable, false, nil
-}
-
-func evalIfStatements(node *ast.IfStatement, env *object.Environment) (object.Object, bool, error) {
+func evalElseIfStatement(node *ast.ElseIfStatement, env *object.Environment) (object.Object, bool, bool, error) {
 	condition, hasErr, err := Eval(node.Value, env, inTesting)
 	if err != nil {
-		return condition, hasErr, err
-	}
-
-	conditionRes, hasErr, err := execIf(condition)
-	if err != nil {
-		return NULL, hasErr, err
-	}
-
-	if conditionRes {
-		return Eval(node.Body, env, inTesting)
-	} else if node.MultiConseq != nil {
-		for i := 0; i < len(node.MultiConseq); i++ {
-			resObj, hasErr, err := evalElseIfStatement(node.MultiConseq[i], env)
-			if err != nil {
-				return resObj, hasErr, err
-			}
-			if resObj != nil {
-				return resObj, hasErr, err
-			}
-		}
-	}
-
-	if node.Consequence != nil {
-		return evalStatements(node.Consequence.Body.Statements, env)
-	}
-	return nil, false, nil
-}
-
-func evalElseIfStatement(node *ast.ElseIfStatement, env *object.Environment) (object.Object, bool, error) {
-	condition, hasErr, err := Eval(node.Value, env, inTesting)
-	if err != nil {
-		return condition, hasErr, err
+		return NULL, false, hasErr, err
 	}
 	conditionRes, hasErr, err := execIf(condition)
 	if err != nil {
-		return NULL, hasErr, err
+		return NULL, false, hasErr, err
 	}
-	if conditionRes {
-		return Eval(node.Body, env, inTesting)
+	if conditionRes == TRUE {
+		resObj, hasErr, err := Eval(node.Body, env, inTesting)
+		if err != nil {
+			return NULL, false, hasErr, err
+		}
+		return resObj, true, false, nil
 	}
-	return nil, false, nil
+	return nil, false, false, nil
 }
 
-func execIf(obj object.Object) (bool, bool, error) {
+func execIf(obj object.Object) (object.Object, bool, error) {
 	if obj.Type() == object.RETURN_VALUE_OBJ {
 		return execIf(obj.(*object.ReturnValue).Value[0])
 	}
 	switch obj {
 	case TRUE:
-		return true, false, nil
+		return TRUE, false, nil
 	case FALSE:
-		return false, false, nil
-	default:
-		return false, true, errors.New("conditions for `if` and `else if` statements must result in a `bool`, got: " + string(obj.Type()))
-	}
-}
-
-// -----------------------------------------------------------------------------
-// Assignment op
-// -----------------------------------------------------------------------------
-func evalAssignmentExpression(node *ast.AssignmentExpression, injectObj bool, val object.Object, env *object.Environment) (object.Object, bool, error) {
-	switch node.Operator {
-	case "=":
-		return evalAssignOp(node, injectObj, val, env)
-	case "+=":
-		return evalSymbolAssignOp("+", node, env)
-	case "-=":
-		return evalSymbolAssignOp("-", node, env)
-	case "*=":
-		return evalSymbolAssignOp("*", node, env)
-	case "/=":
-		return evalSymbolAssignOp("/", node, env)
-	case "%=":
-		return evalSymbolAssignOp("%", node, env)
-	default:
-		return NULL, true, errors.New("only `=`, `+=`, `-=`, `*=`, `/=`, `%=` `assignment` operators supported, got: " + node.Operator)
-	}
-}
-
-func assignOpHelper(node *ast.AssignmentExpression, injectObj bool, rightVal object.Object, env *object.Environment) (object.Object, object.Object, bool, error) {
-	leftSideVariable, hasErr, err := getIdentifierVariable(node.Left, env)
-	if err != nil {
-		return NULL, NULL, hasErr, err
-	}
-
-	if injectObj {
-		return leftSideVariable.Value, rightVal, false, nil
-	}
-
-	rightSideObj, hasErr, err := Eval(node.Right, env, inTesting)
-	if err != nil {
-		return NULL, NULL, hasErr, err
-	}
-
-	if rightSideObj.Type() == object.RETURN_VALUE_OBJ {
-		rightSideObj = rightSideObj.(*object.ReturnValue).Value[0]
-	}
-
-	return leftSideVariable.Value, rightSideObj, false, nil
-}
-
-func evalSymbolAssignOp(operator string, node *ast.AssignmentExpression, env *object.Environment) (object.Object, bool, error) {
-	leftSideObj, rightSideObj, hasErr, err := assignOpHelper(node, false, nil, env)
-	if err != nil {
-		return NULL, hasErr, err
-	}
-
-	resObj, hasErr, err := evalInfixExpression(operator, leftSideObj, rightSideObj)
-	if err != nil {
-		return resObj, hasErr, err
-	}
-	env.Update(node.Left.Value, resObj, object.VAR)
-	return resObj, false, nil
-}
-
-func evalAssignOp(node *ast.AssignmentExpression, injectObj bool, rightVal object.Object, env *object.Environment) (object.Object, bool, error) {
-	_, rightSideObj, hasErr, err := assignOpHelper(node, injectObj, rightVal, env)
-	if err != nil {
-		return NULL, hasErr, err
-	}
-	env.Update(node.Left.Value, rightSideObj, object.VAR)
-	return rightSideObj, false, nil
-}
-
-// -----------------------------------------------------------------------------
-// Prefix op
-// -----------------------------------------------------------------------------
-func evalPrefixExpression(operator string, right object.Object) (object.Object, bool, error) {
-	if operator == "!" {
-		return evalBangOperatorExpression(right)
-	} else {
-		return evalMinusOperatorExpression(right)
-	}
-}
-
-func evalMinusOperatorExpression(right object.Object) (object.Object, bool, error) {
-	if right.Type() == object.FLOAT_OBJ {
-		value := right.(*object.Float).Value
-		return &object.Float{Value: -value}, false, nil
-	}
-	value := right.(*object.Integer).Value
-	return &object.Integer{Value: -value}, false, nil
-}
-
-func evalBangOperatorExpression(right object.Object) (object.Object, bool, error) {
-	if right == TRUE {
-		return FALSE, false, nil
-	} else {
-		return TRUE, false, nil
-	}
-}
-
-// -----------------------------------------------------------------------------
-// Postfix op
-// -----------------------------------------------------------------------------
-func evalPostfixExpression(operator string, left object.Object) (object.Object, bool, error) {
-	if left.Type() == object.INTEGER_OBJ {
-		return evalIntegerPostfixExpression(operator, left)
-	} else {
-		return evalFloatPostfixExpression(operator, left)
-	}
-}
-
-func evalFloatPostfixExpression(operator string, left object.Object) (object.Object, bool, error) {
-	leftVal := left.(*object.Float).Value
-	if operator == "++" {
-		return &object.Float{Value: leftVal + 1}, false, nil
-	} else {
-		return &object.Float{Value: leftVal - 1}, false, nil
-	}
-}
-
-func evalIntegerPostfixExpression(operator string, left object.Object) (object.Object, bool, error) {
-	leftVal := left.(*object.Integer).Value
-	if operator == "++" {
-		return &object.Integer{Value: leftVal + 1}, false, nil
-	} else {
-		return &object.Integer{Value: leftVal - 1}, false, nil
-	}
-}
-
-// -----------------------------------------------------------------------------
-// Infix op
-// -----------------------------------------------------------------------------
-func evalInfixExpression(operator string, left object.Object, right object.Object) (object.Object, bool, error) {
-	switch {
-	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
-		return evalIntegerInfixExpression(operator, left, right)
-	case left.Type() == object.BOOLEAN_OBJ && right.Type() == object.BOOLEAN_OBJ:
-		return evalBooleanInfixExpression(operator, left, right)
-	case left.Type() == object.FLOAT_OBJ && right.Type() == object.FLOAT_OBJ:
-		return evalFloatInfixExpression(operator, left, right)
-	case left.Type() == object.INTEGER_OBJ && right.Type() == object.FLOAT_OBJ || left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
-		leftVal := 0.0
-		rightVal := 0.0
-		if left.Type() == object.INTEGER_OBJ {
-			leftVal = float64(left.(*object.Integer).Value)
-			rightVal = right.(*object.Float).Value
-		} else {
-			leftVal = left.(*object.Float).Value
-			rightVal = float64(right.(*object.Integer).Value)
-		}
-		return evalFloatInfixExpression(operator, &object.Float{Value: leftVal}, &object.Float{Value: rightVal})
-	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
-		return evalStringInfixExpression(operator, left, right)
-	case left.Type() == object.CHAR_OBJ && right.Type() == object.CHAR_OBJ:
-		return evalCharInfixExpression(operator, left, right)
-	case left.Type() == object.ARRAY_OBJ && right.Type() == object.ARRAY_OBJ:
-		return evalArrayInfixExpression(operator, left, right)
-	default:
-		return NULL, true, errors.New("invalid `infix` operation with variable types on left and right, got: `" + string(left.Type()) + "` and `" + string(right.Type()) + "`")
-	}
-}
-
-func evalArrayInfixExpression(operator string, left object.Object, right object.Object) (object.Object, bool, error) {
-	leftVal := left.(*object.Array)
-	rightVal := right.(*object.Array)
-
-	switch operator {
-	case "+":
-		leftVal.Elements = append(leftVal.Elements, rightVal.Elements...)
-		return leftVal, false, nil
-	case "==":
-		for i, element := range leftVal.Elements {
-			if element.Type() != rightVal.Elements[i].Type() {
-				return FALSE, false, nil
-			}
-			isCorrect, hasErr, err := evalInfixExpression("==", element, rightVal.Elements[i])
-			if err != nil {
-				return NULL, hasErr, err
-			}
-			if isCorrect == FALSE {
-				return FALSE, false, nil
-			}
-		}
-		return TRUE, false, nil
-	case "!=":
-		for i, element := range leftVal.Elements {
-			if element.Type() != rightVal.Elements[i].Type() {
-				return TRUE, false, nil
-			}
-			isCorrect, hasErr, err := evalInfixExpression("!=", element, rightVal.Elements[i])
-			if err != nil {
-				return NULL, hasErr, err
-			}
-			if isCorrect == TRUE {
-				return TRUE, false, nil
-			}
-		}
 		return FALSE, false, nil
 	default:
-		return NULL, true, errors.New("can only use `+`, `==`, `!=` infix operators with 2 arrays, got: " + operator)
-	}
-}
-
-func evalCharInfixExpression(operator string, left object.Object, right object.Object) (object.Object, bool, error) {
-	leftVal := left.(*object.Char).Value
-	rightVal := right.(*object.Char).Value
-	leftVal = leftVal[1 : len(leftVal)-1]
-	rightVal = rightVal[1 : len(rightVal)-1]
-
-	switch operator {
-	case "+":
-		return &object.String{Value: "\"" + leftVal + rightVal + "\""}, false, nil
-	case "==":
-		if leftVal == rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "!=":
-		if leftVal != rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	default:
-		return NULL, true, errors.New("can only use `+`, `==`, `!=` infix operators with 2 `char`, got: " + operator)
-	}
-}
-
-func evalStringInfixExpression(operator string, left object.Object, right object.Object) (object.Object, bool, error) {
-	leftVal := left.(*object.String).Value
-	rightVal := right.(*object.String).Value
-	leftVal = leftVal[1 : len(leftVal)-1]
-	rightVal = rightVal[1 : len(rightVal)-1]
-
-	switch operator {
-	case "+":
-		return &object.String{Value: "\"" + leftVal + rightVal + "\""}, false, nil
-	case "==":
-		if leftVal == rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "!=":
-		if leftVal != rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	default:
-		return NULL, true, errors.New("can only use `+`, `==`, `!=` infix operators with 2 `string`, got: " + operator)
-	}
-}
-
-func evalFloatInfixExpression(operator string, left object.Object, right object.Object) (object.Object, bool, error) {
-	leftVal := left.(*object.Float).Value
-	rightVal := right.(*object.Float).Value
-
-	switch operator {
-	case "+":
-		return &object.Float{Value: leftVal + rightVal}, false, nil
-	case "-":
-		return &object.Float{Value: leftVal - rightVal}, false, nil
-	case "/":
-		return &object.Float{Value: leftVal / rightVal}, false, nil
-	case "*":
-		return &object.Float{Value: leftVal * rightVal}, false, nil
-	case ">":
-		if leftVal > rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "<":
-		if leftVal < rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "==":
-		if leftVal == rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "!=":
-		if leftVal != rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "<=":
-		if leftVal <= rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case ">=":
-		if leftVal >= rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	default:
-		return NULL, true, errors.New("can only use `+`, `-`, `*`, `/`, `>`, `<`, `<=`, `>=`, `!=`, `==` infix operators with 2 `float`, got: " + operator)
-	}
-}
-
-func evalIntegerInfixExpression(operator string, left object.Object, right object.Object) (object.Object, bool, error) {
-	leftVal := left.(*object.Integer).Value
-	rightVal := right.(*object.Integer).Value
-
-	switch operator {
-	case "+":
-		return &object.Integer{Value: leftVal + rightVal}, false, nil
-	case "-":
-		return &object.Integer{Value: leftVal - rightVal}, false, nil
-	case "/":
-		return &object.Integer{Value: leftVal / rightVal}, false, nil
-	case "*":
-		return &object.Integer{Value: leftVal * rightVal}, false, nil
-	case "%":
-		return &object.Integer{Value: leftVal % rightVal}, false, nil
-	case "&":
-		return &object.Integer{Value: leftVal & rightVal}, false, nil
-	case "|":
-		return &object.Integer{Value: leftVal | rightVal}, false, nil
-	case ">":
-		if leftVal > rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "<":
-		if leftVal < rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "==":
-		if leftVal == rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "!=":
-		if leftVal != rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "<=":
-		if leftVal <= rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case ">=":
-		if leftVal >= rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	default:
-		return NULL, true, errors.New("can only use `+`, `-`, `*`, `/`, `%`, `>`, `<`, `<=`, `>=`, `!=`, `==`, `|`, `&` infix operators with 2 `int`, got: " + operator)
-	}
-}
-
-func evalBooleanInfixExpression(operator string, left object.Object, right object.Object) (object.Object, bool, error) {
-	leftVal := left.(*object.Boolean).Value
-	rightVal := right.(*object.Boolean).Value
-
-	switch operator {
-	case "==":
-		if leftVal == rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "!=":
-		if leftVal != rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "&&":
-		if leftVal && rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	case "||":
-		if leftVal || rightVal {
-			return TRUE, false, nil
-		}
-		return FALSE, false, nil
-	default:
-		return NULL, true, errors.New("can only use `==`, `!=`, `&&`, `||` infix operators with 2 `bool`, got: " + operator)
+		return NULL, true, errors.New("conditions for `if` and `else if` statements must result in a `bool`, got: " + string(obj.Type()))
 	}
 }
