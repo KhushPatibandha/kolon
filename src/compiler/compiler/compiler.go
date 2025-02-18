@@ -1,16 +1,19 @@
 package compiler
 
 import (
-	"fmt"
+	"errors"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/compiler/code"
-	"github.com/KhushPatibandha/Kolon/src/interpreter/object"
+	"github.com/KhushPatibandha/Kolon/src/object"
 )
 
 type Compiler struct {
-	instructions code.Instructions
-	constants    []object.Object
+	instructions        code.Instructions
+	constants           []object.Object
+	lastInstruction     EmittedInstruction
+	previousInstruction EmittedInstruction
+	symbolTable         *SymbolTable
 }
 
 type Bytecode struct {
@@ -18,10 +21,18 @@ type Bytecode struct {
 	Constants    []object.Object
 }
 
+type EmittedInstruction struct {
+	OpCode   code.Opcode
+	Position int
+}
+
 func New() *Compiler {
 	return &Compiler{
-		instructions: code.Instructions{},
-		constants:    []object.Object{},
+		instructions:        code.Instructions{},
+		constants:           []object.Object{},
+		lastInstruction:     EmittedInstruction{},
+		previousInstruction: EmittedInstruction{},
+		symbolTable:         NewSymTable(),
 	}
 }
 
@@ -35,6 +46,13 @@ func (c *Compiler) Bytecode() *Bytecode {
 func (c *Compiler) Compile(node ast.Node) error {
 	switch node := node.(type) {
 	case *ast.Program:
+		for _, s := range node.Statements {
+			err := c.Compile(s)
+			if err != nil {
+				return err
+			}
+		}
+	case *ast.FunctionBody:
 		for _, s := range node.Statements {
 			err := c.Compile(s)
 			if err != nil {
@@ -59,12 +77,20 @@ func (c *Compiler) Compile(node ast.Node) error {
 	case *ast.CharValue:
 		char := &object.Char{Value: node.Value}
 		c.emit(code.OpConstant, c.addConst(char))
+	case *ast.Identifier:
+		symbol, ok := c.symbolTable.Resolve(node.Value)
+		if !ok {
+			return errors.New("undefined variable: " + node.Value)
+		}
+		c.emit(code.OpGetGlobal, symbol.Index)
 	case *ast.ExpressionStatement:
 		err := c.Compile(node.Expression)
 		if err != nil {
 			return err
 		}
-		c.emit(code.OpPop)
+		if _, ok := node.Expression.(*ast.AssignmentExpression); !ok {
+			c.emit(code.OpPop)
+		}
 	case *ast.InfixExpression:
 		if node.Operator == "<" || node.Operator == "<=" {
 			err := c.Compile(node.Right)
@@ -118,7 +144,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 		case "||":
 			c.emit(code.OpOrOr)
 		default:
-			return fmt.Errorf("unknown operator %s", node.Operator)
+			return errors.New("unknown operator for infix operation. can only use `+`, `-`, `*`, `/`, `%`, `>`, `<`, `<=`, `>=`, `!=`, `==`, `|`, `&`, `&&`, `||` infix operators, got: " + node.Operator)
 		}
 	case *ast.PrefixExpression:
 		err := c.Compile(node.Right)
@@ -131,7 +157,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 		case "-":
 			c.emit(code.OpMinus)
 		default:
-			return fmt.Errorf("unknown operator %s", node.Operator)
+			return errors.New("unknown operator for prefix operation. can only use `!`, `-` prefix operators, got: " + node.Operator)
 		}
 	case *ast.PostfixExpression:
 		err := c.Compile(node.Left)
@@ -144,7 +170,105 @@ func (c *Compiler) Compile(node ast.Node) error {
 		case "--":
 			c.emit(code.OpMinusMinus)
 		default:
-			return fmt.Errorf("unknown operator %s", node.Operator)
+			return errors.New("unknown operator for postfix operation. can only use `++`, `--` postfix operators, got: " + node.Operator)
+		}
+	case *ast.AssignmentExpression:
+		symbol, ok := c.symbolTable.Resolve(node.Left.Value)
+		if !ok {
+			return errors.New("undefined variable: " + node.Left.Value)
+		}
+
+		if node.Operator == "=" {
+			err := c.Compile(node.Right)
+			if err != nil {
+				return err
+			}
+		} else {
+			c.emit(code.OpGetGlobal, symbol.Index)
+
+			err := c.Compile(node.Right)
+			if err != nil {
+				return err
+			}
+
+			switch node.Operator {
+			case "+=":
+				c.emit(code.OpAdd)
+			case "-=":
+				c.emit(code.OpSub)
+			case "/=":
+				c.emit(code.OpDiv)
+			case "*=":
+				c.emit(code.OpMul)
+			case "%=":
+				c.emit(code.OpMod)
+			default:
+				return errors.New("unknown operator for assignment operation. can only use `=`, `+=`, `-=`, `*=`, `/=`, `%=`, got: " + node.Operator)
+			}
+		}
+		c.emit(code.OpSetGlobal, symbol.Index)
+	case *ast.VarStatement:
+		err := c.Compile(node.Value)
+		if err != nil {
+			return err
+		}
+		symbol := c.symbolTable.Define(node.Name.Value)
+		c.emit(code.OpSetGlobal, symbol.Index)
+	case *ast.IfStatement:
+		err := c.Compile(node.Value)
+		if err != nil {
+			return err
+		}
+		jumpNotTruePos := c.emit(code.OpJumpNotTrue, 9999)
+		err = c.Compile(node.Body)
+		if err != nil {
+			return err
+		}
+
+		var allJumpPos []int
+
+		if node.Consequence == nil && node.MultiConseq == nil {
+			afterIfBodyPos := len(c.instructions)
+			c.changeOperand(jumpNotTruePos, afterIfBodyPos)
+		} else if node.MultiConseq != nil {
+			jumpPos := c.emit(code.OpJump, 9999)
+			allJumpPos = append(allJumpPos, jumpPos)
+			afterIfBodyPos := len(c.instructions)
+			c.changeOperand(jumpNotTruePos, afterIfBodyPos)
+
+			for _, elseIf := range node.MultiConseq {
+				err := c.Compile(elseIf.Value)
+				if err != nil {
+					return err
+				}
+				jumpPosNotTrueForElseIf := c.emit(code.OpJumpNotTrue, 9999)
+				err = c.Compile(elseIf.Body)
+				if err != nil {
+					return err
+				}
+				jumpPos := c.emit(code.OpJump, 9999)
+				allJumpPos = append(allJumpPos, jumpPos)
+				afterElseIfBodyPos := len(c.instructions)
+				c.changeOperand(jumpPosNotTrueForElseIf, afterElseIfBodyPos)
+			}
+
+		}
+		if node.Consequence != nil {
+			if node.MultiConseq == nil {
+				jumpPos := c.emit(code.OpJump, 9999)
+				allJumpPos = append(allJumpPos, jumpPos)
+				afterIfBodyPos := len(c.instructions)
+				c.changeOperand(jumpNotTruePos, afterIfBodyPos)
+			}
+
+			err := c.Compile(node.Consequence.Body)
+			if err != nil {
+				return err
+			}
+		}
+		endPos := len(c.instructions)
+		for _, jumpPos := range allJumpPos {
+			c.changeOperand(jumpPos, endPos)
 		}
 	}
 	return nil
@@ -158,6 +282,7 @@ func (c *Compiler) addConst(obj object.Object) int {
 func (c *Compiler) emit(opcode code.Opcode, operands ...int) int {
 	ins := code.Make(opcode, operands...)
 	pos := c.addIns(ins)
+	c.setLastIns(opcode, pos)
 	return pos
 }
 
@@ -165,4 +290,23 @@ func (c *Compiler) addIns(ins []byte) int {
 	newInsPos := len(c.instructions)
 	c.instructions = append(c.instructions, ins...)
 	return newInsPos
+}
+
+func (c *Compiler) setLastIns(op code.Opcode, pos int) {
+	previous := c.lastInstruction
+	last := EmittedInstruction{OpCode: op, Position: pos}
+	c.previousInstruction = previous
+	c.lastInstruction = last
+}
+
+func (c *Compiler) replaceIns(pos int, newIns []byte) {
+	for i := 0; i < len(newIns); i++ {
+		c.instructions[pos+i] = newIns[i]
+	}
+}
+
+func (c *Compiler) changeOperand(pos int, operand int) {
+	op := code.Opcode(c.instructions[pos])
+	newIns := code.Make(op, operand)
+	c.replaceIns(pos, newIns)
 }

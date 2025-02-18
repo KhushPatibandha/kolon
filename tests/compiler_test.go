@@ -7,8 +7,8 @@ import (
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/compiler/code"
 	"github.com/KhushPatibandha/Kolon/src/compiler/compiler"
-	"github.com/KhushPatibandha/Kolon/src/interpreter/object"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
+	"github.com/KhushPatibandha/Kolon/src/object"
 	"github.com/KhushPatibandha/Kolon/src/parser"
 )
 
@@ -215,6 +215,16 @@ func Test49(t *testing.T) {
 			},
 		},
 		{
+			input:             `"some" + "thing"`,
+			expectedConstants: []interface{}{"\"some\"", "\"thing\""},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpAdd),
+				code.Make(code.OpPop),
+			},
+		},
+		{
 			input:             "'c'",
 			expectedConstants: []interface{}{"'c'"},
 			expectedInstructions: []code.Instructions{
@@ -268,6 +278,256 @@ func Test49(t *testing.T) {
 				code.Make(code.OpPop),
 			},
 		},
+		{
+			input: `
+            if: (true): {
+                10;
+            }
+            1000;
+            `,
+			expectedConstants: []interface{}{10, 1000},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpTrue),           // 0000
+				code.Make(code.OpJumpNotTrue, 8), // 0001
+				code.Make(code.OpConstant, 0),    // 0004
+				code.Make(code.OpPop),            // 0007
+				code.Make(code.OpConstant, 1),    // 0008
+				code.Make(code.OpPop),            // 0011
+			},
+		},
+		{
+			input: `
+            if: (true): {
+                10;
+            } else: {
+                20;
+            }
+            1000;
+            `,
+			expectedConstants: []interface{}{10, 20, 1000},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpTrue),            // 0000
+				code.Make(code.OpJumpNotTrue, 11), // 0001
+				code.Make(code.OpConstant, 0),     // 0004
+				code.Make(code.OpPop),             // 0007
+				code.Make(code.OpJump, 15),        // 0008
+				code.Make(code.OpConstant, 1),     // 0011
+				code.Make(code.OpPop),             // 0014
+				code.Make(code.OpConstant, 2),     // 0015
+				code.Make(code.OpPop),             // 0018
+			},
+		},
+		{
+			input: `
+            if: (true): {
+                10;
+            } else if: (false):  {
+                20;
+            } else if: (false): {
+                30;
+            } else: {
+                40;
+            }
+            1000;
+            `,
+			expectedConstants: []interface{}{10, 20, 30, 40, 1000},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpTrue),            // 0000
+				code.Make(code.OpJumpNotTrue, 11), // 0001
+				code.Make(code.OpConstant, 0),     // 0004
+				code.Make(code.OpPop),             // 0007
+				code.Make(code.OpJump, 37),        // 0008
+
+				code.Make(code.OpFalse),           // 0011
+				code.Make(code.OpJumpNotTrue, 22), // 0012
+				code.Make(code.OpConstant, 1),     // 0015
+				code.Make(code.OpPop),             // 0018
+				code.Make(code.OpJump, 37),        // 0019
+
+				code.Make(code.OpFalse),           // 0022
+				code.Make(code.OpJumpNotTrue, 33), // 0023
+				code.Make(code.OpConstant, 2),     // 0026
+				code.Make(code.OpPop),             // 0029
+				code.Make(code.OpJump, 37),        // 0030
+
+				code.Make(code.OpConstant, 3), // 0033
+				code.Make(code.OpPop),         // 0036
+
+				code.Make(code.OpConstant, 4), // 0037
+				code.Make(code.OpPop),         // 0040
+			},
+		},
+		{
+			input: `
+            if: (true): {
+                10;
+            } else if: (true): {
+                20;
+            } else if: (true): {
+                30;
+            }
+            1000;
+            `,
+			expectedConstants: []interface{}{10, 20, 30, 1000},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpTrue),            // 0000
+				code.Make(code.OpJumpNotTrue, 11), // 0001
+				code.Make(code.OpConstant, 0),     // 0004
+				code.Make(code.OpPop),             // 0007
+				code.Make(code.OpJump, 33),        // 0008
+
+				code.Make(code.OpTrue),            // 0011
+				code.Make(code.OpJumpNotTrue, 22), // 0012
+				code.Make(code.OpConstant, 1),     // 0015
+				code.Make(code.OpPop),             // 0018
+				code.Make(code.OpJump, 33),        // 0019
+
+				code.Make(code.OpTrue),            // 0022
+				code.Make(code.OpJumpNotTrue, 33), // 0023
+				code.Make(code.OpConstant, 2),     // 0026
+				code.Make(code.OpPop),             // 0029
+				code.Make(code.OpJump, 33),        // 0030
+
+				code.Make(code.OpConstant, 3), // 0033
+				code.Make(code.OpPop),         // 0036
+			},
+		},
+		{
+			input: `
+            if: (false): {
+                10;
+            }
+            `,
+			expectedConstants: []interface{}{10},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpFalse),          // 0000
+				code.Make(code.OpJumpNotTrue, 8), // 0001
+				code.Make(code.OpConstant, 0),    // 0004
+				code.Make(code.OpPop),            // 0007
+			},
+		},
+		{
+			input: `
+            var a: int = 10;
+            var b: int = 20;
+            `,
+			expectedConstants: []interface{}{10, 20},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGlobal, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpSetGlobal, 1),
+			},
+		},
+		{
+			input: `
+            var a: int = 10;
+            a;
+            `,
+			expectedConstants: []interface{}{10},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGlobal, 0),
+				code.Make(code.OpGetGlobal, 0),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+            var a: int = 10;
+            var b: int = a;
+            b;
+            `,
+			expectedConstants: []interface{}{10},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGlobal, 0),
+				code.Make(code.OpGetGlobal, 0),
+				code.Make(code.OpSetGlobal, 1),
+				code.Make(code.OpGetGlobal, 1),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+                var a: int = 10;
+                a += 20;
+                a;
+            `,
+			expectedConstants: []interface{}{10, 20},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGlobal, 0),
+
+				code.Make(code.OpGetGlobal, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpAdd),
+				code.Make(code.OpSetGlobal, 0),
+
+				code.Make(code.OpGetGlobal, 0),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+                var a: int = 20;
+                a -= 10;
+                a;
+            `,
+			expectedConstants: []interface{}{20, 10},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGlobal, 0),
+
+				code.Make(code.OpGetGlobal, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpSub),
+				code.Make(code.OpSetGlobal, 0),
+
+				code.Make(code.OpGetGlobal, 0),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+                var a: int = 10;
+                a = 20;
+                a;
+            `,
+			expectedConstants: []interface{}{10, 20},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGlobal, 0),
+
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpSetGlobal, 0),
+
+				code.Make(code.OpGetGlobal, 0),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+                var a: int = 10;
+                var b: int = 20;
+                a = b;
+                a;
+            `,
+			expectedConstants: []interface{}{10, 20},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGlobal, 0),
+
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpSetGlobal, 1),
+
+				code.Make(code.OpGetGlobal, 1),
+				code.Make(code.OpSetGlobal, 0),
+
+				code.Make(code.OpGetGlobal, 0),
+				code.Make(code.OpPop),
+			},
+		},
 	}
 	runCompilerTests(t, tests)
 }
@@ -287,13 +547,13 @@ func runCompilerTests(t *testing.T, tests []compileTestCase) {
 		bytecode := c.Bytecode()
 		err = testInstructions(tt.expectedInstructions, bytecode.Instructions)
 		if err != nil {
+			fmt.Println("Input: ", tt.input)
 			t.Fatalf("testInstructions failed: %s", err)
 		}
 
 		err = testConstants(t, tt.expectedConstants, bytecode.Constants)
 		if err != nil {
-			// fmt.Println("Test case number: ", i)
-			// fmt.Println("Input: ", tt.input)
+			fmt.Println("Input: ", tt.input)
 			t.Fatalf("testConstants failed: %s", err)
 		}
 	}

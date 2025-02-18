@@ -33,6 +33,10 @@ const (
 	OpNot
 	OpPlusPlus
 	OpMinusMinus
+	OpJumpNotTrue
+	OpJump
+	OpGetGlobal
+	OpSetGlobal
 )
 
 type Defination struct {
@@ -62,6 +66,10 @@ var definations = map[Opcode]*Defination{
 	OpNot:              {"OpNot", []int{}},
 	OpPlusPlus:         {"OpPlusPlus", []int{}},
 	OpMinusMinus:       {"OpMinusMinus", []int{}},
+	OpJumpNotTrue:      {"OpJumpNotTrue", []int{2}},
+	OpJump:             {"OpJump", []int{2}},
+	OpGetGlobal:        {"OpGetGlobal", []int{2}},
+	OpSetGlobal:        {"OpSetGlobal", []int{2}},
 }
 
 func Lookup(op byte) (*Defination, error) {
