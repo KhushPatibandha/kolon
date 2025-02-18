@@ -1,18 +1,23 @@
 package vm
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/KhushPatibandha/Kolon/src/compiler/code"
 	"github.com/KhushPatibandha/Kolon/src/compiler/compiler"
-	"github.com/KhushPatibandha/Kolon/src/interpreter/object"
+	"github.com/KhushPatibandha/Kolon/src/object"
 )
 
-const StackSize = 2048
+const (
+	StackSize   = 2048
+	GlobalsSize = 65536
+)
 
 var (
-	TRUE  = &object.Boolean{Value: true}
-	FALSE = &object.Boolean{Value: false}
+	TRUE      = &object.Boolean{Value: true}
+	FALSE     = &object.Boolean{Value: false}
+	lastPoped object.Object
 )
 
 type VM struct {
@@ -20,6 +25,7 @@ type VM struct {
 	instructions code.Instructions
 	stack        []object.Object
 	stackPointer int
+	globals      []object.Object
 }
 
 func New(bytecode *compiler.Bytecode) *VM {
@@ -28,12 +34,13 @@ func New(bytecode *compiler.Bytecode) *VM {
 		constants:    bytecode.Constants,
 		stack:        make([]object.Object, StackSize),
 		stackPointer: 0,
+		globals:      make([]object.Object, GlobalsSize),
 	}
 }
 
 func (vm *VM) push(obj object.Object) error {
 	if vm.stackPointer >= StackSize {
-		return fmt.Errorf("stack overflow")
+		return errors.New("stack overflow")
 	}
 	vm.stack[vm.stackPointer] = obj
 	vm.stackPointer++
@@ -43,6 +50,8 @@ func (vm *VM) push(obj object.Object) error {
 func (vm *VM) pop() object.Object {
 	obj := vm.stack[vm.stackPointer-1]
 	vm.stackPointer--
+	vm.stack[vm.stackPointer] = nil
+	lastPoped = obj
 	return obj
 }
 
@@ -54,7 +63,7 @@ func (vm *VM) StackTop() object.Object {
 }
 
 func (vm *VM) LastPoppedStackEle() object.Object {
-	return vm.stack[vm.stackPointer]
+	return lastPoped
 }
 
 func (vm *VM) Run() error {
@@ -78,18 +87,34 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
-		case code.OpNot:
-			err := vm.execNotOp()
-			if err != nil {
-				return err
-			}
-		case code.OpMinus:
-			err := vm.execMinusOp()
+		case code.OpNot, code.OpMinus:
+			err := vm.execPrefixOp(op)
 			if err != nil {
 				return err
 			}
 		case code.OpMinusMinus, code.OpPlusPlus:
 			err := vm.execPostfixOp(op)
+			if err != nil {
+				return err
+			}
+		case code.OpJump:
+			pos := int(code.ReadUint16(vm.instructions[i+1:]))
+			i = pos - 1
+		case code.OpJumpNotTrue:
+			pos := int(code.ReadUint16(vm.instructions[i+1:]))
+			i += 2
+			condition := vm.pop()
+			if condition == FALSE {
+				i = pos - 1
+			}
+		case code.OpSetGlobal:
+			globalIdx := code.ReadUint16(vm.instructions[i+1:])
+			i += 2
+			vm.globals[globalIdx] = vm.pop()
+		case code.OpGetGlobal:
+			globalIdx := code.ReadUint16(vm.instructions[i+1:])
+			i += 2
+			err := vm.push(vm.globals[globalIdx])
 			if err != nil {
 				return err
 			}
@@ -145,7 +170,7 @@ func (vm *VM) execBinaryOp(op code.Opcode) error {
 		rightVal = rightVal[1 : len(rightVal)-1]
 		return vm.execBinaryStringAndCharOp(op, leftVal, rightVal)
 	}
-	return fmt.Errorf("unsupported types for binary operation: %s %s", lType, rType)
+	return errors.New("invalid binary `infix` operation with variable types on left and right, got: `" + string(lType) + "` and `" + string(rType) + "`")
 }
 
 func (vm *VM) execComparisonOp(op code.Opcode) error {
@@ -185,24 +210,15 @@ func (vm *VM) execComparisonOp(op code.Opcode) error {
 		rightVal = rightVal[1 : len(rightVal)-1]
 		return vm.execComparisonStringAndCharOp(op, leftVal, rightVal)
 	}
-	return fmt.Errorf("unsupported types for comparison operation: %s %s", lType, rType)
+	return errors.New("invalid comparison `infix` operation with variable types on left and right, got: `" + string(lType) + "` and `" + string(rType) + "`")
 }
 
-func (vm *VM) execNotOp() error {
-	operand := vm.pop()
-	if operand == TRUE {
-		return vm.push(FALSE)
+func (vm *VM) execPrefixOp(op code.Opcode) error {
+	if op == code.OpNot {
+		return vm.execNotOp()
 	} else {
-		return vm.push(TRUE)
+		return vm.execMinusOp()
 	}
-}
-
-func (vm *VM) execMinusOp() error {
-	right := vm.pop()
-	if right.Type() == object.FLOAT_OBJ {
-		return vm.push(&object.Float{Value: -right.(*object.Float).Value})
-	}
-	return vm.push(&object.Integer{Value: -right.(*object.Integer).Value})
 }
 
 func (vm *VM) execPostfixOp(op code.Opcode) error {
@@ -245,7 +261,7 @@ func (vm *VM) execBinaryIntegerOp(op code.Opcode, left object.Object, right obje
 	case code.OpOr:
 		res = leftVal | rightVal
 	default:
-		return fmt.Errorf("unknown integer operator %d", op)
+		return fmt.Errorf("can only use `+`, `-`, `*`, `/`, `%%`, `>`, `<`, `<=`, `>=`, `!=`, `==`, `|`, `&` infix operators with 2 `int`, got: %d", op)
 	}
 	return vm.push(&object.Integer{Value: res})
 }
@@ -265,7 +281,7 @@ func (vm *VM) execBinaryFloatOp(op code.Opcode, left object.Object, right object
 	case code.OpDiv:
 		res = leftVal / rightVal
 	default:
-		return fmt.Errorf("unknown float operator %d", op)
+		return fmt.Errorf("can only use `+`, `-`, `*`, `/`, `>`, `<`, `<=`, `>=`, `!=`, `==` infix operators with 2 `float`, got: %d", op)
 	}
 	return vm.push(&object.Float{Value: res})
 }
@@ -275,7 +291,11 @@ func (vm *VM) execBinaryStringAndCharOp(op code.Opcode, leftVal string, rightVal
 	case code.OpAdd:
 		return vm.push(&object.String{Value: "\"" + leftVal + rightVal + "\""})
 	default:
-		return fmt.Errorf("unknown string operator %d", op)
+		if leftVal[0] == '\'' {
+			return fmt.Errorf("can only use `+`, `==`, `!=` infix operators with 2 `char`, got: %d", op)
+		} else {
+			return fmt.Errorf("can only use `+`, `==`, `!=` infix operators with 2 `string`, got: %d", op)
+		}
 	}
 }
 
@@ -305,7 +325,7 @@ func (vm *VM) execComparisonIntegerOp(op code.Opcode, left object.Object, right 
 		}
 		return vm.push(FALSE)
 	default:
-		return fmt.Errorf("unknown operator: %d", op)
+		return fmt.Errorf("can only use `+`, `-`, `*`, `/`, `%%`, `>`, `<`, `<=`, `>=`, `!=`, `==`, `|`, `&` infix operators with 2 `int`, got: %d", op)
 	}
 }
 
@@ -335,7 +355,7 @@ func (vm *VM) execComparisonFloatOp(op code.Opcode, left object.Object, right ob
 		}
 		return vm.push(FALSE)
 	default:
-		return fmt.Errorf("unknown operator: %d", op)
+		return fmt.Errorf("can only use `+`, `-`, `*`, `/`, `>`, `<`, `<=`, `>=`, `!=`, `==` infix operators with 2 `float`, got: %d", op)
 	}
 }
 
@@ -365,7 +385,7 @@ func (vm *VM) execComparisonBooleanOp(op code.Opcode, left object.Object, right 
 		}
 		return vm.push(FALSE)
 	}
-	return fmt.Errorf("unknown operator: %d", op)
+	return fmt.Errorf("can only use `==`, `!=`, `&&`, `||` infix operators with 2 `bool`, got: %d", op)
 }
 
 func (vm *VM) execComparisonStringAndCharOp(op code.Opcode, leftVal string, rightVal string) error {
@@ -381,6 +401,27 @@ func (vm *VM) execComparisonStringAndCharOp(op code.Opcode, leftVal string, righ
 		}
 		return vm.push(FALSE)
 	default:
-		return fmt.Errorf("unknown operator: %d", op)
+		if leftVal[0] == '\'' {
+			return fmt.Errorf("can only use `+`, `==`, `!=` infix operators with 2 `char`, got: %d", op)
+		} else {
+			return fmt.Errorf("can only use `+`, `==`, `!=` infix operators with 2 `string`, got: %d", op)
+		}
 	}
+}
+
+func (vm *VM) execNotOp() error {
+	operand := vm.pop()
+	if operand == TRUE {
+		return vm.push(FALSE)
+	} else {
+		return vm.push(TRUE)
+	}
+}
+
+func (vm *VM) execMinusOp() error {
+	right := vm.pop()
+	if right.Type() == object.FLOAT_OBJ {
+		return vm.push(&object.Float{Value: -right.(*object.Float).Value})
+	}
+	return vm.push(&object.Integer{Value: -right.(*object.Integer).Value})
 }
