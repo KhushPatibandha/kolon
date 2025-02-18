@@ -7,8 +7,8 @@ import (
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/compiler/compiler"
 	"github.com/KhushPatibandha/Kolon/src/compiler/vm"
-	"github.com/KhushPatibandha/Kolon/src/interpreter/object"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
+	"github.com/KhushPatibandha/Kolon/src/object"
 	"github.com/KhushPatibandha/Kolon/src/parser"
 )
 
@@ -159,7 +159,6 @@ func Test52(t *testing.T) {
 		{"\"Hello, \" + \"World!\"", "\"Hello, World!\""},
 		{"'a' + 'b'", "\"ab\""},
 		{"'a'", "'a'"},
-
 		{"5++", 6},
 		{"5--", 4},
 		{"-5--", -4},
@@ -169,6 +168,68 @@ func Test52(t *testing.T) {
 		{"10.1--", 9.1},
 		{"-10.1++", -11.1},
 		{"-10.1--", -9.1},
+		{`
+		if: (true): {
+		10;
+		}
+		`, 10},
+		{`
+		if: (true): {
+		10;
+		} else: {
+		20;
+		}
+		`, 10},
+		{`
+		if: (false): {
+		10;
+		} else: {
+		20;
+		}
+		`, 20},
+		{`
+		if: (1 < 2): {
+		10;
+		}
+		`, 10},
+		{`
+		if: (1 < 2): {
+		10;
+		} else: {
+		20;
+		}
+		`, 10},
+		{`
+		if: (1 > 2): {
+		10;
+		} else: {
+		20;
+		}
+		`, 20},
+		{"if: (true): { 10; }", 10},
+		{"if: (1 < 2): { 10; }", 10},
+		{"if: (1 > 2): { 10; } else: { 20; }", 20},
+		{"if: (1 < 2): { 10; } else: { 20; }", 10},
+		{"if: (1 > 2): { 10; } else if: (1 == 2): { 20; } else if: (1 < 2): { 30; }", 30},
+		{"if: (1 > 2): { 10; } else if: (1 < 2): { 20; } else if: (1 == 2): { 30; }", 20},
+		{"if: (1 > 2): { 10; } else if: (1 == 2): { 20; } else if: (1 >= 2): { 30; } else: { 40; }", 40},
+
+		{"if: (true): {}", true},
+		{"if: (false): { 10; }", false},
+		{"if: (1 > 2): { 10; }", false},
+		{"if: (false): { 10; } else if: (false): { 20; } else if: (true): {}", true},
+		{"if: (false): { 10; } else: {}", false},
+
+		{"var a: int = 1; a;", 1},
+		{"var a: int = 1; var b: int = 2; a + b;", 3},
+		{"var a: int = 1; var b: int = a + a; a + b;", 3},
+
+		{"var a: int = 10; a = 20; a;", 20},
+		{"var a: int = 10; a += 10; a;", 20},
+		{"var a: int = 10; a -= 10; a;", 0},
+		{"var a: int = 10; a *= 10; a;", 100},
+		{"var a: int = 10; a /= 10; a;", 1},
+		{"var a: int = 4; a %= 2; a;", 0},
 	}
 	runVmTests(t, tests)
 }
@@ -176,6 +237,7 @@ func Test52(t *testing.T) {
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 	for _, tt := range tests {
+		// fmt.Println(tt.input)
 		program := parseVM(tt.input)
 		if program == nil {
 			return
@@ -193,36 +255,46 @@ func runVmTests(t *testing.T, tests []vmTestCase) {
 			t.Fatalf("vm error: %s", err)
 		}
 		stackElem := vm.LastPoppedStackEle()
-		testExpectedObject(t, tt.expected, stackElem)
+		err = testExpectedObject(t, tt.expected, stackElem)
+		if err != nil {
+			fmt.Println(tt.input)
+			fmt.Println(stackElem)
+			t.Errorf("%s", err)
+		}
 	}
 }
 
-func testExpectedObject(t *testing.T, expected interface{}, actual object.Object) {
+func testExpectedObject(t *testing.T, expected interface{}, actual object.Object) error {
 	t.Helper()
 	switch expected := expected.(type) {
 	case int:
 		err := testIntegerObjectVM(int64(expected), actual)
 		if err != nil {
-			t.Errorf("testIntegerObject failed: %s", err)
+			return fmt.Errorf("testIntegerObject failed: %w", err)
 		}
 	case bool:
 		err := testBooleanObjectVM(bool(expected), actual)
 		if err != nil {
-			t.Errorf("testBooleanObject failed: %s", err)
+			return fmt.Errorf("testBooleanObject failed: %w", err)
 		}
 	case float64:
 		err := testFloatObjectVM(float64(expected), actual)
 		if err != nil {
-			t.Errorf("testFloatObject failed: %s", err)
+			return fmt.Errorf("testFloatObject failed: %w", err)
 		}
 	case string:
 		err := testStringObjectVM(expected, actual)
 		if err != nil {
-			t.Errorf("testStringObject failed: %s", err)
+			return fmt.Errorf("testStringObject failed: %w", err)
+		}
+	case nil:
+		if actual != nil {
+			return fmt.Errorf("object is not nil. got=%T (%+v)", actual, actual)
 		}
 	default:
-		t.Errorf("type of expected not handled. got=%T", expected)
+		return fmt.Errorf("type of expected not handled. got=%T", expected)
 	}
+	return nil
 }
 
 func testIntegerObjectVM(expected int64, actual object.Object) error {
