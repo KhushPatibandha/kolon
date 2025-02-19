@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -528,21 +529,148 @@ func Test49(t *testing.T) {
 				code.Make(code.OpPop),
 			},
 		},
+		{
+			input:             "[]",
+			expectedConstants: []interface{}{},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpArray, 0),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input:             "[1, 2, 3]",
+			expectedConstants: []interface{}{1, 2, 3},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConstant, 2),
+				code.Make(code.OpArray, 3),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input:             "[1 + 2, 3 - 4, 5 * 6]",
+			expectedConstants: []interface{}{1, 2, 3, 4, 5, 6},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpAdd),
+
+				code.Make(code.OpConstant, 2),
+				code.Make(code.OpConstant, 3),
+				code.Make(code.OpSub),
+
+				code.Make(code.OpConstant, 4),
+				code.Make(code.OpConstant, 5),
+				code.Make(code.OpMul),
+
+				code.Make(code.OpArray, 3),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input:             "{}",
+			expectedConstants: []interface{}{},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpHash, 0),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input:             "{1: 2, 3: 4, 5: 6}",
+			expectedConstants: []interface{}{1, 2, 3, 4, 5, 6},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConstant, 2),
+				code.Make(code.OpConstant, 3),
+				code.Make(code.OpConstant, 4),
+				code.Make(code.OpConstant, 5),
+				code.Make(code.OpHash, 6),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input:             "{1: 2 + 3, 4: 5 * 6}",
+			expectedConstants: []interface{}{1, 2, 3, 4, 5, 6},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConstant, 2),
+				code.Make(code.OpAdd),
+
+				code.Make(code.OpConstant, 3),
+
+				code.Make(code.OpConstant, 4),
+				code.Make(code.OpConstant, 5),
+				code.Make(code.OpMul),
+
+				code.Make(code.OpHash, 4),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input:             "[1, 2, 3][1]",
+			expectedConstants: []interface{}{1, 2, 3, 1},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConstant, 2),
+				code.Make(code.OpArray, 3),
+				code.Make(code.OpConstant, 3),
+				code.Make(code.OpIndex),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input:             "[1, 2, 3][1 + 1]",
+			expectedConstants: []interface{}{1, 2, 3, 1, 1},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConstant, 2),
+				code.Make(code.OpArray, 3),
+				code.Make(code.OpConstant, 3),
+				code.Make(code.OpConstant, 4),
+				code.Make(code.OpAdd),
+				code.Make(code.OpIndex),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input:             "{1: 2}[2 - 1]",
+			expectedConstants: []interface{}{1, 2, 2, 1},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpHash, 2),
+				code.Make(code.OpConstant, 2),
+				code.Make(code.OpConstant, 3),
+				code.Make(code.OpSub),
+				code.Make(code.OpIndex),
+				code.Make(code.OpPop),
+			},
+		},
 	}
-	runCompilerTests(t, tests)
+	err := runCompilerTests(t, tests)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func runCompilerTests(t *testing.T, tests []compileTestCase) {
+func runCompilerTests(t *testing.T, tests []compileTestCase) error {
 	t.Helper()
 	for _, tt := range tests {
-		program := parse(tt.input)
-		if program == nil {
-			return
+		program, err := parse(tt.input)
+		if err != nil {
+			return err
 		}
 		c := compiler.New()
-		err := c.Compile(program)
+		c.InTesting = true
+		err = c.Compile(program)
 		if err != nil {
-			t.Fatalf("compiler error: %s", err)
+			return errors.New("compiler error: " + err.Error())
 		}
 		bytecode := c.Bytecode()
 		err = testInstructions(tt.expectedInstructions, bytecode.Instructions)
@@ -557,6 +685,7 @@ func runCompilerTests(t *testing.T, tests []compileTestCase) {
 			t.Fatalf("testConstants failed: %s", err)
 		}
 	}
+	return nil
 }
 
 func testInstructions(expected []code.Instructions, actual code.Instructions) error {
@@ -655,19 +784,17 @@ func testCharObjectC(expected string, actual object.Object) error {
 	return nil
 }
 
-func parse(input string) *ast.Program {
+func parse(input string) (*ast.Program, error) {
 	l := lexer.Tokenizer(input)
 	p := parser.New(l, true)
 	program, err := p.ParseProgram()
 	if err != nil {
-		fmt.Println("Error parsing program: ", err)
-		return nil
+		return nil, errors.New("Error parsing program: " + err.Error())
 	}
 	typeCheckerEnv := parser.NewEnvironment()
 	err = parser.TypeCheckProgram(program, typeCheckerEnv, true)
 	if err != nil {
-		fmt.Println("Error type checking program: ", err)
-		return nil
+		return nil, errors.New("Error type checking program: " + err.Error())
 	}
-	return program
+	return program, nil
 }
