@@ -3,6 +3,7 @@ package vm
 import (
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/KhushPatibandha/Kolon/src/compiler/code"
 	"github.com/KhushPatibandha/Kolon/src/compiler/compiler"
@@ -128,6 +129,35 @@ func (vm *VM) Run() error {
 			if err != nil {
 				return err
 			}
+		case code.OpArray:
+			totalEle := int(code.ReadUint16(vm.instructions[i+1:]))
+			i += 2
+			array := vm.buildArray(vm.stackPointer-totalEle, vm.stackPointer)
+			vm.stackPointer -= totalEle
+			err := vm.push(array)
+			if err != nil {
+				return err
+			}
+		case code.OpHash:
+			totalEle := int(code.ReadUint16(vm.instructions[i+1:]))
+			i += 2
+
+			hash, err := vm.buildHash(vm.stackPointer-totalEle, vm.stackPointer)
+			if err != nil {
+				return err
+			}
+			vm.stackPointer -= totalEle
+			err = vm.push(hash)
+			if err != nil {
+				return err
+			}
+		case code.OpIndex:
+			idx := vm.pop()
+			left := vm.pop()
+			err := vm.execIndexOp(left, idx)
+			if err != nil {
+				return err
+			}
 		case code.OpPop:
 			vm.pop()
 		}
@@ -237,6 +267,14 @@ func (vm *VM) execPostfixOp(op code.Opcode) error {
 		} else {
 			return vm.push(&object.Float{Value: leftVal - 1})
 		}
+	}
+}
+
+func (vm *VM) execIndexOp(left object.Object, idx object.Object) error {
+	if left.Type() == object.ARRAY_OBJ && idx.Type() == object.INTEGER_OBJ {
+		return vm.execArrayIdxOp(left, idx)
+	} else {
+		return vm.execHashMapIdxOp(left, idx)
 	}
 }
 
@@ -424,4 +462,51 @@ func (vm *VM) execMinusOp() error {
 		return vm.push(&object.Float{Value: -right.(*object.Float).Value})
 	}
 	return vm.push(&object.Integer{Value: -right.(*object.Integer).Value})
+}
+
+func (vm *VM) execArrayIdxOp(left object.Object, index object.Object) error {
+	arrayObj := left.(*object.Array)
+	idx := index.(*object.Integer).Value
+	maxIdx := int64(len(arrayObj.Elements) - 1)
+	if idx < 0 || idx > maxIdx {
+		return errors.New("index out of range, index: " + strconv.FormatInt(idx, 10) + ", max index: " + strconv.FormatInt(maxIdx, 10) + ", min index: 0")
+	}
+	return vm.push(arrayObj.Elements[idx])
+}
+
+func (vm *VM) execHashMapIdxOp(left object.Object, index object.Object) error {
+	hashObj := left.(*object.Hash)
+	key, ok := index.(object.Hashable)
+	if !ok {
+		return errors.New("unusable as hash key: " + string(index.Type()))
+	}
+	pair, ok := hashObj.Pairs[key.HashKey()]
+	if !ok {
+		return errors.New("key not found: " + index.Inspect())
+	}
+	return vm.push(pair.Value)
+}
+
+func (vm *VM) buildArray(sIdx int, eIdx int) object.Object {
+	elements := make([]object.Object, eIdx-sIdx)
+	for i := sIdx; i < eIdx; i++ {
+		elements[i-sIdx] = vm.stack[i]
+	}
+	return &object.Array{Elements: elements}
+}
+
+func (vm *VM) buildHash(sIdx int, eIdx int) (object.Object, error) {
+	pairs := make(map[object.HashKey]object.HashPair)
+
+	for i := sIdx; i < eIdx; i += 2 {
+		key := vm.stack[i]
+		value := vm.stack[i+1]
+
+		hashKey, ok := key.(object.Hashable)
+		if !ok {
+			return nil, errors.New("unusable as hash key: " + string(key.Type()))
+		}
+		pairs[hashKey.HashKey()] = object.HashPair{Key: key, Value: value}
+	}
+	return &object.Hash{Pairs: pairs}, nil
 }
