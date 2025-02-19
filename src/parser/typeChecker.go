@@ -486,7 +486,7 @@ func checkReturnStmt(node *ast.ReturnStatement, env *Environment) error {
 // -----------------------------------------------------------------------------
 func checkArrayExp(node *ast.ArrayValue, env *Environment) (expType, error) {
 	if len(node.Values) == 0 {
-		return expType{Type: ast.Type{IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+		return expType{Type: ast.Type{Value: "", IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 	}
 	typeStr := ""
 	for _, element := range node.Values {
@@ -765,11 +765,17 @@ func checkIndexExp(exp *ast.IndexExpression, env *Environment) (expType, error) 
 	}
 
 	if leftType.Type.IsArray {
+		if leftType.Type.Value == "" {
+			return expType{}, errors.New("array is empty, can't index empty array")
+		}
 		if indexType.Type.Value != "int" {
 			return expType{}, errors.New("array index must be an integer, got: " + indexType.Type.Value)
 		}
 		return expType{Type: ast.Type{Value: leftType.Type.Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 	} else if leftType.Type.IsHash {
+		if leftType.Type.SubTypes == nil {
+			return expType{}, errors.New("hashmap is empty, can't index empty hashmap")
+		}
 		if indexType.Type.Value != leftType.Type.SubTypes[0].Value {
 			return expType{}, errors.New("hashmap key type must be of datatype `" + leftType.Type.SubTypes[0].Value + "`, got: " + indexType.Type.Value)
 		}

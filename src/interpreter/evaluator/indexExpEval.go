@@ -20,7 +20,7 @@ func evalArrayIndexExpression(array object.Object, index object.Object) (object.
 	idx := index.(*object.Integer).Value
 	maxIdx := int64(len(arrayObj.Elements) - 1)
 	if idx < 0 || idx > maxIdx {
-		return NULL, true, errors.New("index out of range, index: " + strconv.FormatInt(idx, 10) + " max index: " + strconv.FormatInt(maxIdx, 10))
+		return NULL, true, errors.New("index out of range, index: " + strconv.FormatInt(idx, 10) + ", max index: " + strconv.FormatInt(maxIdx, 10) + ", min index: 0")
 	}
 	return arrayObj.Elements[idx], false, nil
 }
