@@ -2,6 +2,7 @@ package compiler
 
 import (
 	"errors"
+	"sort"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/compiler/code"
@@ -14,6 +15,7 @@ type Compiler struct {
 	lastInstruction     EmittedInstruction
 	previousInstruction EmittedInstruction
 	symbolTable         *SymbolTable
+	InTesting           bool
 }
 
 type Bytecode struct {
@@ -33,6 +35,7 @@ func New() *Compiler {
 		lastInstruction:     EmittedInstruction{},
 		previousInstruction: EmittedInstruction{},
 		symbolTable:         NewSymTable(),
+		InTesting:           false,
 	}
 }
 
@@ -77,6 +80,35 @@ func (c *Compiler) Compile(node ast.Node) error {
 	case *ast.CharValue:
 		char := &object.Char{Value: node.Value}
 		c.emit(code.OpConstant, c.addConst(char))
+	case *ast.ArrayValue:
+		for _, el := range node.Values {
+			err := c.Compile(el)
+			if err != nil {
+				return err
+			}
+		}
+		c.emit(code.OpArray, len(node.Values))
+	case *ast.HashMap:
+		keys := []ast.Expression{}
+		for k := range node.Pairs {
+			keys = append(keys, k)
+		}
+		if c.InTesting {
+			sort.Slice(keys, func(i int, j int) bool {
+				return keys[i].String() < keys[j].String()
+			})
+		}
+		for _, k := range keys {
+			err := c.Compile(k)
+			if err != nil {
+				return err
+			}
+			err = c.Compile(node.Pairs[k])
+			if err != nil {
+				return err
+			}
+		}
+		c.emit(code.OpHash, len(node.Pairs)*2)
 	case *ast.Identifier:
 		symbol, ok := c.symbolTable.Resolve(node.Value)
 		if !ok {
@@ -207,6 +239,16 @@ func (c *Compiler) Compile(node ast.Node) error {
 			}
 		}
 		c.emit(code.OpSetGlobal, symbol.Index)
+	case *ast.IndexExpression:
+		err := c.Compile(node.Left)
+		if err != nil {
+			return err
+		}
+		err = c.Compile(node.Index)
+		if err != nil {
+			return err
+		}
+		c.emit(code.OpIndex)
 	case *ast.VarStatement:
 		err := c.Compile(node.Value)
 		if err != nil {

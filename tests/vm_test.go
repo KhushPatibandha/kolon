@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -230,20 +231,48 @@ func Test52(t *testing.T) {
 		{"var a: int = 10; a *= 10; a;", 100},
 		{"var a: int = 10; a /= 10; a;", 1},
 		{"var a: int = 4; a %= 2; a;", 0},
+
+		{"[]", []int{}},
+		{"[1, 2, 3]", []int{1, 2, 3}},
+		{"[1 + 2, 3 * 4, 5 + 6]", []int{3, 12, 11}},
+
+		{"{}", map[object.HashKey]int64{}},
+		{
+			"{1: 2, 2: 3}", map[object.HashKey]int64{
+				(&object.Integer{Value: 1}).HashKey(): 2,
+				(&object.Integer{Value: 2}).HashKey(): 3,
+			},
+		},
+		{
+			"{1 + 1: 2 * 2, 3 + 3: 4 * 4}", map[object.HashKey]int64{
+				(&object.Integer{Value: 2}).HashKey(): 4,
+				(&object.Integer{Value: 6}).HashKey(): 16,
+			},
+		},
+
+		{"[1, 2, 3][1]", 2},
+		{"[1, 2, 3][0 + 2]", 3},
+		{"{1: 1, 2: 2}[1]", 1},
+		{"{1: 1, 2: 2}[2]", 2},
+		{"{1: 1, 2: 3}[2]", 3},
 	}
-	runVmTests(t, tests)
+	err := runVmTests(t, tests)
+	if err != nil {
+		t.Fatal(err)
+	}
 }
 
-func runVmTests(t *testing.T, tests []vmTestCase) {
+func runVmTests(t *testing.T, tests []vmTestCase) error {
 	t.Helper()
 	for _, tt := range tests {
 		// fmt.Println(tt.input)
-		program := parseVM(tt.input)
-		if program == nil {
-			return
+		program, err := parseVM(tt.input)
+		if err != nil {
+			return err
 		}
 		c := compiler.New()
-		err := c.Compile(program)
+		c.InTesting = true
+		err = c.Compile(program)
 		if err != nil {
 			t.Fatalf("compiler error: %s", err)
 		}
@@ -262,6 +291,7 @@ func runVmTests(t *testing.T, tests []vmTestCase) {
 			t.Errorf("%s", err)
 		}
 	}
+	return nil
 }
 
 func testExpectedObject(t *testing.T, expected interface{}, actual object.Object) error {
@@ -287,12 +317,60 @@ func testExpectedObject(t *testing.T, expected interface{}, actual object.Object
 		if err != nil {
 			return fmt.Errorf("testStringObject failed: %w", err)
 		}
+	case []int:
+		err := testArrayObjectVM(expected, actual)
+		if err != nil {
+			return fmt.Errorf("testArrayObject failed: %w", err)
+		}
+	case map[object.HashKey]int64:
+		err := testHashMapObjectVM(expected, actual)
+		if err != nil {
+			return fmt.Errorf("testHashMapObject failed: %w", err)
+		}
 	case nil:
 		if actual != nil {
 			return fmt.Errorf("object is not nil. got=%T (%+v)", actual, actual)
 		}
 	default:
 		return fmt.Errorf("type of expected not handled. got=%T", expected)
+	}
+	return nil
+}
+
+func testArrayObjectVM(expected []int, actual object.Object) error {
+	array, ok := actual.(*object.Array)
+	if !ok {
+		return fmt.Errorf("object not Array: %T (%+v)", actual, actual)
+	}
+	if len(array.Elements) != len(expected) {
+		return fmt.Errorf("wrong num of elements. want=%d, got=%d", len(expected), len(array.Elements))
+	}
+	for i, expectedEle := range expected {
+		err := testIntegerObjectVM(int64(expectedEle), array.Elements[i])
+		if err != nil {
+			return fmt.Errorf("testIntegerObject failed: %s", err)
+		}
+	}
+	return nil
+}
+
+func testHashMapObjectVM(expected map[object.HashKey]int64, actual object.Object) error {
+	hash, ok := actual.(*object.Hash)
+	if !ok {
+		return fmt.Errorf("object is not Hash. got=%T (%+v)", actual, actual)
+	}
+	if len(hash.Pairs) != len(expected) {
+		return fmt.Errorf("hash has wrong number of Pairs. want=%d, got=%d", len(expected), len(hash.Pairs))
+	}
+	for expKey, expVal := range expected {
+		pair, ok := hash.Pairs[expKey]
+		if !ok {
+			return fmt.Errorf("no pair for given key in Pairs")
+		}
+		err := testIntegerObjectVM(expVal, pair.Value)
+		if err != nil {
+			return fmt.Errorf("testIntegerObject failed: %s", err)
+		}
 	}
 	return nil
 }
@@ -355,19 +433,17 @@ func testCharObjectVM(expected string, actual object.Object) error {
 	return nil
 }
 
-func parseVM(input string) *ast.Program {
+func parseVM(input string) (*ast.Program, error) {
 	l := lexer.Tokenizer(input)
 	p := parser.New(l, true)
 	program, err := p.ParseProgram()
 	if err != nil {
-		fmt.Println("Error parsing program: ", err)
-		return nil
+		return nil, errors.New("Error parsing program: " + err.Error())
 	}
 	typeCheckerEnv := parser.NewEnvironment()
 	err = parser.TypeCheckProgram(program, typeCheckerEnv, true)
 	if err != nil {
-		fmt.Println("Error type checking program: ", err)
-		return nil
+		return nil, errors.New("Error type checking program: " + err.Error())
 	}
-	return program
+	return program, nil
 }
