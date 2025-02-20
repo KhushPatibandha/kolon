@@ -222,7 +222,7 @@ func checkMultiAssignStmt(node *ast.MultiValueAssignStmt, env *Environment) erro
 			case *ast.VarStatement:
 				err := varTypeCheckerHelper(*obj.Type, *returnTypes[i].ReturnType)
 				if err != nil {
-					return nil
+					return err
 				}
 				if obj.Token.Kind == lexer.VAR {
 					err := env.Set(obj.Name.Value, *obj.Name, *obj.Type, VAR, nil)
@@ -317,7 +317,7 @@ func checkIfStmt(node *ast.IfStatement, env *Environment) error {
 		localEnvForElse := NewEnclosedEnvironment(env)
 		err = checkStmts(node.Consequence.Body.Statements, localEnvForElse)
 		if err != nil {
-			return nil
+			return err
 		}
 	}
 
@@ -327,24 +327,31 @@ func checkIfStmt(node *ast.IfStatement, env *Environment) error {
 func checkForLoopStmt(node *ast.ForLoopStatement, env *Environment) error {
 	inForLoop = true
 
-	err := checkVarStmt(node.Left, env)
-	if err != nil {
-		return nil
-	}
-	varVariable, ok := env.Get(node.Left.Name.Value)
-	if !ok {
-		return errors.New("`var` variable in `for loop` condition not found")
-	}
-	if varVariable.VarType != VAR {
-		return errors.New("can't use `const` to define variable in `for loop` condition")
-	}
-	if varVariable.Type.Value != "int" {
-		return errors.New("can only define variable in `for loop` condition as `int`, got: " + varVariable.Type.Value)
+	if _, ok := node.Left.(*ast.VarStatement); ok {
+		err := checkVarStmt(node.Left.(*ast.VarStatement), env)
+		if err != nil {
+			return err
+		}
+		varVariable, ok := env.Get(node.Left.(*ast.VarStatement).Name.Value)
+		if !ok {
+			return errors.New("`var` variable in `for loop` condition not found")
+		}
+		if varVariable.VarType != VAR {
+			return errors.New("can't use `const` to define variable in `for loop` condition")
+		}
+		if varVariable.Type.Value != "int" {
+			return errors.New("can only define variable in `for loop` condition as `int`, got: " + varVariable.Type.Value)
+		}
+	} else {
+		err := checkExpStmt(node.Left.(*ast.ExpressionStatement), env)
+		if err != nil {
+			return err
+		}
 	}
 
 	expType, err := getExpType(node.Middle, env)
 	if err != nil {
-		return nil
+		return err
 	}
 	if expType.Type.Value != "bool" {
 		return errors.New("infix operation for `for loop` condition should always result in a `bool`, got: " + expType.Type.Value)
@@ -355,6 +362,9 @@ func checkForLoopStmt(node *ast.ForLoopStatement, env *Environment) error {
 		return err
 	}
 	if expType.Type.Value != "int" {
+		if _, ok := node.Right.(*ast.AssignmentExpression); ok {
+			return errors.New("assignment operation for `for loop` condition should always result in an `int`, got: " + expType.Type.Value)
+		}
 		return errors.New("postfix operation for `for loop` condition should always result in an `int`, got: " + expType.Type.Value)
 	}
 

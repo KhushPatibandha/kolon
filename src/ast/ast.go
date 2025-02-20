@@ -481,9 +481,9 @@ func (eis *ElseIfStatement) String() string {
 // -----------------------------------------------------------------------------
 type ForLoopStatement struct {
 	Token  lexer.Token
-	Left   *VarStatement
+	Left   Statement
 	Middle *InfixExpression
-	Right  *PostfixExpression
+	Right  Expression
 	Body   *FunctionBody
 }
 

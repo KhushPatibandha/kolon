@@ -1243,32 +1243,53 @@ func (p *Parser) parseForLoop() (*ast.ForLoopStatement, error) {
 		return nil, errors.New("expected an open bracket (`(`) after the colon (`:`) in `for loop` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 
-	if !p.expectedPeekToken(lexer.VAR) {
-		return nil, errors.New("expected a `var` keyword after an open bracket (`(`) in `for loop` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
-	}
-	varStmt, err := p.parseVarStatement()
+	p.nextToken()
+	parsedStmt, err := p.parseStatement()
 	if err != nil {
 		return nil, err
 	}
-	stmt.Left = varStmt.(*ast.VarStatement)
-	p.nextToken()
+	if _, ok := parsedStmt.(*ast.VarStatement); !ok {
+		if _, ok := parsedStmt.(*ast.ExpressionStatement); !ok {
+			return nil, errors.New("expected a `var` statement or an assignment expression after an open bracket (`(`) in `for loop` statement, got: " + fmt.Sprintf("%T", parsedStmt))
+		} else {
+			assign, ok := parsedStmt.(*ast.ExpressionStatement).Expression.(*ast.AssignmentExpression)
+			if !ok {
+				return nil, errors.New("expected a `var` statement or an assignment expression after an open bracket (`(`) in `for loop` statement, got: " + fmt.Sprintf("%T", parsedStmt.(*ast.ExpressionStatement).Expression))
+			} else {
+				if assign.Operator != "=" {
+					return nil, errors.New("expected assignment-equal operator (`=`) in assignment expression in `for loop` statement, got: " + assign.Operator)
+				}
+			}
+		}
+	}
+	stmt.Left = parsedStmt
 
+	p.nextToken()
 	parsedExp, err := p.parseExpression(LOWEST)
 	if err != nil {
 		return nil, err
 	}
-	stmt.Middle = parsedExp.(*ast.InfixExpression)
+	midStmt, ok := parsedExp.(*ast.InfixExpression)
+	if !ok {
+		return nil, errors.New("expected an infix expression after the variable declaration in `for loop`, got: " + fmt.Sprintf("%T", parsedExp))
+	}
+	stmt.Middle = midStmt
 
 	if !p.expectedPeekToken(lexer.SEMI_COLON) {
 		return nil, errors.New("expected a semicolon (`;`) after infix expression in `for loop` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
-	p.nextToken()
 
+	p.nextToken()
 	parsedExp, err = p.parseExpression(LOWEST)
 	if err != nil {
 		return nil, err
 	}
-	stmt.Right = parsedExp.(*ast.PostfixExpression)
+	if _, ok := parsedExp.(*ast.PostfixExpression); !ok {
+		if _, ok := parsedExp.(*ast.AssignmentExpression); !ok {
+			return nil, errors.New("expected a postfix expression or an assignment expression after the infix expression in `for loop`, got: " + fmt.Sprintf("%T", parsedExp))
+		}
+	}
+	stmt.Right = parsedExp
 
 	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
 		return nil, errors.New("expected a closing bracket (`)`) after the postfix expression in `for loop`, got: " + lexer.TokenKindString(p.peekToken.Kind))

@@ -384,12 +384,16 @@ func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Ob
 			return resReturnObj, false, nil
 		}
 
-		postfixObj, hasErr, err := Eval(node.Right, env, inTesting)
+		postfixOrAssignObj, hasErr, err := Eval(node.Right, env, inTesting)
 		if err != nil {
 			return NULL, hasErr, err
 		}
 
-		env.Update(node.Left.Name.Value, postfixObj, object.VAR)
+		if _, ok := node.Left.(*ast.VarStatement); ok {
+			env.Update(node.Left.(*ast.VarStatement).Name.Value, postfixOrAssignObj, object.VAR)
+		} else {
+			env.Update(node.Left.(*ast.ExpressionStatement).Expression.(*ast.AssignmentExpression).Left.Value, postfixOrAssignObj, object.VAR)
+		}
 		infixObj, hasErr, err = Eval(node.Middle, env, inTesting)
 		if err != nil {
 			return NULL, hasErr, err

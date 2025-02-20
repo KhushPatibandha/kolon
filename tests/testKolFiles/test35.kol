@@ -1,0 +1,7 @@
+fun: main() {
+    var i: int = 1000;
+    for: (i = 0; i <= 10; i += 2): {
+        println(i);
+    }
+    println(i);
+}
