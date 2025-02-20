@@ -11,9 +11,26 @@ import (
 )
 
 func main() {
-	if len(os.Args) == 2 && os.Args[1] == "--version" {
+	if len(os.Args) == 2 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
 		fmt.Println("Kolon v1.0.2")
 		return
+	} else if len(os.Args) == 2 && (os.Args[1] == "--help" || os.Args[1] == "-h") {
+		fmt.Println(`Usage:
+        kolon [flags]
+        kolon [command] ([flags] <optional>)`)
+
+		fmt.Println()
+
+		fmt.Println(`Available Commands:
+        'run: <file.kol> [optional flags]'        Run a kolon file`)
+
+		fmt.Println()
+
+		fmt.Println(`Flags:
+        -h, --help        help for kolon
+        -v, --version     show version information
+        --print-tokens    print tokens of the file [optional: 'run:']`)
+
 	} else if len(os.Args) == 3 && os.Args[1] == "run:" {
 		filePath := os.Args[2]
 		if filePath[len(filePath)-4:] != ".kol" {
@@ -26,9 +43,6 @@ func main() {
 			return
 		}
 		tokens := lexer.Tokenizer(string(bytes))
-		// for _, token := range tokens {
-		// 	token.Help()
-		// }
 
 		p := parser.New(tokens, false)
 		program, err := p.ParseProgram()
@@ -48,8 +62,23 @@ func main() {
 			fmt.Println("Error evaluating program:", err)
 			return
 		}
+	} else if len(os.Args) == 4 && os.Args[1] == "run:" && os.Args[3] == "--print-tokens" {
+		filePath := os.Args[2]
+		if filePath[len(filePath)-4:] != ".kol" {
+			fmt.Println("Error: File should have .kol extension")
+			return
+		}
+		bytes, err := os.ReadFile(filePath)
+		if err != nil {
+			fmt.Println("Error reading file:", err)
+			return
+		}
+		tokens := lexer.Tokenizer(string(bytes))
+		for _, token := range tokens {
+			token.Help()
+		}
 	} else {
-		fmt.Println("Usage: kolon run: <path-to-kolon-file>")
+		fmt.Println("Not a valid command, use `--help` or `-h` for more information")
 		return
 	}
 }

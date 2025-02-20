@@ -197,13 +197,13 @@ for: (var i: int = 0; i < 3; i++): {
 
 The `for` loop expects three arguments:
 
-- A `var` statement to declare and initialize the loop variable.
+- A `var` statement to declare and initialize the loop variable or an assignment expression in case the variable is already declared.
 - An infix operation that evaluates to a boolean value (the loop condition).
-- A postfix operation (e.g., increment or decrement) to update the loop variable.
+- A postfix operation (e.g., increment or decrement) or an assignment expression (e.g., +=, -=, etc...) to update the loop variable.
 
 Note:
 
-- The first argument must be a `var` statement and cannot be just an identifier.
+- The first and third argument MUST always result in an integer value.
 - The second argument MUST be an infix operation that results in a boolean value.
 
 ### Continue and Break
