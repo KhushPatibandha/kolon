@@ -387,6 +387,13 @@ func checkWhileLoopStmt(node *ast.WhileLoopStatement, env *Environment) error {
 	if err != nil {
 		return err
 	}
+	if expType.CallExp {
+		function := FunctionMap[node.Condition.(*ast.CallExpression).Name.(*ast.Identifier).Value]
+		if len(function.ReturnType) != 1 {
+			return errors.New("call expression must return only 1 value for `while` statement's break condition, got: " + strconv.Itoa(len(function.ReturnType)))
+		}
+		expType.Type = *function.ReturnType[0].ReturnType
+	}
 	if expType.Type.Value != "bool" {
 		return errors.New("break condition for `while loop` should always result in a `bool`, got: " + expType.Type.Value)
 	}

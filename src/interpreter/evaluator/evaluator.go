@@ -417,6 +417,9 @@ func evalWhileLoop(node *ast.WhileLoopStatement, env *object.Environment) (objec
 	if err != nil {
 		return NULL, hasErr, err
 	}
+	if condition.Type() == object.RETURN_VALUE_OBJ {
+		condition = condition.(*object.ReturnValue).Value[0]
+	}
 
 	for condition == TRUE {
 		resStmtObj, hasErr, err := evalStatements(node.Body.Statements, env)
@@ -434,6 +437,9 @@ func evalWhileLoop(node *ast.WhileLoopStatement, env *object.Environment) (objec
 		condition, hasErr, err = Eval(node.Condition, env, inTesting)
 		if err != nil {
 			return NULL, hasErr, err
+		}
+		if condition.Type() == object.RETURN_VALUE_OBJ {
+			condition = condition.(*object.ReturnValue).Value[0]
 		}
 		if condition == FALSE {
 			break
