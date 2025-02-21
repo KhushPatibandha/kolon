@@ -1,9 +1,34 @@
 fun: main() {
     println("here " + toString(callMe()));
+    println("here2 " + toString(callMe1()));
+    println("here3 " + toString(callMe2()));
 }
 
 fun: callMe(): (int) {
     for: (var i: int = 0; i < 10; i++): {
+        if: (i == 2): {
+            return: i;
+        }
+        println(i);
+    }
+    return: -1;
+}
+
+fun: callMe1(): (int) {
+    var i: int = 0;
+    while: (i < 10): {
+        if: (i == 2): {
+            return: i;
+        }
+        println(i);
+        i++;
+    }
+    return: -1;
+}
+
+fun: callMe2(): (int) {
+    var i: int = 0;
+    for: (i = 0; i < 10; i++): {
         if: (i == 2): {
             return: i;
         }

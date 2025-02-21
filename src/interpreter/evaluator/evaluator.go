@@ -190,6 +190,9 @@ func Eval(node ast.Node, env *object.Environment, inTest bool) (object.Object, b
 	case *ast.ForLoopStatement:
 		localEnv := object.NewEnclosedEnvironment(env)
 		return evalForLoop(node, localEnv)
+	case *ast.WhileLoopStatement:
+		localEnv := object.NewEnclosedEnvironment(env)
+		return evalWhileLoop(node, localEnv)
 	case *ast.ContinueStatement:
 		return CONTINUE, false, nil
 	case *ast.BreakStatement:
@@ -399,6 +402,40 @@ func evalForLoop(node *ast.ForLoopStatement, env *object.Environment) (object.Ob
 			return NULL, hasErr, err
 		}
 		if infixObj == FALSE {
+			break
+		}
+	}
+
+	inForLoop = false
+	return nil, false, nil
+}
+
+func evalWhileLoop(node *ast.WhileLoopStatement, env *object.Environment) (object.Object, bool, error) {
+	inForLoop = true
+
+	condition, hasErr, err := Eval(node.Condition, env, inTesting)
+	if err != nil {
+		return NULL, hasErr, err
+	}
+
+	for condition == TRUE {
+		resStmtObj, hasErr, err := evalStatements(node.Body.Statements, env)
+		if err != nil {
+			return NULL, hasErr, err
+		}
+
+		if resStmtObj == BREAK {
+			break
+		} else if resReturnObj, ok := resStmtObj.(*object.ReturnValue); ok {
+			inForLoop = false
+			return resReturnObj, false, nil
+		}
+
+		condition, hasErr, err = Eval(node.Condition, env, inTesting)
+		if err != nil {
+			return NULL, hasErr, err
+		}
+		if condition == FALSE {
 			break
 		}
 	}

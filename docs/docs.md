@@ -187,7 +187,9 @@ if: (a > b): {
 
 ## Loops
 
-Kolon currently supports only a single type of loop, the `for` loop.
+Kolon supports two type of loops, `for` loop and `while` loop.
+
+### For Loop
 
 ```kolon
 for: (var i: int = 0; i < 3; i++): {
@@ -195,7 +197,7 @@ for: (var i: int = 0; i < 3; i++): {
 }
 ```
 
-The `for` loop expects three arguments:
+`for` loop expects three arguments:
 
 - A `var` statement to declare and initialize the loop variable or an assignment expression in case the variable is already declared.
 - An infix operation that evaluates to a boolean value (the loop condition).
@@ -205,6 +207,20 @@ Note:
 
 - The first and third argument MUST always result in an integer value.
 - The second argument MUST be an infix operation that results in a boolean value.
+
+### While Loop
+
+```kolon
+var i: int = 0;
+while: (i < 10): {
+    println(i);
+    i++;
+}
+```
+
+`while` loop expects a single argument:
+
+- Break condition that MUST always evaluates to a boolean value.
 
 ### Continue and Break
 

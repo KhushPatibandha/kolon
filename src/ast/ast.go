@@ -96,7 +96,6 @@ func (av *ArrayValue) String() string {
 // -----------------------------------------------------------------------------
 // For Integer
 // -----------------------------------------------------------------------------
-
 type IntegerValue struct {
 	Token lexer.Token
 	Value int64
@@ -109,7 +108,6 @@ func (iv *IntegerValue) String() string     { return iv.Token.Value }
 // -----------------------------------------------------------------------------
 // For Float
 // -----------------------------------------------------------------------------
-
 type FloatValue struct {
 	Token lexer.Token
 	Value float64
@@ -477,7 +475,7 @@ func (eis *ElseIfStatement) String() string {
 }
 
 // -----------------------------------------------------------------------------
-// for loop statement left.
+// for loop statement
 // -----------------------------------------------------------------------------
 type ForLoopStatement struct {
 	Token  lexer.Token
@@ -499,6 +497,27 @@ func (fls *ForLoopStatement) String() string {
 	out.WriteString(fls.Right.String())
 	out.WriteString("): {")
 	out.WriteString(fls.Body.String())
+	out.WriteString("}")
+
+	return out.String()
+}
+
+// -----------------------------------------------------------------------------
+// For While loop Statement
+// -----------------------------------------------------------------------------
+type WhileLoopStatement struct {
+	Token     lexer.Token
+	Condition Expression
+	Body      *FunctionBody
+}
+
+func (wls *WhileLoopStatement) statementNode()     {}
+func (wls *WhileLoopStatement) TokenValue() string { return wls.Token.Value }
+func (wls *WhileLoopStatement) String() string {
+	var out bytes.Buffer
+
+	out.WriteString(wls.TokenValue() + ": (" + wls.Condition.String() + "): {")
+	out.WriteString(wls.Body.String())
 	out.WriteString("}")
 
 	return out.String()

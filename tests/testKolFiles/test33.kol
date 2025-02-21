@@ -1,9 +1,16 @@
 fun: main() {
-    callMe1();
-    println(callMe2());
+    var l: int[] = [];
+
+    callMe1(l);
+    callMe3(l);
+
+    push(l, callMe2(l));
+    push(l, callMe4(l));
+
+    println(l);
 }
 
-fun: callMe1() {
+fun: callMe1(list: int[]) {
     for: (var i: int = 0; i < 10; i++): {
         if: (i == 3): {
             continue;
@@ -11,16 +18,43 @@ fun: callMe1() {
         if: (i == 9): {
             break;
         }
-        println(i);
+        push(list, i);
     }
 }
 
-fun: callMe2(): (int) {
+fun: callMe2(list: int[]): (int) {
     for: (var i: int = 0; i < 10; i++): {
         if: (i == 6): {
             return: i;
         }
-        println(i);
+        push(list, i);
+    }
+    return: -1;
+}
+
+fun: callMe3(list: int[]) {
+    var i: int = 0;
+    while: (i < 10): {
+        if: (i == 3): {
+            i++;
+            continue;
+        }
+        if: (i == 9): {
+            break;
+        }
+        push(list, i);
+        i++;
+    }
+}
+
+fun: callMe4(list: int[]): (int) {
+    var i: int = 0;
+    while: (i < 10): {
+        if: (i == 6): {
+            return: i;
+        }
+        push(list, i);
+        i++;
     }
     return: -1;
 }

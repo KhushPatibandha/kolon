@@ -1,8 +1,29 @@
 fun: main() {
+    var list: int[] = [];
     for: (var i: int = 0; i < 10; i++): {
         if: (i == 5): {
             continue;
         }
-        println(i);
+        push(list, i);
     }
+
+    var i: int = 0;
+    for: (i = 0; i < 10; i++): {
+        if: (i == 5): {
+            continue;
+        }
+        push(list, i);
+    }
+
+    i = 0;
+    while: (i < 10): {
+        if: (i == 5): {
+            i++;
+            continue;
+        }
+        push(list, i);
+        i++;
+    }
+
+    println(list);
 }

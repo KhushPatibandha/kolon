@@ -22,7 +22,7 @@ func TestRandom(t *testing.T) {
 	run(t, "./testKolFiles/test8.kol", "[\"khush\", \"heeh\"]\n[\"hello\", \"yo\"]")
 	run(t, "./testKolFiles/test9.kol", "[\"khush\", \"heeh\"]\n[\"hello\", \"yo\"]\n10\ntrue")
 	// run(t, "./testKolFiles/test10.kol", "{\"heeh\": 2, \"khush\": 1}\n1")
-	run(t, "./testKolFiles/test11.kol", "0\n1\n2\n3\n4\n6\n7\n8\n9")
+	run(t, "./testKolFiles/test11.kol", "[0, 1, 2, 3, 4, 6, 7, 8, 9, 0, 1, 2, 3, 4, 6, 7, 8, 9, 0, 1, 2, 3, 4, 6, 7, 8, 9]")
 	run(t, "./testKolFiles/test12.kol", "310")
 	run(t, "./testKolFiles/test13.kol", "310")
 	run(t, "./testKolFiles/test14.kol", "1\n0")
@@ -42,11 +42,12 @@ func TestRandom(t *testing.T) {
 	run(t, "./testKolFiles/test28.kol", "102\nhello\nhello\n123\n10")
 	run(t, "./testKolFiles/test29.kol", "{}\n{\"khush\": 1}")
 	run(t, "./testKolFiles/test30.kol", "hello!!\n10\ntrue\nHello\nw\n1.1\nhello!!")
-	run(t, "./testKolFiles/test31.kol", "0\n1\nhere 2")
+	run(t, "./testKolFiles/test31.kol", "0\n1\nhere 2\n0\n1\nhere2 2\n0\n1\nhere3 2")
 	run(t, "./testKolFiles/test32.kol", "1\n2\n3\n4")
-	run(t, "./testKolFiles/test33.kol", "0\n1\n2\n4\n5\n6\n7\n8\n0\n1\n2\n3\n4\n5\n6")
-	run(t, "./testKolFiles/test34.kol", "0\n2\n4\n6\n8\n10")
+	run(t, "./testKolFiles/test33.kol", "[0, 1, 2, 4, 5, 6, 7, 8, 0, 1, 2, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4, 5, 6]")
+	run(t, "./testKolFiles/test34.kol", "[0, 2, 4, 6, 8, 10, 0, 2, 4, 6, 8, 10, 0, 2, 4, 6, 8, 10]")
 	run(t, "./testKolFiles/test35.kol", "0\n2\n4\n6\n8\n10\n12")
+	run(t, "./testKolFiles/test36.kol", "0\n1\n2\n3\n4\n5\n100")
 }
 
 func run(t *testing.T, filePath string, expectedOutput string) {

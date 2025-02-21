@@ -85,6 +85,9 @@ func typeCheckStmts(stmtNode ast.Statement, env *Environment) error {
 	case *ast.ForLoopStatement:
 		localEnv := NewEnclosedEnvironment(env)
 		return checkForLoopStmt(node, localEnv)
+	case *ast.WhileLoopStatement:
+		localEnv := NewEnclosedEnvironment(env)
+		return checkWhileLoopStmt(node, localEnv)
 	case *ast.ExpressionStatement:
 		return checkExpStmt(node, env)
 	default:
@@ -366,6 +369,26 @@ func checkForLoopStmt(node *ast.ForLoopStatement, env *Environment) error {
 			return errors.New("assignment operation for `for loop` condition should always result in an `int`, got: " + expType.Type.Value)
 		}
 		return errors.New("postfix operation for `for loop` condition should always result in an `int`, got: " + expType.Type.Value)
+	}
+
+	err = checkStmts(node.Body.Statements, env)
+	if err != nil {
+		return err
+	}
+
+	inForLoop = false
+	return nil
+}
+
+func checkWhileLoopStmt(node *ast.WhileLoopStatement, env *Environment) error {
+	inForLoop = true
+
+	expType, err := getExpType(node.Condition, env)
+	if err != nil {
+		return err
+	}
+	if expType.Type.Value != "bool" {
+		return errors.New("break condition for `while loop` should always result in a `bool`, got: " + expType.Type.Value)
 	}
 
 	err = checkStmts(node.Body.Statements, env)

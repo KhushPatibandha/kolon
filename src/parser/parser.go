@@ -164,6 +164,8 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 		return p.parseIfStatement()
 	case lexer.FOR:
 		return p.parseForLoop()
+	case lexer.WHILE:
+		return p.parseWhileLoop()
 	case lexer.CONTINUE:
 		return p.parseContinueStatement()
 	case lexer.BREAK:
@@ -1299,6 +1301,49 @@ func (p *Parser) parseForLoop() (*ast.ForLoopStatement, error) {
 	}
 	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
 		return nil, errors.New("expected an open curly bracket (`{`) after the colon (`:`) in `for loop`, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+	stmtBody, err := p.parseFunctionBody()
+	if err != nil {
+		return nil, err
+	}
+	stmt.Body = stmtBody
+
+	inForLoop = false
+	return stmt, nil
+}
+
+// -----------------------------------------------------------------------------
+// Parsing While Loop
+// -----------------------------------------------------------------------------
+func (p *Parser) parseWhileLoop() (*ast.WhileLoopStatement, error) {
+	if !inFunction && !p.inTesting {
+		return nil, errors.New("while loop can only be used inside a function")
+	}
+	inForLoop = true
+	stmt := &ast.WhileLoopStatement{Token: p.currentToken}
+
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil, errors.New("expected a colon (`:`) after the `while` keyword, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
+		return nil, errors.New("expected an open bracket (`(`) after the colon (`:`) in `while loop` statement, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+
+	p.nextToken()
+	parsedExp, err := p.parseExpression(LOWEST)
+	if err != nil {
+		return nil, err
+	}
+	stmt.Condition = parsedExp
+
+	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
+		return nil, errors.New("expected a closing bracket (`)`) after break condition in `while loop`, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+	if !p.expectedPeekToken(lexer.COLON) {
+		return nil, errors.New("expected a colon (`:`) after the closing bracket (`)`) in `while loop`, got: " + lexer.TokenKindString(p.peekToken.Kind))
+	}
+	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
+		return nil, errors.New("expected an open curly bracket (`{`) after the colon (`:`) in `while loop`, got: " + lexer.TokenKindString(p.peekToken.Kind))
 	}
 	stmtBody, err := p.parseFunctionBody()
 	if err != nil {

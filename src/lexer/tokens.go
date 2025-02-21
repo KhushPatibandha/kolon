@@ -53,6 +53,7 @@ const (
 	ELSE
 	ELSE_IF
 	FOR
+	WHILE
 	RETURN
 	CONTINUE
 	BREAK
@@ -65,6 +66,7 @@ var reservedWords = map[string]TokenKind{
 	"if":       IF,
 	"else":     ELSE,
 	"for":      FOR,
+	"while":    WHILE,
 	"else if":  ELSE_IF,
 	"true":     BOOL,
 	"false":    BOOL,
@@ -193,6 +195,8 @@ func TokenKindString(tKind TokenKind) string {
 		return "ELSE_IF"
 	case FOR:
 		return "FOR"
+	case WHILE:
+		return "WHILE"
 	case RETURN:
 		return "RETURN"
 	case CONTINUE:
