@@ -817,6 +817,11 @@ func checkIndexExp(exp *ast.IndexExpression, env *Environment) (expType, error) 
 			return expType{}, errors.New("hashmap key type must be of datatype `" + leftType.Type.SubTypes[0].Value + "`, got: " + indexType.Type.Value)
 		}
 		return expType{Type: ast.Type{Value: leftType.Type.SubTypes[1].Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+	} else if leftType.Type.Value == "string" {
+		if indexType.Type.Value != "int" {
+			return expType{}, errors.New("string index must be an integer, got: " + indexType.Type.Value)
+		}
+		return expType{Type: ast.Type{Value: "char", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 	} else {
 		return expType{}, errors.New("index operation not supported for " + leftType.Type.Value + "[" + indexType.Type.Value + "]")
 	}
