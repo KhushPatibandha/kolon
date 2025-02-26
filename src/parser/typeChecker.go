@@ -685,9 +685,6 @@ func checkInfixExp(infix *ast.InfixExpression, env *Environment) (expType, error
 		}
 	case leftExpType.Type.Value == "int" && rightExpType.Type.Value == "int":
 		if infix.Operator == "+" || infix.Operator == "-" || infix.Operator == "*" || infix.Operator == "/" || infix.Operator == "%" || infix.Operator == "|" || infix.Operator == "&" {
-			if infix.Operator == "/" && infix.Right.(*ast.IntegerValue).Value == 0 {
-				return expType{}, errors.New("integer divide by zero")
-			}
 			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.INT, Value: "int"}, Value: "int", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if infix.Operator == ">" || infix.Operator == "<" || infix.Operator == "<=" || infix.Operator == ">=" || infix.Operator == "==" || infix.Operator == "!=" {
 			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
