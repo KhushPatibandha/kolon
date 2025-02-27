@@ -420,7 +420,7 @@ func (ifs *IfStatement) String() string {
 	out.WriteString("}")
 
 	if ifs.MultiConseq != nil {
-		for i := 0; i < len(ifs.MultiConseq); i++ {
+		for i := range ifs.MultiConseq {
 			out.WriteString(ifs.MultiConseq[i].String())
 		}
 	}

@@ -1356,6 +1356,59 @@ func (p *Parser) parseWhileLoop() (*ast.WhileLoopStatement, error) {
 }
 
 // -----------------------------------------------------------------------------
+// Parsing Types
+// -----------------------------------------------------------------------------
+func (p *Parser) parseType() (*ast.Type, error) {
+	stmt := &ast.Type{Token: p.currentToken, Value: p.currentToken.Value}
+	if !p.peekTokenIsOk(lexer.OPEN_SQUARE_BRACKET) {
+		p.nextToken()
+		stmt.IsArray = false
+		stmt.IsHash = false
+		stmt.SubTypes = nil
+		return stmt, nil
+	} else {
+		p.nextToken()
+		// int[string[]]
+		// int[string]
+		// int[int[string]]
+		// int[][]
+		// int[string][]
+		// int[string[]][]
+		if p.peekTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
+			p.nextToken()
+			stmt.IsArray = true
+			stmt.IsHash = false
+			stmt.SubTypes = nil
+			p.nextToken()
+			return stmt, nil
+		} else {
+			p.nextToken()
+
+			valueType, err := p.parseType()
+			if err != nil {
+				return nil, err
+			}
+
+			if !p.currTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
+				return nil, errors.New("expected a closing square bracket (`]`) after value datatype for hashmap, got: " + lexer.TokenKindString(p.currentToken.Kind))
+			}
+
+			stmt.IsArray = false
+			stmt.IsHash = true
+			var subTypes []*ast.Type
+
+			keyType := &ast.Type{Token: stmt.Token, Value: stmt.Value, IsArray: false, IsHash: false, SubTypes: nil}
+			subTypes = append(subTypes, keyType)
+			subTypes = append(subTypes, valueType)
+
+			stmt.SubTypes = subTypes
+			p.nextToken()
+			return stmt, nil
+		}
+	}
+}
+
+// -----------------------------------------------------------------------------
 // Helper Methods
 // -----------------------------------------------------------------------------
 func (p *Parser) nextToken() {
