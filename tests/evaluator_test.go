@@ -37,6 +37,8 @@ func Test27(t *testing.T) {
 		{"2 | 3;", 3, false},
 		{"5++;", 6, false},
 		{"5--;", 4, false},
+		{"5 / 2", 2, false},
+		{"1 / 2", 0, false},
 	}
 
 	for _, tt := range tests {
@@ -163,8 +165,8 @@ func Test29(t *testing.T) {
 		{"3.5 * (3.5 * 3.5) + 10.0;", 52.875, false},
 		{"3.5 * (3.5 + 10.0);", 47.25, false},
 		{"(5.5 + 10.0 * 2.5 + 15.0 / 3.0) * 2.5 + -10.0;", 78.75, false},
-		{"5 / 2", 2.5, false},
-		{"1 / 2", 0.5, false},
+		{"toFloat(5) / 2", 2.5, false},
+		{"1 / toFloat(2)", 0.5, false},
 	}
 
 	for _, tt := range test {

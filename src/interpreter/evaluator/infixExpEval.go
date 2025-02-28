@@ -186,9 +186,6 @@ func evalIntegerInfixExpression(operator string, left object.Object, right objec
 		if rightVal == 0 {
 			return NULL, true, errors.New("integer divide by zero")
 		}
-		if leftVal%rightVal != 0 {
-			return &object.Float{Value: float64(leftVal) / float64(rightVal)}, false, nil
-		}
 		return &object.Integer{Value: leftVal / rightVal}, false, nil
 	case "*":
 		return &object.Integer{Value: leftVal * rightVal}, false, nil

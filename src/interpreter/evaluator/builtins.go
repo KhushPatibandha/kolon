@@ -59,6 +59,21 @@ var builtins = map[string]*object.Builtin{
 			}
 		},
 	},
+	"toFloat": {
+		Fn: func(args ...object.Object) (object.Object, bool, error) {
+			if len(args) != 1 {
+				return NULL, true, errors.New("wrong number of arguments for `toFloat`, got: " + strconv.Itoa(len(args)) + ", want: 1")
+			}
+			switch arg := args[0].(type) {
+			case *object.Integer:
+				return &object.Float{Value: float64(arg.Value)}, false, nil
+			case *object.Float:
+				return arg, false, nil
+			default:
+				return NULL, true, errors.New("argument for `toFloat` not supported, got: " + string(args[0].Type()) + ", want: `int` or `float`")
+			}
+		},
+	},
 	"print": {
 		Fn: func(args ...object.Object) (object.Object, bool, error) {
 			if len(args) != 1 {
