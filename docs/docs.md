@@ -372,6 +372,20 @@ fun: main() {
 }
 ```
 
+#### toFloat()
+
+| **Num of Args** | **Type of Args** | **Returns** | **Description**                                   |
+| --------------- | ---------------- | ----------- | ------------------------------------------------- |
+| 1               | int/float        | float       | Converts the provided argument to its float form. |
+
+```kolon
+fun: main() {
+    var a: int = 10;
+    println(toFloat(a)); // 10.0
+    println(typeOf(toFloat(a))); // float
+}
+```
+
 #### typeOf()
 
 | **Num of Args** | **Type of Args**                         | **Returns** | **Description**                        |

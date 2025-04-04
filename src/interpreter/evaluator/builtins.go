@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/KhushPatibandha/Kolon/src/object"
 )
@@ -94,6 +95,9 @@ var builtins = map[string]*object.Builtin{
 				return NULL, false, nil
 			case *object.Float:
 				newStr := strconv.FormatFloat(arg.Value, 'f', -1, 64)
+				if !strings.Contains(newStr, ".") {
+					newStr += ".0"
+				}
 				fmt.Print(newStr)
 				return NULL, false, nil
 			case *object.Boolean:
@@ -132,6 +136,9 @@ var builtins = map[string]*object.Builtin{
 				return NULL, false, nil
 			case *object.Float:
 				newStr := strconv.FormatFloat(arg.Value, 'f', -1, 64)
+				if !strings.Contains(newStr, ".") {
+					newStr += ".0"
+				}
 				fmt.Println(newStr)
 				return NULL, false, nil
 			case *object.Boolean:

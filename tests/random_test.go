@@ -48,6 +48,7 @@ func TestRandom(t *testing.T) {
 	run(t, "./testKolFiles/test34.kol", "[0, 2, 4, 6, 8, 10, 0, 2, 4, 6, 8, 10, 0, 2, 4, 6, 8, 10]")
 	run(t, "./testKolFiles/test35.kol", "0\n2\n4\n6\n8\n10\n12")
 	run(t, "./testKolFiles/test36.kol", "0\n1\n2\n3\n4\n5\n100")
+	run(t, "./testKolFiles/test37.kol", "10.0\n10.1111\nfloat")
 }
 
 func run(t *testing.T, filePath string, expectedOutput string) {
