@@ -290,7 +290,7 @@ fun: callMeAgain() {
 
 ### Builtin Functions
 
-Kolon has many built-in functions that you can use without needing to define them. You can simply call them. All built-in functions take more than one argument.
+Kolon has many built-in functions that you can use without needing to define them. You can simply call them.
 
 #### print()
 
@@ -376,13 +376,27 @@ fun: main() {
 
 | **Num of Args** | **Type of Args** | **Returns** | **Description**                                   |
 | --------------- | ---------------- | ----------- | ------------------------------------------------- |
-| 1               | int/float        | float       | Converts the provided argument to its float form. |
+| 1               | int/float/string | float       | Converts the provided argument to its float form. |
 
 ```kolon
 fun: main() {
     var a: int = 10;
     println(toFloat(a)); // 10.0
     println(typeOf(toFloat(a))); // float
+}
+```
+
+#### toInt()
+
+| **Num of Args** | **Type of Args**      | **Returns** | **Description**                                 |
+| --------------- | --------------------- | ----------- | ----------------------------------------------- |
+| 1               | int/float/string/char | int         | Converts the provided argument to its int form. |
+
+```kolon
+fun: main() {
+    println(toInt(11.9)); // 11 [always returns floor value]
+    println(toInt("10")); // 10
+    println(toInt('A')); // 65
 }
 ```
 
@@ -410,6 +424,22 @@ fun: main() {
     println(typeOf(g)); // string[int]
 }
 ```
+
+#### scan()
+
+| **Num of Args** | **Type of Args** | **Returns** | **Description**                                                                                                                                                          |
+| --------------- | ---------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0               | -                | string      | Waits for user to input 1 or more than 1 lines.                                                                                                                          |
+| 1               | string           | string      | Waits for user to input 1 or more than 1 lines. First arg is prompt, will be printed when the function is called. By default WON'T take input from next line             |
+| 2               | string, bool     | string      | Waits for user to input 1 or more than 1 lines. First arg is prompt, will be printed when the function is called. Second arg if true will take user input from next line |
+
+#### scanln()
+
+| **Num of Args** | **Type of Args** | **Returns** | **Description**                                                                                                                                          |
+| --------------- | ---------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0               | -                | string      | Waits for user to input 1 line.                                                                                                                          |
+| 1               | string           | string      | Waits for user to input 1 line. First arg is prompt, will be printed when the function is called. By default WON'T take input from next line             |
+| 2               | string, bool     | string      | Waits for user to input 1 line. First arg is prompt, will be printed when the function is called. Second arg if true will take user input from next line |
 
 #### push()
 

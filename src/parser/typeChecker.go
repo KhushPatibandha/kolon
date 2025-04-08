@@ -15,9 +15,12 @@ var (
 	builtinMap   = map[string]bool{
 		"print":       true,
 		"println":     true,
+		"scan":        true,
+		"scanln":      true,
 		"len":         true,
 		"toString":    true,
 		"toFloat":     true,
+		"toInt":       true,
 		"push":        true,
 		"pop":         true,
 		"insert":      true,
@@ -915,13 +918,25 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("wrong number of arguments for `toFloat`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1")
 		}
 		if argTypes[0].Type.IsArray {
-			return expType{}, errors.New("argument for `toFloat` not supported, got: array, want: `int` or `float`")
+			return expType{}, errors.New("argument for `toFloat` not supported, got: array, want: `int` or `float` or `string`")
 		} else if argTypes[0].Type.IsHash {
-			return expType{}, errors.New("argument for `toFloat` not supported, got: hashmap, want: `int` or `float`")
-		} else if argTypes[0].Type.Value != "int" && argTypes[0].Type.Value != "float" {
-			return expType{}, errors.New("argument for `toFloat` not supported, got: " + argTypes[0].Type.Value + ", want: `int` or `float`")
+			return expType{}, errors.New("argument for `toFloat` not supported, got: hashmap, want: `int` or `float` or `string`")
+		} else if argTypes[0].Type.Value != "int" && argTypes[0].Type.Value != "float" && argTypes[0].Type.Value != "string" {
+			return expType{}, errors.New("argument for `toFloat` not supported, got: " + argTypes[0].Type.Value + ", want: `int` or `float` or `string`")
 		}
 		return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.FLOAT, Value: "float"}, Value: "float", IsHash: false, IsArray: false, SubTypes: nil}, CallExp: false}, nil
+	case "toInt":
+		if len(callExp.Args) != 1 {
+			return expType{}, errors.New("wrong number of arguments for `toInt`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1")
+		}
+		if argTypes[0].Type.IsArray {
+			return expType{}, errors.New("argument for `toInt` not supported, got: array, want: `int`, `float`, `string`, `char`")
+		} else if argTypes[0].Type.IsHash {
+			return expType{}, errors.New("argument for `toInt` not supported, got: hashmap, want: `int`, `float`, `string`, `char`")
+		} else if argTypes[0].Type.Value != "int" && argTypes[0].Type.Value != "float" && argTypes[0].Type.Value != "string" && argTypes[0].Type.Value != "char" {
+			return expType{}, errors.New("argument for `toInt` not supported, got: " + argTypes[0].Type.Value + ", want: `int`, `float`, `string`, `char`")
+		}
+		return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.INT, Value: "int"}, Value: "int", IsHash: false, IsArray: false, SubTypes: nil}, CallExp: false}, nil
 	case "print", "println":
 		if len(callExp.Args) != 1 {
 			return expType{}, errors.New("wrong number of arguments for `" + callExp.Name.(*ast.Identifier).Value + "`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1")
@@ -931,13 +946,37 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 		} else {
 			return expType{}, errors.New("argument to `" + callExp.Name.(*ast.Identifier).Value + "` not supported, got: " + argTypes[0].Type.Value + ", want: array, hashmap, `int`, `float`, `bool`, `char` or `string`. use `toString` to convert to `string` in case of using other datatypes with `string`")
 		}
+	case "scan", "scanln":
+		fncName := callExp.Name.(*ast.Identifier).Value
+		if len(callExp.Args) != 0 && len(callExp.Args) != 1 && len(callExp.Args) != 2 {
+			return expType{}, errors.New("wrong number of arguments for `" + fncName + "`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 0 or 1 or 2. " + fncName + "() or " + fncName + "(prompt) or " + fncName + "(prompt, newline[true/false])")
+		}
+		if len(callExp.Args) != 0 {
+			if argTypes[0].Type.IsArray {
+				return expType{}, errors.New("argument for `" + fncName + "` not supported, got: array, want: `string`")
+			} else if argTypes[0].Type.IsHash {
+				return expType{}, errors.New("argument for `" + fncName + "` not supported, got: hashmap, want: `string`")
+			} else if argTypes[0].Type.Value != "string" {
+				return expType{}, errors.New("argument for `" + fncName + "` not supported, got: " + argTypes[0].Type.Value + ", want: `string`")
+			}
+			if len(callExp.Args) == 2 {
+				if argTypes[1].Type.IsArray {
+					return expType{}, errors.New("2nd argument for `" + fncName + "` not supported, got: array, want: `bool`")
+				} else if argTypes[1].Type.IsHash {
+					return expType{}, errors.New("2nd argument for `" + fncName + "` not supported, got: hashmap, want: `bool`")
+				} else if argTypes[1].Type.Value != "bool" {
+					return expType{}, errors.New("2nd argument for `" + fncName + "` not supported, got: " + argTypes[1].Type.Value + ", want: `bool`")
+				}
+			}
+		}
+		return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.STRING, Value: "string"}, Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 	case "push":
 		if len(callExp.Args) != 2 && len(callExp.Args) != 3 {
-			return expType{}, errors.New("wrong number of arguments for `push`, got: " + strconv.Itoa(len(callExp.Args)) + ", want=2 or 3. for array: `push(array, element)` and for hashmap: `push(map, key, value)`")
+			return expType{}, errors.New("wrong number of arguments for `push`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 2 or 3. for array: `push(array, element)` and for hashmap: `push(map, key, value)`")
 		}
 		if argTypes[0].Type.IsArray {
 			if len(callExp.Args) != 2 {
-				return expType{}, errors.New("wrong number of arguments for `push` for array, got: " + strconv.Itoa(len(callExp.Args)) + ", want=2. `push(array, element)`")
+				return expType{}, errors.New("wrong number of arguments for `push` for array, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 2. `push(array, element)`")
 			}
 
 			arrayType := argTypes[0].Type.Value

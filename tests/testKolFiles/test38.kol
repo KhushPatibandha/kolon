@@ -1,0 +1,21 @@
+fun: main() {
+    var a: float = 10.991;
+    println(toInt(11.89));
+    println(toInt(a));
+    println(toInt(a) + 1);
+    println(typeOf(toInt(a)));
+
+    println(toInt(1));
+
+    var b: string = "11";
+    println(toInt("10"));
+    println(toInt(b));
+    println(typeOf(toInt(b)));
+
+    var c: char = 'A';
+    println(toInt(c));
+    println(toInt('c'));
+    println(typeOf(toInt('c')));
+
+    println(toInt("10.1"));
+}

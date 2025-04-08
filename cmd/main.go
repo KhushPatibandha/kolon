@@ -14,26 +14,26 @@ import (
 
 func main() {
 	if len(os.Args) == 2 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
-		fmt.Println("Kolon v2.0.0")
+		fmt.Println("Kolon v1.1.0")
 		return
 	} else if len(os.Args) == 2 && (os.Args[1] == "--help" || os.Args[1] == "-h") {
 		fmt.Println(`Usage:
-        kolon [flags]
-        kolon [command] ([flags] <optional>)`)
+    kolon [flags]
+    kolon [command] ([flags] <optional>)`)
 
 		fmt.Println()
 
 		fmt.Println(`Available Commands:
-        'run: <file.kol>'                             Run a kolon file
-        'debug: <file.kol> [--tokens | --ast]'        Debug a kolon file`)
+    'run: <file.kol>'                             Run a kolon file
+    'debug: <file.kol> [--tokens | --ast]'        Debug a kolon file`)
 
 		fmt.Println()
 
 		fmt.Println(`Flags:
-        -h, --help        help for kolon
-        -v, --version     show version information
-        --tokens          print tokens of the file [Command: 'debug:']
-        --ast             print ast of the file [Command: 'debug:']`)
+    -h, --help        help for kolon
+    -v, --version     show version information
+    --tokens          print tokens of the file [Command: 'debug:']
+    --ast             print ast of the file [Command: 'debug:']`)
 
 		return
 	} else if len(os.Args) == 3 && os.Args[1] == "run:" {

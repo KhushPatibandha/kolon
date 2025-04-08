@@ -1,0 +1,20 @@
+fun: main() {
+    var a: string = scanln();
+    var b: string = scanln("here is some random prompt: ");
+    var c: string = scanln("here is some random prompt 2", true);
+    var d: string = scanln("here is some random prompt: ", false);
+
+    println(a);
+    println(b);
+    println(c);
+    println(d);
+    println(typeOf(a));
+
+    var a: int = toInt(scanln("Enter a number", true));
+    println(a);
+    println(typeOf(a));
+
+    var a: float = toFloat(scanln("Enter a number", true));
+    println(a);
+    println(typeOf(a));
+}

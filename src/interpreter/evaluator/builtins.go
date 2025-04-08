@@ -1,8 +1,10 @@
 package evaluator
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -70,8 +72,40 @@ var builtins = map[string]*object.Builtin{
 				return &object.Float{Value: float64(arg.Value)}, false, nil
 			case *object.Float:
 				return arg, false, nil
+			case *object.String:
+				newStr := arg.Value[1 : len(arg.Value)-1]
+				floatValue, err := strconv.ParseFloat(newStr, 64)
+				if err != nil {
+					return NULL, true, errors.New("Error converting string to float, can't convert: " + newStr)
+				}
+				return &object.Float{Value: floatValue}, false, nil
 			default:
 				return NULL, true, errors.New("argument for `toFloat` not supported, got: " + string(args[0].Type()) + ", want: `int` or `float`")
+			}
+		},
+	},
+	"toInt": {
+		Fn: func(args ...object.Object) (object.Object, bool, error) {
+			if len(args) != 1 {
+				return NULL, true, errors.New("wrong number of arguments for `toInt`, got: " + strconv.Itoa(len(args)) + ", want: 1")
+			}
+			switch arg := args[0].(type) {
+			case *object.Integer:
+				return arg, false, nil
+			case *object.Float:
+				return &object.Integer{Value: int64(arg.Value)}, false, nil
+			case *object.Char:
+				newStr := arg.Value[1 : len(arg.Value)-1]
+				return &object.Integer{Value: int64(newStr[0])}, false, nil
+			case *object.String:
+				newStr := arg.Value[1 : len(arg.Value)-1]
+				intValue, err := strconv.ParseInt(newStr, 10, 64)
+				if err != nil {
+					return NULL, true, errors.New("Error converting string to int, can't convert: " + newStr)
+				}
+				return &object.Integer{Value: intValue}, false, nil
+			default:
+				return NULL, true, errors.New("argument for `toInt` not supported, got: " + string(args[0].Type()) + ", want: `int`, `float`, `string`, `char`")
 			}
 		},
 	},
@@ -155,6 +189,59 @@ var builtins = map[string]*object.Builtin{
 			default:
 				return NULL, true, errors.New("argument to `println` not supported, got: " + string(args[0].Type()) + ", want: array, hashmap, `int`, `float`, `bool`, `char` or `string`. use `toString` to convert to `string` in case of using other datatypes with `string`")
 			}
+		},
+	},
+	"scanln": {
+		Fn: func(args ...object.Object) (object.Object, bool, error) {
+			if len(args) != 0 && len(args) != 1 && len(args) != 2 {
+				return NULL, true, errors.New("wrong number of arguments for `scanln`, got: " + strconv.Itoa(len(args)) + ", want: 0 or 1 or 2")
+			}
+			if len(args) != 0 {
+				strToPrint := args[0].(*object.String).Value[1 : len(args[0].(*object.String).Value)-1]
+				if len(args) == 2 && args[1].Inspect() == "true" {
+					fmt.Println(strToPrint)
+				} else {
+					fmt.Print(strToPrint)
+				}
+			}
+			reader := bufio.NewReader(os.Stdin)
+			var input string
+			rawInput, err := reader.ReadString('\n')
+			if err != nil {
+				return NULL, true, errors.New("error reading input: " + err.Error())
+			}
+			input = strings.TrimSpace(rawInput)
+			return &object.String{Value: "\"" + input + "\""}, false, nil
+		},
+	},
+	"scan": {
+		Fn: func(args ...object.Object) (object.Object, bool, error) {
+			if len(args) != 0 && len(args) != 1 && len(args) != 2 {
+				return NULL, true, errors.New("wrong number of arguments for `scan`, got: " + strconv.Itoa(len(args)) + ", want: 0 or 1 or 2")
+			}
+			if len(args) != 0 {
+				strToPrint := args[0].(*object.String).Value[1 : len(args[0].(*object.String).Value)-1]
+				if len(args) == 2 && args[1].Inspect() == "true" {
+					fmt.Println(strToPrint)
+				} else {
+					fmt.Print(strToPrint)
+				}
+			}
+			reader := bufio.NewReader(os.Stdin)
+			var input []string
+			for {
+				line, err := reader.ReadString('\n')
+				if err != nil {
+					return NULL, true, errors.New("error reading input: " + err.Error())
+				}
+				line = strings.TrimSpace(line)
+				if line == "" {
+					break
+				}
+				input = append(input, line)
+			}
+			res := strings.Join(input, "\n")
+			return &object.String{Value: "\"" + res + "\""}, false, nil
 		},
 	},
 	"push": {
