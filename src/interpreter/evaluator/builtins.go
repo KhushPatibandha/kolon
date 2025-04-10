@@ -80,7 +80,7 @@ var builtins = map[string]*object.Builtin{
 				}
 				return &object.Float{Value: floatValue}, false, nil
 			default:
-				return NULL, true, errors.New("argument for `toFloat` not supported, got: " + string(args[0].Type()) + ", want: `int` or `float`")
+				return NULL, true, errors.New("argument for `toFloat` not supported, got: " + string(args[0].Type()) + ", want: `int`, `float` or `string`")
 			}
 		},
 	},
@@ -105,7 +105,7 @@ var builtins = map[string]*object.Builtin{
 				}
 				return &object.Integer{Value: intValue}, false, nil
 			default:
-				return NULL, true, errors.New("argument for `toInt` not supported, got: " + string(args[0].Type()) + ", want: `int`, `float`, `string`, `char`")
+				return NULL, true, errors.New("argument for `toInt` not supported, got: " + string(args[0].Type()) + ", want: `int`, `float`, `string` or `char`")
 			}
 		},
 	},
@@ -194,7 +194,7 @@ var builtins = map[string]*object.Builtin{
 	"scanln": {
 		Fn: func(args ...object.Object) (object.Object, bool, error) {
 			if len(args) != 0 && len(args) != 1 && len(args) != 2 {
-				return NULL, true, errors.New("wrong number of arguments for `scanln`, got: " + strconv.Itoa(len(args)) + ", want: 0 or 1 or 2")
+				return NULL, true, errors.New("wrong number of arguments for `scanln`, got: " + strconv.Itoa(len(args)) + ", want: 0, 1 or 2")
 			}
 			if len(args) != 0 {
 				strToPrint := args[0].(*object.String).Value[1 : len(args[0].(*object.String).Value)-1]
@@ -217,7 +217,7 @@ var builtins = map[string]*object.Builtin{
 	"scan": {
 		Fn: func(args ...object.Object) (object.Object, bool, error) {
 			if len(args) != 0 && len(args) != 1 && len(args) != 2 {
-				return NULL, true, errors.New("wrong number of arguments for `scan`, got: " + strconv.Itoa(len(args)) + ", want: 0 or 1 or 2")
+				return NULL, true, errors.New("wrong number of arguments for `scan`, got: " + strconv.Itoa(len(args)) + ", want: 0, 1 or 2")
 			}
 			if len(args) != 0 {
 				strToPrint := args[0].(*object.String).Value[1 : len(args[0].(*object.String).Value)-1]
