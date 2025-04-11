@@ -51,6 +51,9 @@ func (e *Environment) Set(name string, ident ast.Identifier, identType ast.Type,
 		if variable.VarType == CONST {
 			return errors.New("variable `" + ident.Value + "` is a constant, can't re-declare const variables")
 		}
+		if variable.VarType != identVarType {
+			return errors.New("variable `" + ident.Value + "` already declared as `" + varTypeToString(variable.VarType) + "` can't re-declare as `" + varTypeToString(identVarType) + "`")
+		}
 	}
 	e.store[name] = &Variable{
 		Ident:   ident,
@@ -59,4 +62,17 @@ func (e *Environment) Set(name string, ident ast.Identifier, identType ast.Type,
 		Env:     env,
 	}
 	return nil
+}
+
+func varTypeToString(varType VariableType) string {
+	switch varType {
+	case VAR:
+		return "variable"
+	case CONST:
+		return "constant"
+	case FUNCTION:
+		return "function"
+	default:
+		return "unknown"
+	}
 }

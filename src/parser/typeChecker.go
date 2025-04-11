@@ -867,7 +867,7 @@ func checkCallExp(callExp *ast.CallExpression, env *Environment) (expType, error
 		}
 		err = varTypeCheckerHelper(*function.Parameters[i].ParameterType, argType.Type)
 		if err != nil {
-			return expType{}, err
+			return expType{}, errors.New(err.Error() + ", for function `" + function.Name.Value + "`")
 		}
 		subTypes = append(subTypes, &argType.Type)
 	}

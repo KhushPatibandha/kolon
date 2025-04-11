@@ -532,7 +532,7 @@ func (p *Parser) parseFunctionStatement() (*ast.Function, error) {
 	stmt.Name = &ast.Identifier{Token: p.currentToken, Value: p.currentToken.Value}
 
 	if _, ok := FunctionMap[stmt.Name.Value]; ok && !p.inTesting {
-		return nil, errors.New("can't declare a function twice, function with the same name `" + stmt.Name.Value + "`already exists")
+		return nil, errors.New("can't declare a function twice, function with the same name `" + stmt.Name.Value + "` already exists")
 	}
 
 	parameters, err := p.parseFunctionParameters()
