@@ -519,6 +519,9 @@ func (p *Parser) parseGroupedExpression() (ast.Expression, error) {
 // Parsing Function Statement
 // -----------------------------------------------------------------------------
 func (p *Parser) parseFunctionStatement() (*ast.Function, error) {
+	if inFunction {
+		return nil, errors.New("can't declare a function inside a function")
+	}
 	inFunction = true
 	stmt := &ast.Function{Token: p.currentToken}
 
