@@ -537,6 +537,9 @@ func (p *Parser) parseFunctionStatement() (*ast.Function, error) {
 	if _, ok := FunctionMap[stmt.Name.Value]; ok && !p.inTesting {
 		return nil, errors.New("can't declare a function twice, function with the same name `" + stmt.Name.Value + "` already exists")
 	}
+	if _, ok := builtinMap[stmt.Name.Value]; ok && !p.inTesting {
+		return nil, errors.New("can't override a built-in function, function `" + stmt.Name.Value + "` already exists")
+	}
 
 	parameters, err := p.parseFunctionParameters()
 	if err != nil {
