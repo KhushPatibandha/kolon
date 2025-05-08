@@ -12,7 +12,7 @@ func TestRandom(t *testing.T) {
 	run(t, "./testKolFiles/fibo.kol", "0\n1\n1\n2\n3")
 	run(t, "./testKolFiles/fac.kol", "120")
 	run(t, "./testKolFiles/test.kol", "1\nhello!! 1\n2\nhello!! 1.1 hehe!! true\n1\n1.1\ntrue\nc")
-	run(t, "./testKolFiles/test1.kol", "100")
+	run(t, "./testKolFiles/test1.kol", "Error parsing program: can't override a built-in function, function `len` already exists")
 	run(t, "./testKolFiles/test2.kol", "true")
 	run(t, "./testKolFiles/test3.kol", "true")
 	run(t, "./testKolFiles/test4.kol", "true\n[\"khush\", \"hehe\"]")
