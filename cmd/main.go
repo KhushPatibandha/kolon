@@ -14,7 +14,7 @@ import (
 
 func main() {
 	if len(os.Args) == 2 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
-		fmt.Println("Kolon v1.1.0")
+		fmt.Println("Kolon v1.1.1")
 		return
 	} else if len(os.Args) == 2 && (os.Args[1] == "--help" || os.Args[1] == "-h") {
 		fmt.Println(`Usage:
