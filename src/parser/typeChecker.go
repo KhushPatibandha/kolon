@@ -36,7 +36,7 @@ var (
 )
 
 type expType struct {
-	Type    ast.Type
+	Type    *ast.Type
 	CallExp bool
 }
 
@@ -107,15 +107,15 @@ func getExpType(exp ast.Expression, env *Environment) (expType, error) {
 	case *ast.ArrayValue:
 		return checkArrayExp(exp, env)
 	case *ast.IntegerValue:
-		return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.INT, Value: "int"}, Value: "int", IsArray: false, IsHash: false, SubTypes: nil}}, nil
+		return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.INT, Value: "int"}, Value: "int", IsArray: false, IsHash: false, SubTypes: nil}}, nil
 	case *ast.FloatValue:
-		return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.FLOAT, Value: "float"}, Value: "float", IsArray: false, IsHash: false, SubTypes: nil}}, nil
+		return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.FLOAT, Value: "float"}, Value: "float", IsArray: false, IsHash: false, SubTypes: nil}}, nil
 	case *ast.StringValue:
-		return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.STRING, Value: "string"}, Value: "string", IsArray: false, IsHash: false, SubTypes: nil}}, nil
+		return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.STRING, Value: "string"}, Value: "string", IsArray: false, IsHash: false, SubTypes: nil}}, nil
 	case *ast.CharValue:
-		return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.CHAR, Value: "char"}, Value: "char", IsArray: false, IsHash: false, SubTypes: nil}}, nil
+		return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.CHAR, Value: "char"}, Value: "char", IsArray: false, IsHash: false, SubTypes: nil}}, nil
 	case *ast.BooleanValue:
-		return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}}, nil
+		return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}}, nil
 	case *ast.Identifier:
 		return checkIdentExp(exp, env)
 	case *ast.PrefixExpression:
@@ -162,10 +162,10 @@ func checkVarStmt(node *ast.VarStatement, env *Environment) error {
 		if len(function.ReturnType) != 1 {
 			return errors.New("call expression must return only 1 value for `var` statement, got: " + strconv.Itoa(len(function.ReturnType)))
 		}
-		expType.Type = *function.ReturnType[0].ReturnType
+		expType.Type = function.ReturnType[0].ReturnType
 	}
 
-	err = varTypeCheckerHelper(*definedType, expType.Type)
+	err = varTypeCheckerHelper(definedType, expType.Type)
 	if err != nil {
 		return err
 	}
@@ -227,7 +227,7 @@ func checkMultiAssignStmt(node *ast.MultiValueAssignStmt, env *Environment) erro
 		for i, obj := range node.Objects {
 			switch obj := obj.(type) {
 			case *ast.VarStatement:
-				err := varTypeCheckerHelper(*obj.Type, *returnTypes[i].ReturnType)
+				err := varTypeCheckerHelper(obj.Type, returnTypes[i].ReturnType)
 				if err != nil {
 					return err
 				}
@@ -253,7 +253,7 @@ func checkMultiAssignStmt(node *ast.MultiValueAssignStmt, env *Environment) erro
 					return errors.New("variable `" + obj.Expression.(*ast.AssignmentExpression).Left.Value + "` is a function, can't assign value to a function")
 				}
 				definedVarType := variable.Type
-				err := varTypeCheckerHelper(definedVarType, *returnTypes[i].ReturnType)
+				err := varTypeCheckerHelper(&definedVarType, returnTypes[i].ReturnType)
 				if err != nil {
 					return err
 				}
@@ -284,7 +284,7 @@ func checkIfStmt(node *ast.IfStatement, env *Environment) error {
 		if len(function.ReturnType) != 1 {
 			return errors.New("call expression must return only 1 value for `if` statement, got: " + strconv.Itoa(len(function.ReturnType)))
 		}
-		expType.Type = *function.ReturnType[0].ReturnType
+		expType.Type = function.ReturnType[0].ReturnType
 	}
 	if expType.Type.Value != "bool" {
 		return errors.New("condition for `if` statement must always result in a boolean value, got: " + expType.Type.Value)
@@ -307,7 +307,7 @@ func checkIfStmt(node *ast.IfStatement, env *Environment) error {
 				if len(function.ReturnType) != 1 {
 					return errors.New("call expression must return only 1 value for `else if` statement, got: " + strconv.Itoa(len(function.ReturnType)))
 				}
-				expType.Type = *function.ReturnType[0].ReturnType
+				expType.Type = function.ReturnType[0].ReturnType
 			}
 			if expType.Type.Value != "bool" {
 				return errors.New("condition for `else if` statement must always result in a boolean value, got: " + expType.Type.Value)
@@ -396,7 +396,7 @@ func checkWhileLoopStmt(node *ast.WhileLoopStatement, env *Environment) error {
 		if len(function.ReturnType) != 1 {
 			return errors.New("call expression must return only 1 value for `while` statement's break condition, got: " + strconv.Itoa(len(function.ReturnType)))
 		}
-		expType.Type = *function.ReturnType[0].ReturnType
+		expType.Type = function.ReturnType[0].ReturnType
 	}
 	if expType.Type.Value != "bool" {
 		return errors.New("break condition for `while loop` should always result in a `bool`, got: " + expType.Type.Value)
@@ -530,7 +530,7 @@ func checkReturnStmt(node *ast.ReturnStatement, env *Environment) error {
 // -----------------------------------------------------------------------------
 func checkArrayExp(node *ast.ArrayValue, env *Environment) (expType, error) {
 	if len(node.Values) == 0 {
-		return expType{Type: ast.Type{Value: "", IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+		return expType{Type: &ast.Type{Value: "", IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 	}
 	typeStr := ""
 	for _, element := range node.Values {
@@ -547,12 +547,12 @@ func checkArrayExp(node *ast.ArrayValue, env *Environment) (expType, error) {
 		}
 	}
 
-	return expType{Type: ast.Type{Value: typeStr, IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+	return expType{Type: &ast.Type{Value: typeStr, IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 }
 
 func checkHashmapExp(hashmap *ast.HashMap, env *Environment) (expType, error) {
 	if len(hashmap.Pairs) == 0 {
-		return expType{Type: ast.Type{IsArray: false, IsHash: true, SubTypes: nil}, CallExp: false}, nil
+		return expType{Type: &ast.Type{IsArray: false, IsHash: true, SubTypes: nil}, CallExp: false}, nil
 	}
 	keyTypeStr := ""
 	valueTypeStr := ""
@@ -580,7 +580,7 @@ func checkHashmapExp(hashmap *ast.HashMap, env *Environment) (expType, error) {
 	var subTypes []*ast.Type
 	subTypes = append(subTypes, &ast.Type{Value: keyTypeStr, IsArray: false, IsHash: false, SubTypes: nil})
 	subTypes = append(subTypes, &ast.Type{Value: valueTypeStr, IsArray: false, IsHash: false, SubTypes: nil})
-	return expType{Type: ast.Type{IsArray: false, IsHash: true, SubTypes: subTypes}, CallExp: false}, nil
+	return expType{Type: &ast.Type{IsArray: false, IsHash: true, SubTypes: subTypes}, CallExp: false}, nil
 }
 
 func checkIdentExp(ident *ast.Identifier, env *Environment) (expType, error) {
@@ -588,7 +588,7 @@ func checkIdentExp(ident *ast.Identifier, env *Environment) (expType, error) {
 	if !ok {
 		return expType{}, errors.New("variable `" + ident.Value + "` is undefined/not found")
 	}
-	return expType{Type: variable.Type, CallExp: false}, nil
+	return expType{Type: &variable.Type, CallExp: false}, nil
 }
 
 func checkPrefixExp(prefix *ast.PrefixExpression, env *Environment) (expType, error) {
@@ -601,7 +601,7 @@ func checkPrefixExp(prefix *ast.PrefixExpression, env *Environment) (expType, er
 		if len(function.ReturnType) != 1 {
 			return expType{}, errors.New("call expression must return only 1 value for `prefix` expression, got: " + strconv.Itoa(len(function.ReturnType)))
 		}
-		rightExpType.Type = *function.ReturnType[0].ReturnType
+		rightExpType.Type = function.ReturnType[0].ReturnType
 	}
 	if rightExpType.Type.IsArray || rightExpType.Type.IsHash {
 		return expType{}, errors.New("prefix operator can't be used with array or hashmap")
@@ -632,7 +632,7 @@ func checkPostfixExp(postfix *ast.PostfixExpression, env *Environment) (expType,
 		if len(function.ReturnType) != 1 {
 			return expType{}, errors.New("call expression must return only 1 value for `postfix` expression, got: " + strconv.Itoa(len(function.ReturnType)))
 		}
-		leftExpType.Type = *function.ReturnType[0].ReturnType
+		leftExpType.Type = function.ReturnType[0].ReturnType
 	}
 	if leftExpType.Type.IsArray || leftExpType.Type.IsHash {
 		return expType{}, errors.New("postfix operator can't be used with array or hashmap")
@@ -661,14 +661,14 @@ func checkInfixExp(infix *ast.InfixExpression, env *Environment) (expType, error
 		if len(function.ReturnType) != 1 {
 			return expType{}, errors.New("call expression must return only 1 value for `infix` expression, got: " + strconv.Itoa(len(function.ReturnType)))
 		}
-		leftExpType.Type = *function.ReturnType[0].ReturnType
+		leftExpType.Type = function.ReturnType[0].ReturnType
 	}
 	if rightExpType.CallExp {
 		function := FunctionMap[infix.Right.(*ast.CallExpression).Name.(*ast.Identifier).Value]
 		if len(function.ReturnType) != 1 {
 			return expType{}, errors.New("call expression must return only 1 value for `infix` expression, got: " + strconv.Itoa(len(function.ReturnType)))
 		}
-		rightExpType.Type = *function.ReturnType[0].ReturnType
+		rightExpType.Type = function.ReturnType[0].ReturnType
 	}
 
 	if leftExpType.Type.IsHash || rightExpType.Type.IsHash {
@@ -681,47 +681,47 @@ func checkInfixExp(infix *ast.InfixExpression, env *Environment) (expType, error
 			return expType{}, errors.New("can only add arrays of same type, got: `" + leftExpType.Type.Value + "` and `" + rightExpType.Type.Value + "`")
 		}
 		if infix.Operator == "+" {
-			return expType{Type: ast.Type{Value: leftExpType.Type.Value, IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Value: leftExpType.Type.Value, IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if infix.Operator == "==" || infix.Operator == "!=" {
-			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("can only use `+`, `==`, `!=` infix operators with 2 arrays, got: " + infix.Operator)
 		}
 	case leftExpType.Type.Value == "int" && rightExpType.Type.Value == "int":
 		if infix.Operator == "+" || infix.Operator == "-" || infix.Operator == "*" || infix.Operator == "/" || infix.Operator == "%" || infix.Operator == "|" || infix.Operator == "&" {
-			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.INT, Value: "int"}, Value: "int", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.INT, Value: "int"}, Value: "int", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if infix.Operator == ">" || infix.Operator == "<" || infix.Operator == "<=" || infix.Operator == ">=" || infix.Operator == "==" || infix.Operator == "!=" {
-			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("can only use `+`, `-`, `*`, `/`, `%`, `>`, `<`, `<=`, `>=`, `!=`, `==`, `|`, `&` infix operators with 2 `int`, got: " + infix.Operator)
 		}
 	case leftExpType.Type.Value == "float" && rightExpType.Type.Value == "float", (leftExpType.Type.Value == "int" && rightExpType.Type.Value == "float") || (leftExpType.Type.Value == "float" && rightExpType.Type.Value == "int"):
 		if infix.Operator == "+" || infix.Operator == "-" || infix.Operator == "*" || infix.Operator == "/" {
-			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.FLOAT, Value: "float"}, Value: "float", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.FLOAT, Value: "float"}, Value: "float", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if infix.Operator == ">" || infix.Operator == "<" || infix.Operator == "<=" || infix.Operator == ">=" || infix.Operator == "==" || infix.Operator == "!=" {
-			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("can only use `+`, `-`, `*`, `/`, `>`, `<`, `<=`, `>=`, `!=`, `==` infix operators with 2 `float`, got: " + infix.Operator)
 		}
 	case leftExpType.Type.Value == "string" && rightExpType.Type.Value == "string":
 		if infix.Operator == "+" {
-			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.STRING, Value: "string"}, Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.STRING, Value: "string"}, Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if infix.Operator == "==" || infix.Operator == "!=" {
-			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("can only use `+`, `==`, `!=` infix operators with 2 `string`, got: " + infix.Operator)
 		}
 	case leftExpType.Type.Value == "char" && rightExpType.Type.Value == "char":
 		if infix.Operator == "+" {
-			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.STRING, Value: "string"}, Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.STRING, Value: "string"}, Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if infix.Operator == "==" || infix.Operator == "!=" {
-			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("can only use `+`, `==`, `!=` infix operators with 2 `char`, got: " + infix.Operator)
 		}
 	case leftExpType.Type.Value == "bool" && rightExpType.Type.Value == "bool":
 		if infix.Operator == "==" || infix.Operator == "!=" || infix.Operator == "&&" || infix.Operator == "||" {
-			return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.BOOL, Value: "bool"}, Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("can only use `==`, `!=`, `&&`, `||` infix operators with 2 `bool`, got: " + infix.Operator)
 		}
@@ -751,16 +751,16 @@ func checkAssignExp(assign *ast.AssignmentExpression, env *Environment) (expType
 		if len(function.ReturnType) != 1 {
 			return expType{}, errors.New("call expression must return only 1 value for `assignment` operator, got: " + strconv.Itoa(len(function.ReturnType)))
 		}
-		rightExpType.Type = *function.ReturnType[0].ReturnType
+		rightExpType.Type = function.ReturnType[0].ReturnType
 	}
 
 	switch assign.Operator {
 	case "=":
-		err := varTypeCheckerHelper(leftType, rightExpType.Type)
+		err := varTypeCheckerHelper(&leftType, rightExpType.Type)
 		if err != nil {
 			return expType{}, err
 		}
-		return expType{Type: leftType, CallExp: false}, nil
+		return expType{Type: &leftType, CallExp: false}, nil
 	case "+=", "-=", "*=", "/=", "%=":
 		infixAst := &ast.InfixExpression{
 			Left:     assign.Left,
@@ -771,11 +771,11 @@ func checkAssignExp(assign *ast.AssignmentExpression, env *Environment) (expType
 		if err != nil {
 			return expType{}, err
 		}
-		err = varTypeCheckerHelper(leftType, infixExpType.Type)
+		err = varTypeCheckerHelper(&leftType, infixExpType.Type)
 		if err != nil {
 			return expType{}, err
 		}
-		return expType{Type: leftType, CallExp: false}, nil
+		return expType{Type: &leftType, CallExp: false}, nil
 	default:
 		return expType{}, errors.New("only `=`, `+=`, `-=`, `*=`, `/=`, `%=` `assignment` operators supported, got: " + assign.Operator)
 	}
@@ -795,14 +795,14 @@ func checkIndexExp(exp *ast.IndexExpression, env *Environment) (expType, error) 
 		if len(function.ReturnType) != 1 {
 			return expType{}, errors.New("call expression must return only 1 value for `index` operator, got: " + strconv.Itoa(len(function.ReturnType)))
 		}
-		leftType.Type = *function.ReturnType[0].ReturnType
+		leftType.Type = function.ReturnType[0].ReturnType
 	}
 	if indexType.CallExp {
 		function := FunctionMap[exp.Index.(*ast.CallExpression).Name.(*ast.Identifier).Value]
 		if len(function.ReturnType) != 1 {
 			return expType{}, errors.New("call expression must return only 1 value for `index` operator, got: " + strconv.Itoa(len(function.ReturnType)))
 		}
-		indexType.Type = *function.ReturnType[0].ReturnType
+		indexType.Type = function.ReturnType[0].ReturnType
 	}
 
 	if leftType.Type.IsArray {
@@ -812,7 +812,7 @@ func checkIndexExp(exp *ast.IndexExpression, env *Environment) (expType, error) 
 		if indexType.Type.Value != "int" {
 			return expType{}, errors.New("array index must be an integer, got: " + indexType.Type.Value)
 		}
-		return expType{Type: ast.Type{Value: leftType.Type.Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+		return expType{Type: &ast.Type{Value: leftType.Type.Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 	} else if leftType.Type.IsHash {
 		if leftType.Type.SubTypes == nil {
 			return expType{}, errors.New("hashmap is empty, can't index empty hashmap")
@@ -820,12 +820,12 @@ func checkIndexExp(exp *ast.IndexExpression, env *Environment) (expType, error) 
 		if indexType.Type.Value != leftType.Type.SubTypes[0].Value {
 			return expType{}, errors.New("hashmap key type must be of datatype `" + leftType.Type.SubTypes[0].Value + "`, got: " + indexType.Type.Value)
 		}
-		return expType{Type: ast.Type{Value: leftType.Type.SubTypes[1].Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+		return expType{Type: &ast.Type{Value: leftType.Type.SubTypes[1].Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 	} else if leftType.Type.Value == "string" {
 		if indexType.Type.Value != "int" {
 			return expType{}, errors.New("string index must be an integer, got: " + indexType.Type.Value)
 		}
-		return expType{Type: ast.Type{Value: "char", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+		return expType{Type: &ast.Type{Value: "char", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 	} else {
 		return expType{}, errors.New("index operation not supported for " + leftType.Type.Value + "[" + indexType.Type.Value + "]")
 	}
@@ -863,18 +863,18 @@ func checkCallExp(callExp *ast.CallExpression, env *Environment) (expType, error
 			if len(function.ReturnType) != 1 {
 				return expType{}, errors.New("call expression must return only 1 value to be used as an argument for `call expression`, got: " + strconv.Itoa(len(function.ReturnType)))
 			}
-			argType.Type = *function.ReturnType[0].ReturnType
+			argType.Type = function.ReturnType[0].ReturnType
 		}
-		err = varTypeCheckerHelper(*function.Parameters[i].ParameterType, argType.Type)
+		err = varTypeCheckerHelper(function.Parameters[i].ParameterType, argType.Type)
 		if err != nil {
 			return expType{}, errors.New(err.Error() + ", for function `" + function.Name.Value + "`")
 		}
-		subTypes = append(subTypes, &argType.Type)
+		subTypes = append(subTypes, argType.Type)
 	}
 	if function.ReturnType == nil {
 		return expType{CallExp: true}, nil
 	}
-	return expType{Type: ast.Type{IsArray: false, IsHash: false, SubTypes: subTypes}, CallExp: true}, nil
+	return expType{Type: &ast.Type{IsArray: false, IsHash: false, SubTypes: subTypes}, CallExp: true}, nil
 }
 
 func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, error) {
@@ -889,7 +889,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			if len(function.ReturnType) != 1 {
 				return expType{}, errors.New("call expression must return only 1 value to be used as an argument for `built-in methods`, got: " + strconv.Itoa(len(function.ReturnType)))
 			}
-			argType.Type = *function.ReturnType[0].ReturnType
+			argType.Type = function.ReturnType[0].ReturnType
 		}
 		argTypes = append(argTypes, argType)
 	}
@@ -900,7 +900,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("wrong number of arguments for `len`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1")
 		}
 		if argTypes[0].Type.IsArray || argTypes[0].Type.IsHash || argTypes[0].Type.Value == "string" {
-			return expType{Type: ast.Type{Value: "int", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Value: "int", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("argument for `len` not supported, got: " + argTypes[0].Type.Value + ", want: array, hashmap or `string`")
 		}
@@ -909,7 +909,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("wrong number of arguments for `toString`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1")
 		}
 		if argTypes[0].Type.IsArray || argTypes[0].Type.IsHash || argTypes[0].Type.Value == "int" || argTypes[0].Type.Value == "float" || argTypes[0].Type.Value == "bool" || argTypes[0].Type.Value == "char" || argTypes[0].Type.Value == "string" {
-			return expType{Type: ast.Type{Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("argument for `toString` not supported, got: " + argTypes[0].Type.Value + ", want: array, hashmap, `int`, `float`, `bool`, `char` or `string`")
 		}
@@ -924,7 +924,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 		} else if argTypes[0].Type.Value != "int" && argTypes[0].Type.Value != "float" && argTypes[0].Type.Value != "string" {
 			return expType{}, errors.New("argument for `toFloat` not supported, got: " + argTypes[0].Type.Value + ", want: `int` or `float` or `string`")
 		}
-		return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.FLOAT, Value: "float"}, Value: "float", IsHash: false, IsArray: false, SubTypes: nil}, CallExp: false}, nil
+		return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.FLOAT, Value: "float"}, Value: "float", IsHash: false, IsArray: false, SubTypes: nil}, CallExp: false}, nil
 	case "toInt":
 		if len(callExp.Args) != 1 {
 			return expType{}, errors.New("wrong number of arguments for `toInt`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1")
@@ -936,13 +936,13 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 		} else if argTypes[0].Type.Value != "int" && argTypes[0].Type.Value != "float" && argTypes[0].Type.Value != "string" && argTypes[0].Type.Value != "char" {
 			return expType{}, errors.New("argument for `toInt` not supported, got: " + argTypes[0].Type.Value + ", want: `int`, `float`, `string`, `char`")
 		}
-		return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.INT, Value: "int"}, Value: "int", IsHash: false, IsArray: false, SubTypes: nil}, CallExp: false}, nil
+		return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.INT, Value: "int"}, Value: "int", IsHash: false, IsArray: false, SubTypes: nil}, CallExp: false}, nil
 	case "print", "println":
 		if len(callExp.Args) != 1 {
 			return expType{}, errors.New("wrong number of arguments for `" + callExp.Name.(*ast.Identifier).Value + "`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1")
 		}
 		if argTypes[0].Type.IsArray || argTypes[0].Type.IsHash || argTypes[0].Type.Value == "int" || argTypes[0].Type.Value == "float" || argTypes[0].Type.Value == "bool" || argTypes[0].Type.Value == "char" || argTypes[0].Type.Value == "string" {
-			return expType{Type: ast.Type{Value: callExp.Name.(*ast.Identifier).Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Value: callExp.Name.(*ast.Identifier).Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("argument to `" + callExp.Name.(*ast.Identifier).Value + "` not supported, got: " + argTypes[0].Type.Value + ", want: array, hashmap, `int`, `float`, `bool`, `char` or `string`. use `toString` to convert to `string` in case of using other datatypes with `string`")
 		}
@@ -969,7 +969,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 				}
 			}
 		}
-		return expType{Type: ast.Type{Token: lexer.Token{Kind: lexer.STRING, Value: "string"}, Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+		return expType{Type: &ast.Type{Token: lexer.Token{Kind: lexer.STRING, Value: "string"}, Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 	case "push":
 		if len(callExp.Args) != 2 && len(callExp.Args) != 3 {
 			return expType{}, errors.New("wrong number of arguments for `push`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 2 or 3. for array: `push(array, element)` and for hashmap: `push(map, key, value)`")
@@ -1037,7 +1037,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 		}
 		if argTypes[0].Type.IsArray {
 			if len(callExp.Args) == 1 {
-				return expType{Type: ast.Type{Value: argTypes[0].Type.Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+				return expType{Type: &ast.Type{Value: argTypes[0].Type.Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 			} else {
 				if argTypes[1].Type.IsArray {
 					return expType{}, errors.New("index must be an integer for `pop`, got: array")
@@ -1046,7 +1046,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 				} else if argTypes[1].Type.Value != "int" {
 					return expType{}, errors.New("index must be an integer for `pop`, got: " + argTypes[1].Type.Value)
 				}
-				return expType{Type: ast.Type{Value: argTypes[0].Type.Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+				return expType{Type: &ast.Type{Value: argTypes[0].Type.Value, IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 			}
 		} else if argTypes[0].Type.IsHash {
 			return expType{}, errors.New("data structure not supported by `pop`, got: hashmap, want: array")
@@ -1126,7 +1126,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			} else {
 				return expType{}, errors.New("key type not supported, got: " + keyType + ", want: `int`, `float`, `string`, `char` or `bool`")
 			}
-			return expType{Type: *argTypes[0].Type.SubTypes[1], CallExp: false}, nil
+			return expType{Type: &*argTypes[0].Type.SubTypes[1], CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("data structure not supported by `remove`, got: " + argTypes[0].Type.Value + ", want: array or hashmap")
 		}
@@ -1149,7 +1149,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 				return expType{}, errors.New("array type not supported for `getIndex`, got: " + arrayType + ", want: `int`, `float`, `string`, `char` or `bool`")
 			}
 
-			return expType{Type: ast.Type{Value: "int", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Value: "int", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if argTypes[0].Type.IsHash {
 			return expType{}, errors.New("data structure not supported by `getIndex`, got: hashmap, want: array")
 		} else {
@@ -1160,7 +1160,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("wrong number of arguments for `keys` for hashmap, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1. `keys(map)`")
 		}
 		if argTypes[0].Type.IsHash {
-			return expType{Type: ast.Type{Value: argTypes[0].Type.SubTypes[0].Value, IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Value: argTypes[0].Type.SubTypes[0].Value, IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if argTypes[0].Type.IsArray {
 			return expType{}, errors.New("data structure not supported by `keys`, got: array, want: hashmap")
 		} else {
@@ -1171,7 +1171,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("wrong number of arguments for `values` for hashmap, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1. `values(map)`")
 		}
 		if argTypes[0].Type.IsHash {
-			return expType{Type: ast.Type{Value: argTypes[0].Type.SubTypes[1].Value, IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Value: argTypes[0].Type.SubTypes[1].Value, IsArray: true, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if argTypes[0].Type.IsArray {
 			return expType{}, errors.New("data structure not supported by `keys`, got: array, want: hashmap")
 		} else {
@@ -1195,7 +1195,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			} else {
 				return expType{}, errors.New("key type not supported, got: " + keyType + ", want: `int`, `float`, `string`, `char` or `bool`")
 			}
-			return expType{Type: ast.Type{Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Value: "bool", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else if argTypes[0].Type.IsArray {
 			return expType{}, errors.New("data structure not supported by `containsKey`, got: array, want: hashmap")
 		} else {
@@ -1206,7 +1206,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 			return expType{}, errors.New("wrong number of arguments for `typeOf`, got: " + strconv.Itoa(len(callExp.Args)) + ", want: 1")
 		}
 		if argTypes[0].Type.IsArray || argTypes[0].Type.IsHash || argTypes[0].Type.Value == "int" || argTypes[0].Type.Value == "float" || argTypes[0].Type.Value == "char" || argTypes[0].Type.Value == "string" || argTypes[0].Type.Value == "bool" {
-			return expType{Type: ast.Type{Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
+			return expType{Type: &ast.Type{Value: "string", IsArray: false, IsHash: false, SubTypes: nil}, CallExp: false}, nil
 		} else {
 			return expType{}, errors.New("data structure not supported by `typeOf`, got: " + argTypes[0].Type.Value)
 		}
@@ -1265,7 +1265,7 @@ func checkBuiltins(callExp *ast.CallExpression, env *Environment) (expType, erro
 // -----------------------------------------------------------------------------
 // Helper Methods
 // -----------------------------------------------------------------------------
-func varTypeCheckerHelper(definedType ast.Type, expType ast.Type) error {
+func varTypeCheckerHelper(definedType *ast.Type, expType *ast.Type) error {
 	if definedType.IsArray {
 		if !expType.IsArray {
 			if expType.IsHash {
@@ -1324,9 +1324,9 @@ func returnTypeCheckerHelper(node *ast.ReturnStatement, env *Environment) error 
 					if len(callFun.ReturnType) != 1 {
 						return errors.New("call expression must return only 1 value for `return` statement, got: " + strconv.Itoa(len(callFun.ReturnType)))
 					}
-					expType.Type = *callFun.ReturnType[0].ReturnType
+					expType.Type = callFun.ReturnType[0].ReturnType
 				}
-				err = varTypeCheckerHelper(*currFunction.ReturnType[i].ReturnType, expType.Type)
+				err = varTypeCheckerHelper(currFunction.ReturnType[i].ReturnType, expType.Type)
 				if err != nil {
 					return err
 				}
