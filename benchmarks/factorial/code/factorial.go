@@ -10,5 +10,12 @@ func factorial(n int) int {
 }
 
 func main() {
-	fmt.Println(factorial(20))
+	var result int
+	var p int
+	for i := 0; i < 1_000_000; i++ {
+		result = factorial(20)
+		p = i
+	}
+	fmt.Println(result)
+	fmt.Println(p)
 }

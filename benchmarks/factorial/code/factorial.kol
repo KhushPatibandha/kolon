@@ -1,5 +1,12 @@
 fun: main() {
-    println(factorial(20));
+    var result: int;
+    var p: int;
+    for: (var i: int = 0; i < 1000000; i++): {
+        result = factorial(20);
+        p = i;
+    }
+    println(result);
+    println(p);
 }
 
 fun: factorial(n: int): (int) {
