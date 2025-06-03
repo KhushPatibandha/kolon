@@ -33,10 +33,12 @@ func applyFunction(fn object.Object, args []object.Object) (object.Object, bool,
 		}
 	}
 
+	localEnv := object.NewEnclosedEnvironment(function.Env)
+
 	for i, param := range function.Parameters {
-		function.Env.Set(param.ParameterName.Value, args[i], object.VAR)
+		localEnv.Set(param.ParameterName.Value, args[i], object.VAR)
 	}
-	evaluated, hasErr, err := Eval(function.Body, function.Env, inTesting)
+	evaluated, hasErr, err := Eval(function.Body, localEnv, inTesting)
 	if err != nil {
 		return NULL, hasErr, err
 	}
