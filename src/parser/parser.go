@@ -10,9 +10,10 @@ import (
 )
 
 var (
-	FunctionMap = make(map[string]*ast.Function)
-	inForLoop   = false
-	inFunction  = false
+	FunctionMap      = make(map[string]*ast.Function)
+	localFunctionMap = make(map[string]bool)
+	inForLoop        = false
+	inFunction       = false
 )
 
 type Parser struct {
@@ -147,6 +148,14 @@ func (p *Parser) ParseProgram() (*ast.Program, error) {
 		program.Statements = append(program.Statements, stmt)
 		p.nextToken()
 	}
+	// check if all functions called are defined
+	for funcName := range localFunctionMap {
+		if _, ok := FunctionMap[funcName]; !ok {
+			if _, ok := builtinMap[funcName]; !ok {
+				return nil, errors.New("function `" + funcName + "` is called but not defined")
+			}
+		}
+	}
 	return program, nil
 }
 
@@ -209,6 +218,11 @@ func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	// add to localFunctionMap to check at the end of parsing if function is defined or not
+	if _, ok := leftExp.(*ast.CallExpression); ok {
+		localFunctionMap[leftExp.(*ast.CallExpression).Name.(*ast.Identifier).Value] = true
 	}
 
 	return leftExp, nil
