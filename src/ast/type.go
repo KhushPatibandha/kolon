@@ -40,9 +40,21 @@ func (t *Type) String() string {
 		return t.Name
 	case TypeArray:
 		return fmt.Sprintf("%s[]", t.ElementType.String())
-	case TypeHashMap:
-		return fmt.Sprintf("%s[%s]", t.KeyType.String(), t.ValueType.String())
 	default:
-		return "unknown, Some error occured, ast.go file -- Type struct, String() method"
+		return fmt.Sprintf("%s[%s]", t.KeyType.String(), t.ValueType.String())
+	}
+}
+
+func (t *Type) Equals(other *Type) bool {
+	if other == nil || t.Kind != other.Kind {
+		return false
+	}
+	switch t.Kind {
+	case TypeBase:
+		return t.Name == other.Name
+	case TypeArray:
+		return t.ElementType.Equals(other.ElementType)
+	default:
+		return t.KeyType.Equals(other.KeyType) && t.ValueType.Equals(other.ValueType)
 	}
 }

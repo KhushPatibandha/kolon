@@ -6,15 +6,13 @@ import (
 
 	"github.com/sanity-io/litter"
 
-	"github.com/KhushPatibandha/Kolon/src/interpreter/evaluator"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
-	"github.com/KhushPatibandha/Kolon/src/object"
 	"github.com/KhushPatibandha/Kolon/src/parser"
 )
 
 func main() {
 	if len(os.Args) == 2 && (os.Args[1] == "--version" || os.Args[1] == "-v") {
-		fmt.Println("Kolon v1.1.2")
+		fmt.Println("Kolon v2.0.0")
 		return
 	} else if len(os.Args) == 2 && (os.Args[1] == "--help" || os.Args[1] == "-h") {
 		fmt.Println(`Usage:
@@ -50,21 +48,9 @@ func main() {
 		tokens := lexer.Tokenizer(string(bytes))
 
 		p := parser.New(tokens, false)
-		program, err := p.ParseProgram()
+		_, err = p.ParseProgram()
 		if err != nil {
 			fmt.Println("Error parsing program:", err)
-			return
-		}
-		typeCheckerEnv := parser.NewEnvironment()
-		err = parser.TypeCheckProgram(program, typeCheckerEnv, false)
-		if err != nil {
-			fmt.Println("Error type checking program:", err)
-			return
-		}
-		env := object.NewEnvironment()
-		_, _, err = evaluator.Eval(program, env, false)
-		if err != nil {
-			fmt.Println("Error evaluating program:", err)
 			return
 		}
 		return

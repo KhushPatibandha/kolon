@@ -3,151 +3,185 @@ package tests
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
 
-func Test14(t *testing.T) {
+func Test4(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "myVar"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "myVar"},
 					Value: "myVar",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value: "int",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Name:        "int",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
 				Value: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "anotherVar"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "anotherVar"},
 					Value: "anotherVar",
 				},
 			},
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.CONST, Value: "const"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.CONST, Value: "const"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "someVar"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "someVar"},
 					Value: "someVar",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value: "int",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Name:        "int",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
-				Value: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.INT, Value: "1"},
-					Value: "1",
+				Value: &ast.Integer{
+					Token: &lexer.Token{Kind: lexer.INT, Value: "1"},
+					Value: 1,
 				},
 			},
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "someString"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "someString"},
 					Value: "someString",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "string"},
-					Value: "string",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "string"},
+					Name:        "string",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
-				Value: &ast.StringValue{
-					Token: lexer.Token{Kind: lexer.STRING, Value: "\"someString\""},
+				Value: &ast.String{
+					Token: &lexer.Token{Kind: lexer.STRING, Value: "\"someString\""},
 					Value: "\"someString\"",
 				},
 			},
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "someFloat"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "someFloat"},
 					Value: "someFloat",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "float"},
-					Value: "float",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "float"},
+					Name:        "float",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
-				Value: &ast.FloatValue{
-					Token: lexer.Token{Kind: lexer.FLOAT, Value: "1.0"},
+				Value: &ast.Float{
+					Token: &lexer.Token{Kind: lexer.FLOAT, Value: "1.0"},
 					Value: 1.0,
 				},
 			},
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.CONST, Value: "const"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.CONST, Value: "const"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "someBool"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "someBool"},
 					Value: "someBool",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "bool"},
-					Value: "bool",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "bool"},
+					Name:        "bool",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
-				Value: &ast.BooleanValue{
-					Token: lexer.Token{Kind: lexer.BOOL, Value: "true"},
+				Value: &ast.Bool{
+					Token: &lexer.Token{Kind: lexer.BOOL, Value: "true"},
 					Value: true,
 				},
 			},
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "someChar"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "someChar"},
 					Value: "someChar",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "char"},
-					Value: "char",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "char"},
+					Name:        "char",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
-				Value: &ast.CharValue{
-					Token: lexer.Token{Kind: lexer.CHAR, Value: "'a'"},
+				Value: &ast.Char{
+					Token: &lexer.Token{Kind: lexer.CHAR, Value: "'a'"},
 					Value: "'a'",
 				},
 			},
 		},
 	}
-
-	if program.String() != "var myVar: int = anotherVar;const someVar: int = 1;var someString: string = \"someString\";var someFloat: float = 1.0;const someBool: bool = true;var someChar: char = 'a';" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-	}
+	assert.Equal(t, program.String(), "var myVar: int = anotherVar;const "+
+		"someVar: int = 1;var someString: string = \"someString\";var "+
+		"someFloat: float = 1.0;const someBool: bool = true;var someChar: char = 'a';")
 }
 
-func Test15(t *testing.T) {
+func Test5(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
 			&ast.Function{
-				Token: lexer.Token{Kind: lexer.FUN, Value: "fun"},
+				Token: &lexer.Token{Kind: lexer.FUN, Value: "fun"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "main"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "main"},
 					Value: "main",
 				},
-				Parameters: []*ast.FunctionParameters{},
-				ReturnType: nil,
-				Body: &ast.FunctionBody{
+				Parameters:  nil,
+				ReturnTypes: nil,
+				Body: &ast.Body{
+					Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 					Statements: []ast.Statement{
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
-							Value: &ast.IntegerValue{
-								Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+							Value: &ast.Integer{
+								Token: &lexer.Token{Kind: lexer.INT, Value: "10"},
 								Value: 10,
 							},
 						},
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "bool"},
-								Value: "bool",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "bool"},
+								Name:        "bool",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
-							Value: &ast.BooleanValue{
-								Token: lexer.Token{Kind: lexer.BOOL, Value: "true"},
+							Value: &ast.Bool{
+								Token: &lexer.Token{Kind: lexer.BOOL, Value: "true"},
 								Value: true,
 							},
 						},
@@ -157,133 +191,152 @@ func Test15(t *testing.T) {
 		},
 	}
 
-	if program.String() != "fun: main() {var a: int = 10;var b: bool = true;}" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-	}
+	assert.Equal(t, program.String(), "fun: main() {var a: int = 10;var b: bool = true;}")
 }
 
-func Test16(t *testing.T) {
+func Test6(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
 			&ast.Function{
-				Token: lexer.Token{Kind: lexer.FUN, Value: "fun"},
+				Token: &lexer.Token{Kind: lexer.FUN, Value: "fun"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "main"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "main"},
 					Value: "main",
 				},
-				Parameters: []*ast.FunctionParameters{},
-				ReturnType: nil,
-				Body: &ast.FunctionBody{
+				Parameters:  nil,
+				ReturnTypes: nil,
+				Body: &ast.Body{
+					Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 					Statements: []ast.Statement{
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
-							Value: &ast.IntegerValue{
-								Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+							Value: &ast.Integer{
+								Token: &lexer.Token{Kind: lexer.INT, Value: "10"},
 								Value: 10,
 							},
 						},
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
-							Value: &ast.IntegerValue{
-								Token: lexer.Token{Kind: lexer.INT, Value: "20"},
+							Value: &ast.Integer{
+								Token: &lexer.Token{Kind: lexer.INT, Value: "20"},
 								Value: 20,
 							},
 						},
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 								Value: "c",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
-							Value: &ast.IntegerValue{
-								Token: lexer.Token{Kind: lexer.INT, Value: "30"},
+							Value: &ast.Integer{
+								Token: &lexer.Token{Kind: lexer.INT, Value: "30"},
 								Value: 30,
 							},
 						},
-						&ast.IfStatement{
-							Token: lexer.Token{Kind: lexer.IF, Value: "if"},
-							Value: &ast.InfixExpression{
-								Token: lexer.Token{Kind: lexer.GREATER_THAN, Value: ">"},
+						&ast.If{
+							Token: &lexer.Token{Kind: lexer.IF, Value: "if"},
+							Condition: &ast.Infix{
+								Token: &lexer.Token{Kind: lexer.GREATER_THAN, Value: ">"},
 								Left: &ast.Identifier{
-									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+									Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 									Value: "a",
 								},
 								Operator: ">",
 								Right: &ast.Identifier{
-									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+									Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 									Value: "b",
 								},
 							},
-							Body: &ast.FunctionBody{
-								Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+							Body: &ast.Body{
+								Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 								Statements: []ast.Statement{
-									&ast.VarStatement{
-										Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+									&ast.VarAndConst{
+										Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 										Name: &ast.Identifier{
-											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
+											Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
 											Value: "d",
 										},
 										Type: &ast.Type{
-											Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-											Value: "int",
+											Kind:        ast.TypeBase,
+											Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+											Name:        "int",
+											ElementType: nil,
+											KeyType:     nil,
+											ValueType:   nil,
 										},
-										Value: &ast.IntegerValue{
-											Token: lexer.Token{Kind: lexer.INT, Value: "40"},
+										Value: &ast.Integer{
+											Token: &lexer.Token{Kind: lexer.INT, Value: "40"},
 											Value: 40,
 										},
 									},
 								},
 							},
-							MultiConseq: []*ast.ElseIfStatement{
+							MultiConditionals: []*ast.ElseIf{
 								{
-									Token: lexer.Token{Kind: lexer.ELSE_IF, Value: "else if"},
-									Value: &ast.InfixExpression{
-										Token: lexer.Token{Kind: lexer.GREATER_THAN, Value: ">"},
+									Token: &lexer.Token{Kind: lexer.ELSE_IF, Value: "else if"},
+									Condition: &ast.Infix{
+										Token: &lexer.Token{Kind: lexer.GREATER_THAN, Value: ">"},
 										Left: &ast.Identifier{
-											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+											Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 											Value: "b",
 										},
 										Operator: ">",
 										Right: &ast.Identifier{
-											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+											Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 											Value: "c",
 										},
 									},
-									Body: &ast.FunctionBody{
-										Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+									Body: &ast.Body{
+										Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 										Statements: []ast.Statement{
-											&ast.VarStatement{
-												Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+											&ast.VarAndConst{
+												Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 												Name: &ast.Identifier{
-													Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "e"},
+													Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "e"},
 													Value: "e",
 												},
 												Type: &ast.Type{
-													Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-													Value: "int",
+													Kind:        ast.TypeBase,
+													Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+													Name:        "int",
+													ElementType: nil,
+													KeyType:     nil,
+													ValueType:   nil,
 												},
-												Value: &ast.IntegerValue{
-													Token: lexer.Token{Kind: lexer.INT, Value: "50"},
+												Value: &ast.Integer{
+													Token: &lexer.Token{Kind: lexer.INT, Value: "50"},
 													Value: 50,
 												},
 											},
@@ -291,23 +344,27 @@ func Test16(t *testing.T) {
 									},
 								},
 							},
-							Consequence: &ast.ElseStatement{
-								Token: lexer.Token{Kind: lexer.ELSE, Value: "else"},
-								Body: &ast.FunctionBody{
-									Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+							Alternate: &ast.Else{
+								Token: &lexer.Token{Kind: lexer.ELSE, Value: "else"},
+								Body: &ast.Body{
+									Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 									Statements: []ast.Statement{
-										&ast.VarStatement{
-											Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+										&ast.VarAndConst{
+											Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 											Name: &ast.Identifier{
-												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "f"},
+												Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "f"},
 												Value: "f",
 											},
 											Type: &ast.Type{
-												Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-												Value: "int",
+												Kind:        ast.TypeBase,
+												Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+												Name:        "int",
+												ElementType: nil,
+												KeyType:     nil,
+												ValueType:   nil,
 											},
-											Value: &ast.IntegerValue{
-												Token: lexer.Token{Kind: lexer.INT, Value: "60"},
+											Value: &ast.Integer{
+												Token: &lexer.Token{Kind: lexer.INT, Value: "60"},
 												Value: 60,
 											},
 										},
@@ -319,66 +376,79 @@ func Test16(t *testing.T) {
 				},
 			},
 			&ast.Function{
-				Token: lexer.Token{Kind: lexer.FUN, Value: "fun"},
+				Token: &lexer.Token{Kind: lexer.FUN, Value: "fun"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "add"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "add"},
 					Value: "add",
 				},
-				Parameters: []*ast.FunctionParameters{
+				Parameters: []*ast.FunctionParameter{
 					{
 						ParameterName: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 							Value: "a",
 						},
 						ParameterType: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
 					},
 					{
 						ParameterName: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 							Value: "b",
 						},
 						ParameterType: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
 					},
 				},
-				ReturnType: []*ast.FunctionReturnType{
+				ReturnTypes: []*ast.Type{
 					{
-						ReturnType: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
-						},
+						Kind:        ast.TypeBase,
+						Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Name:        "int",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
 					},
 					{
-						ReturnType: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "bool"},
-							Value: "bool",
-						},
+						Kind:        ast.TypeBase,
+						Token:       &lexer.Token{Kind: lexer.TYPE, Value: "bool"},
+						Name:        "bool",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
 					},
 				},
-				Body: &ast.FunctionBody{
+				Body: &ast.Body{
+					Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 					Statements: []ast.Statement{
-						&ast.ReturnStatement{
-							Token: lexer.Token{Kind: lexer.RETURN, Value: "return"},
+						&ast.Return{
+							Token: &lexer.Token{Kind: lexer.RETURN, Value: "return"},
 							Value: []ast.Expression{
-								&ast.InfixExpression{
-									Token: lexer.Token{Kind: lexer.PLUS, Value: "+"},
+								&ast.Infix{
+									Token: &lexer.Token{Kind: lexer.PLUS, Value: "+"},
 									Left: &ast.Identifier{
-										Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+										Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 										Value: "a",
 									},
 									Operator: "+",
 									Right: &ast.Identifier{
-										Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+										Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 										Value: "b",
 									},
 								},
-								&ast.BooleanValue{
-									Token: lexer.Token{Kind: lexer.BOOL, Value: "true"},
+								&ast.Bool{
+									Token: &lexer.Token{Kind: lexer.BOOL, Value: "true"},
 									Value: true,
 								},
 							},
@@ -389,140 +459,158 @@ func Test16(t *testing.T) {
 		},
 	}
 
-	if program.String() != "fun: main() {var a: int = 10;var b: int = 20;var c: int = 30;if: ((a > b)): {var d: int = 40;}else if: ((b > c)): {var e: int = 50;}else: {var f: int = 60;}}fun: add(a: int, b: int): (int, bool) {return: ((a + b), true);}" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("Expected: fun: main() {var a: int = 10;var b: int = 20;var c: int = 30;if: ((a > b)): {var d: int = 40;} else if: ((b > c)): {var e: int = 50;} else: {var f: int = 60;}}fun: add(a: int, b: int): (int, bool) {return: ((a + b), true);}")
-	}
+	assert.Equal(t, program.String(), "fun: main() {var a: int = 10;var "+
+		"b: int = 20;var c: int = 30;if: ((a > b)): {var d: "+
+		"int = 40;}else if: ((b > c)): {var e: int = 50;}"+
+		"else: {var f: int = 60;}}fun: add(a: int, b: int): (int, bool) {return: ((a + b), true);}")
 }
 
-func Test18(t *testing.T) {
+func Test7(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
 			&ast.Function{
-				Token: lexer.Token{Kind: lexer.FUN, Value: "fun"},
+				Token: &lexer.Token{Kind: lexer.FUN, Value: "fun"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "main"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "main"},
 					Value: "main",
 				},
-				Parameters: []*ast.FunctionParameters{},
-				ReturnType: nil,
-				Body: &ast.FunctionBody{
+				Parameters:  nil,
+				ReturnTypes: nil,
+				Body: &ast.Body{
+					Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 					Statements: []ast.Statement{
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
-							Value: &ast.IntegerValue{
-								Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+							Value: &ast.Integer{
+								Token: &lexer.Token{Kind: lexer.INT, Value: "10"},
 								Value: 10,
 							},
 						},
-						&ast.PostfixExpression{
-							Token:    lexer.Token{Kind: lexer.PLUS_PLUS, Value: "++"},
-							Operator: "++",
-							Left: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
-								Value: "a",
+						&ast.ExpressionStatement{
+							Expression: &ast.Postfix{
+								Token:    &lexer.Token{Kind: lexer.PLUS_PLUS, Value: "++"},
+								Operator: "++",
+								Left: &ast.Identifier{
+									Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+									Value: "a",
+								},
 							},
-							IsStmt: true,
 						},
-						&ast.PostfixExpression{
-							Token:    lexer.Token{Kind: lexer.MINUS_MINUS, Value: "--"},
-							Operator: "--",
-							Left: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
-								Value: "a",
+						&ast.ExpressionStatement{
+							Expression: &ast.Postfix{
+								Token:    &lexer.Token{Kind: lexer.MINUS_MINUS, Value: "--"},
+								Operator: "--",
+								Left: &ast.Identifier{
+									Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+									Value: "a",
+								},
 							},
-							IsStmt: true,
 						},
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
-							Value: &ast.IntegerValue{
-								Token: lexer.Token{Kind: lexer.INT, Value: "20"},
+							Value: &ast.Integer{
+								Token: &lexer.Token{Kind: lexer.INT, Value: "20"},
 								Value: 20,
 							},
 						},
-						&ast.IfStatement{
-							Token: lexer.Token{Kind: lexer.IF, Value: "if"},
-							Value: &ast.InfixExpression{
-								Token: lexer.Token{Kind: lexer.GREATER_THAN, Value: ">"},
+						&ast.If{
+							Token: &lexer.Token{Kind: lexer.IF, Value: "if"},
+							Condition: &ast.Infix{
+								Token: &lexer.Token{Kind: lexer.GREATER_THAN, Value: ">"},
 								Left: &ast.Identifier{
-									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+									Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 									Value: "a",
 								},
 								Operator: ">",
 								Right: &ast.Identifier{
-									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+									Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 									Value: "b",
 								},
 							},
-							Body: &ast.FunctionBody{
-								Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+							Body: &ast.Body{
+								Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 								Statements: []ast.Statement{
-									&ast.VarStatement{
-										Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+									&ast.VarAndConst{
+										Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 										Name: &ast.Identifier{
-											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+											Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 											Value: "c",
 										},
 										Type: &ast.Type{
-											Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-											Value: "int",
+											Kind:        ast.TypeBase,
+											Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+											Name:        "int",
+											ElementType: nil,
+											KeyType:     nil,
+											ValueType:   nil,
 										},
-										Value: &ast.InfixExpression{
-											Token: lexer.Token{Kind: lexer.PLUS, Value: "+"},
+										Value: &ast.Infix{
+											Token: &lexer.Token{Kind: lexer.PLUS, Value: "+"},
 											Left: &ast.Identifier{
-												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+												Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 												Value: "a",
 											},
 											Operator: "+",
 											Right: &ast.Identifier{
-												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+												Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 												Value: "b",
 											},
 										},
 									},
 								},
 							},
-							MultiConseq: nil,
-							Consequence: &ast.ElseStatement{
-								Token: lexer.Token{Kind: lexer.ELSE, Value: "else"},
-								Body: &ast.FunctionBody{
-									Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+							Alternate: &ast.Else{
+								Token: &lexer.Token{Kind: lexer.ELSE, Value: "else"},
+								Body: &ast.Body{
+									Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 									Statements: []ast.Statement{
-										&ast.VarStatement{
-											Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+										&ast.VarAndConst{
+											Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 											Name: &ast.Identifier{
-												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
+												Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
 												Value: "d",
 											},
 											Type: &ast.Type{
-												Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-												Value: "int",
+												Kind:        ast.TypeBase,
+												Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+												Name:        "int",
+												ElementType: nil,
+												KeyType:     nil,
+												ValueType:   nil,
 											},
-											Value: &ast.InfixExpression{
-												Token: lexer.Token{Kind: lexer.DASH, Value: "-"},
+											Value: &ast.Infix{
+												Token: &lexer.Token{Kind: lexer.DASH, Value: "-"},
 												Left: &ast.Identifier{
-													Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+													Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 													Value: "a",
 												},
 												Operator: "-",
 												Right: &ast.Identifier{
-													Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+													Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 													Value: "b",
 												},
 											},
@@ -537,65 +625,77 @@ func Test18(t *testing.T) {
 		},
 	}
 
-	if program.String() != "fun: main() {var a: int = 10;(a++);(a--);var b: int = 20;if: ((a > b)): {var c: int = (a + b);}else: {var d: int = (a - b);}}" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("Expected: fun: main() {var a: int = 10;(a++);(a--);var b: int = 20;if: ((a > b)): {var c: int = (a + b);}else: {var d: int = (a - b);}}")
-	}
+	assert.Equal(t, "fun: main() {var a: int = 10;(a++);(a--);var "+
+		"b: int = 20;if: ((a > b)): {var c: int = (a + b);}else: {var d: int = (a - b);}}", program.String())
 }
 
-func Test21(t *testing.T) {
+func Test8(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
 			&ast.Function{
-				Token: lexer.Token{Kind: lexer.FUN, Value: "fun"},
+				Token: &lexer.Token{Kind: lexer.FUN, Value: "fun"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "main"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "main"},
 					Value: "main",
 				},
-				Parameters: []*ast.FunctionParameters{},
-				ReturnType: nil,
-				Body: &ast.FunctionBody{
+				Parameters:  nil,
+				ReturnTypes: nil,
+				Body: &ast.Body{
+					Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 					Statements: []ast.Statement{
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
-							Value: &ast.IntegerValue{
-								Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+							Value: &ast.Integer{
+								Token: &lexer.Token{Kind: lexer.INT, Value: "10"},
 								Value: 10,
 							},
 						},
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
 							Value: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
 						},
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 								Value: "c",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
+							Value: nil,
 						},
 					},
 				},
@@ -603,112 +703,125 @@ func Test21(t *testing.T) {
 		},
 	}
 
-	if program.String() != "fun: main() {var a: int = 10;var b: int = a;var c: int;}" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("Expected: fun: main() {var a: int = 10;var b: int = a;var c: int;}")
-	}
+	assert.Equal(t, "fun: main() {var a: int = 10;var b: int = a;var c: int;}", program.String())
 }
 
-func Test22(t *testing.T) {
+func Test9(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
 			&ast.Function{
-				Token: lexer.Token{Kind: lexer.FUN, Value: "fun"},
+				Token: &lexer.Token{Kind: lexer.FUN, Value: "fun"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "main"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "main"},
 					Value: "main",
 				},
-				Parameters: []*ast.FunctionParameters{},
-				ReturnType: nil,
-				Body: &ast.FunctionBody{
-					Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+				Parameters:  nil,
+				ReturnTypes: nil,
+				Body: &ast.Body{
+					Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 					Statements: []ast.Statement{
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
-							Value: &ast.IntegerValue{
-								Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+							Value: &ast.Integer{
+								Token: &lexer.Token{Kind: lexer.INT, Value: "10"},
 								Value: 10,
 							},
 						},
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
 							Value: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
 						},
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 								Value: "c",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
 							Value: &ast.CallExpression{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "add"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "add"},
 								Name: &ast.Identifier{
-									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "add"},
+									Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "add"},
 									Value: "add",
 								},
 								Args: []ast.Expression{
-									&ast.InfixExpression{
-										Token: lexer.Token{Kind: lexer.PLUS, Value: "+"},
+									&ast.Infix{
+										Token: &lexer.Token{Kind: lexer.PLUS, Value: "+"},
 										Left: &ast.Identifier{
-											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+											Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 											Value: "a",
 										},
 										Operator: "+",
 										Right: &ast.Identifier{
-											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+											Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 											Value: "b",
 										},
 									},
-									&ast.InfixExpression{
-										Token: lexer.Token{Kind: lexer.STAR, Value: "*"},
+									&ast.Infix{
+										Token: &lexer.Token{Kind: lexer.STAR, Value: "*"},
 										Left: &ast.Identifier{
-											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+											Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 											Value: "b",
 										},
 										Operator: "*",
 										Right: &ast.Identifier{
-											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+											Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 											Value: "b",
 										},
 									},
 								},
 							},
 						},
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
 								Value: "d",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "string"},
-								Value: "string",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "string"},
+								Name:        "string",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
-							Value: &ast.StringValue{
-								Token: lexer.Token{Kind: lexer.STRING, Value: "\"Hello\""},
+							Value: &ast.String{
+								Token: &lexer.Token{Kind: lexer.STRING, Value: "\"Hello\""},
 								Value: "\"Hello\"",
 							},
 						},
@@ -716,55 +829,67 @@ func Test22(t *testing.T) {
 				},
 			},
 			&ast.Function{
-				Token: lexer.Token{Kind: lexer.FUN, Value: "fun"},
+				Token: &lexer.Token{Kind: lexer.FUN, Value: "fun"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "add"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "add"},
 					Value: "add",
 				},
-				Parameters: []*ast.FunctionParameters{
+				Parameters: []*ast.FunctionParameter{
 					{
 						ParameterName: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 							Value: "a",
 						},
 						ParameterType: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
 					},
 					{
 						ParameterName: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 							Value: "b",
 						},
 						ParameterType: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:  ast.TypeBase,
+							Token: &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
 					},
 				},
-				ReturnType: []*ast.FunctionReturnType{
+				ReturnTypes: []*ast.Type{
 					{
-						ReturnType: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
-						},
+						Kind:        ast.TypeBase,
+						Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Name:        "int",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
 					},
 				},
-				Body: &ast.FunctionBody{
+				Body: &ast.Body{
+					Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 					Statements: []ast.Statement{
-						&ast.ReturnStatement{
-							Token: lexer.Token{Kind: lexer.RETURN, Value: "return"},
+						&ast.Return{
+							Token: &lexer.Token{Kind: lexer.RETURN, Value: "return"},
 							Value: []ast.Expression{
-								&ast.InfixExpression{
-									Token: lexer.Token{Kind: lexer.PLUS, Value: "+"},
+								&ast.Infix{
+									Token: &lexer.Token{Kind: lexer.PLUS, Value: "+"},
 									Left: &ast.Identifier{
-										Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+										Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 										Value: "a",
 									},
 									Operator: "+",
 									Right: &ast.Identifier{
-										Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+										Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 										Value: "b",
 									},
 								},
@@ -776,103 +901,117 @@ func Test22(t *testing.T) {
 		},
 	}
 
-	if program.String() != "fun: main() {var a: int = 10;var b: int = a;var c: int = add((a + b), (b * b));var d: string = \"Hello\";}fun: add(a: int, b: int): (int) {return: (a + b);}" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("Expected: fun: main() {var a: int = 10;var b: int = a;var c: int = add((a + b), (b * b));var d: string = \"Hello\";}fun: add(a: int, b: int): (int) {return: (a + b);}")
-	}
+	assert.Equal(t, "fun: main() {var a: int = "+
+		"10;var b: int = a;var c: int = add((a + b), (b * b));var "+
+		"d: string = \"Hello\";}fun: add(a: int, b: "+
+		"int): (int) {return: (a + b);}", program.String())
 }
 
-func Test23(t *testing.T) {
+func Test10(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "x"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "x"},
 					Value: "x",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value: "int",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Name:        "int",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
-				Value: &ast.IntegerValue{
-					Token: lexer.Token{Kind: lexer.INT, Value: "5"},
+				Value: &ast.Integer{
+					Token: &lexer.Token{Kind: lexer.INT, Value: "5"},
 					Value: 5,
 				},
 			},
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "s"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "s"},
 					Value: "s",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value: "int",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Name:        "int",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
-				Value: &ast.PostfixExpression{
-					Token:    lexer.Token{Kind: lexer.PLUS_PLUS, Value: "++"},
+				Value: &ast.Postfix{
+					Token:    &lexer.Token{Kind: lexer.PLUS_PLUS, Value: "++"},
 					Operator: "++",
 					Left: &ast.Identifier{
-						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "x"},
+						Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "x"},
 						Value: "x",
 					},
-					IsStmt: false,
 				},
 			},
-			&ast.ForLoopStatement{
-				Token: lexer.Token{Kind: lexer.FOR, Value: "for"},
-				Left: &ast.VarStatement{
-					Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.ForLoop{
+				Token: &lexer.Token{Kind: lexer.FOR, Value: "for"},
+				Left: &ast.VarAndConst{
+					Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 					Name: &ast.Identifier{
-						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "i"},
+						Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "i"},
 						Value: "i",
 					},
 					Type: &ast.Type{
-						Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-						Value: "int",
+						Kind:        ast.TypeBase,
+						Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Name:        "int",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
 					},
-					Value: &ast.IntegerValue{
-						Token: lexer.Token{Kind: lexer.INT, Value: "0"},
+					Value: &ast.Integer{
+						Token: &lexer.Token{Kind: lexer.INT, Value: "0"},
 						Value: 0,
 					},
 				},
-				Middle: &ast.InfixExpression{
-					Token: lexer.Token{Kind: lexer.LESS_THAN, Value: "<"},
+				Middle: &ast.Infix{
+					Token: &lexer.Token{Kind: lexer.LESS_THAN, Value: "<"},
 					Left: &ast.Identifier{
-						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "i"},
+						Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "i"},
 						Value: "i",
 					},
 					Operator: "<",
-					Right: &ast.IntegerValue{
-						Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+					Right: &ast.Integer{
+						Token: &lexer.Token{Kind: lexer.INT, Value: "10"},
 						Value: 10,
 					},
 				},
-				Right: &ast.PostfixExpression{
-					Token:    lexer.Token{Kind: lexer.PLUS_PLUS, Value: "++"},
+				Right: &ast.Postfix{
+					Token:    &lexer.Token{Kind: lexer.PLUS_PLUS, Value: "++"},
 					Operator: "++",
 					Left: &ast.Identifier{
-						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "i"},
+						Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "i"},
 						Value: "i",
 					},
-					IsStmt: false,
 				},
-				Body: &ast.FunctionBody{
-					Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+				Body: &ast.Body{
+					Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
 					Statements: []ast.Statement{
-						&ast.VarStatement{
-							Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+						&ast.VarAndConst{
+							Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
 							Type: &ast.Type{
-								Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-								Value: "int",
+								Kind:        ast.TypeBase,
+								Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+								Name:        "int",
+								ElementType: nil,
+								KeyType:     nil,
+								ValueType:   nil,
 							},
-							Value: &ast.IntegerValue{
-								Token: lexer.Token{Kind: lexer.INT, Value: "5"},
+							Value: &ast.Integer{
+								Token: &lexer.Token{Kind: lexer.INT, Value: "5"},
 								Value: 5,
 							},
 						},
@@ -882,82 +1021,89 @@ func Test23(t *testing.T) {
 		},
 	}
 
-	if program.String() != "var x: int = 5;var s: int = (x++);for: (var i: int = 0; (i < 10); (i++)): {var a: int = 5;}" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("Expected: for: (var i: int = 0; (i < 10); (i++)): {var a: int = 5;}")
-	}
+	assert.Equal(t, "var x: int = 5;var s: int = (x++);for: (var i: int = 0; (i < 10); (i++)): {var a: int = 5;}", program.String())
 }
 
-func Test40(t *testing.T) {
+func Test11(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "s"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "s"},
 					Value: "s",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value: "int",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Name:        "int",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
+				Value: nil,
 			},
 			&ast.ExpressionStatement{
-				Expression: &ast.AssignmentExpression{
-					Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+				Expression: &ast.Assignment{
+					Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 					Left: &ast.Identifier{
-						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "s"},
+						Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "s"},
 						Value: "s",
 					},
-					Right: &ast.IntegerValue{
-						Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+					Operator: "=",
+					Right: &ast.Integer{
+						Token: &lexer.Token{Kind: lexer.INT, Value: "10"},
 						Value: 10,
 					},
-					Operator: "=",
 				},
 			},
 		},
 	}
 
-	if program.String() != "var s: int;s = 10;" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("Expected: var s: int;s = 10;")
-	}
+	assert.Equal(t, "var s: int;s = 10;", program.String())
 }
 
-func Test41(t *testing.T) {
+func Test12(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
-			&ast.MultiValueAssignStmt{
-				Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+			&ast.MultiAssignment{
+				Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 				Objects: []ast.Statement{
-					&ast.VarStatement{
-						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+					&ast.VarAndConst{
+						Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 						Name: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 							Value: "a",
 						},
 						Type: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
-						Value: &ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+						Value: &ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "10"},
 							Value: 10,
 						},
 					},
-					&ast.VarStatement{
-						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+					&ast.VarAndConst{
+						Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 						Name: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 							Value: "b",
 						},
 						Type: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
-						Value: &ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "20"},
+						Value: &ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "20"},
 							Value: 20,
 						},
 					},
@@ -967,87 +1113,100 @@ func Test41(t *testing.T) {
 	}
 
 	// var a: int, var b: int = 10, 20;
-	// if program.String() != "var a: int, var b: int = 10, 20;" {
-	if program.String() != "var a: int = 10;var b: int = 20;" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("var a: int = 10;var b: int = 20;")
-	}
+	assert.Equal(t, "var a: int = 10;var b: int = 20;", program.String())
 }
 
-func Test42(t *testing.T) {
+func Test13(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
 					Value: "d",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value: "int",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Name:        "int",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
+				Value: nil,
 			},
-			&ast.MultiValueAssignStmt{
-				Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+			&ast.MultiAssignment{
+				Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 				Objects: []ast.Statement{
-					&ast.VarStatement{
-						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+					&ast.VarAndConst{
+						Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 						Name: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 							Value: "a",
 						},
 						Type: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
-						Value: &ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+						Value: &ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "10"},
 							Value: 10,
 						},
 					},
-					&ast.VarStatement{
-						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+					&ast.VarAndConst{
+						Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 						Name: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 							Value: "b",
 						},
 						Type: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
-						Value: &ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "20"},
+						Value: &ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "20"},
 							Value: 20,
 						},
 					},
-					&ast.VarStatement{
-						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+					&ast.VarAndConst{
+						Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 						Name: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 							Value: "c",
 						},
 						Type: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "string"},
-							Value: "string",
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "string"},
+							Name:        "string",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
-						Value: &ast.StringValue{
-							Token: lexer.Token{Kind: lexer.STRING, Value: "\"hello\""},
+						Value: &ast.String{
+							Token: &lexer.Token{Kind: lexer.STRING, Value: "\"hello\""},
 							Value: "\"hello\"",
 						},
 					},
 					&ast.ExpressionStatement{
-						Expression: &ast.AssignmentExpression{
-							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+						Expression: &ast.Assignment{
+							Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 							Left: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
 								Value: "d",
 							},
-							Right: &ast.IntegerValue{
-								Token: lexer.Token{Kind: lexer.INT, Value: "100"},
+							Operator: "=",
+							Right: &ast.Integer{
+								Token: &lexer.Token{Kind: lexer.INT, Value: "100"},
 								Value: 100,
 							},
-							Operator: "=",
 						},
 					},
 				},
@@ -1056,81 +1215,94 @@ func Test42(t *testing.T) {
 	}
 
 	// var d: int; var a: int, var b: int, var c: string, d = 10, 20, "hello", 100;
-	// if program.String() != "var d: int; var a: int, var b: int, var c: string, d = 10, 20, \"hello\", 100;" {
-	if program.String() != "var d: int;var a: int = 10;var b: int = 20;var c: string = \"hello\";d = 100;" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("var d: int;var a: int = 10;var b: int = 20;var c: string = \"hello\";d = 100;")
-	}
+	assert.Equal(t, "var d: int;var a: int = 10;var b: int = 20;var c: string = \"hello\";d = 100;", program.String())
 }
 
-func Test43(t *testing.T) {
+func Test14(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 					Value: "a",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value: "int",
+					Kind:  ast.TypeBase,
+					Token: &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+
+					Name:        "int",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
+				Value: nil,
 			},
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 					Value: "b",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "string"},
-					Value: "string",
+					Kind:  ast.TypeBase,
+					Token: &lexer.Token{Kind: lexer.TYPE, Value: "string"},
+
+					Name:        "string",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
+				Value: nil,
 			},
-			&ast.MultiValueAssignStmt{
-				Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+			&ast.MultiAssignment{
+				Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 				Objects: []ast.Statement{
 					&ast.ExpressionStatement{
-						Expression: &ast.AssignmentExpression{
-							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+						Expression: &ast.Assignment{
+							Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 							Left: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
-							Right: &ast.IntegerValue{
-								Token: lexer.Token{Kind: lexer.INT, Value: "10"},
+							Operator: "=",
+							Right: &ast.Integer{
+								Token: &lexer.Token{Kind: lexer.INT, Value: "10"},
 								Value: 10,
 							},
-							Operator: "=",
 						},
 					},
 					&ast.ExpressionStatement{
-						Expression: &ast.AssignmentExpression{
-							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+						Expression: &ast.Assignment{
+							Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 							Left: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
-							Right: &ast.StringValue{
-								Token: lexer.Token{Kind: lexer.STRING, Value: "\"hello\""},
+							Operator: "=",
+							Right: &ast.String{
+								Token: &lexer.Token{Kind: lexer.STRING, Value: "\"hello\""},
 								Value: "\"hello\"",
 							},
-							Operator: "=",
 						},
 					},
-					&ast.VarStatement{
-						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+					&ast.VarAndConst{
+						Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 						Name: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 							Value: "c",
 						},
 						Type: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:  ast.TypeBase,
+							Token: &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
-						Value: &ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "20"},
+						Value: &ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "20"},
 							Value: 20,
 						},
 					},
@@ -1140,84 +1312,95 @@ func Test43(t *testing.T) {
 	}
 
 	// var a: int; var b: string; a, b, var c: int = 10, "hello", 20;
-	// if program.String() != "var a: int; var b: string; a, b, var c: int = 10, \"hello\", 20;" {
-	if program.String() != "var a: int;var b: string;a = 10;b = \"hello\";var c: int = 20;" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("var a: int;var b: string;a = 10;b = \"hello\";var c: int = 20;")
-	}
+	assert.Equal(t, "var a: int;var b: string;a = 10;b = \"hello\";var c: int = 20;", program.String())
 }
 
-func Test44(t *testing.T) {
+func Test15(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 					Value: "c",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value: "int",
+					Kind:  ast.TypeBase,
+					Token: &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+
+					Name:        "int",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
+				Value: nil,
 			},
-			&ast.MultiValueAssignStmt{
-				Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+			&ast.MultiAssignment{
+				Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 				Objects: []ast.Statement{
-					&ast.VarStatement{
-						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+					&ast.VarAndConst{
+						Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 						Name: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 							Value: "a",
 						},
 						Type: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:  ast.TypeBase,
+							Token: &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
 						Value: &ast.CallExpression{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 								Value: "getValues",
 							},
-							Args: []ast.Expression{},
+							Args: nil,
 						},
 					},
-					&ast.VarStatement{
-						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+					&ast.VarAndConst{
+						Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 						Name: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 							Value: "b",
 						},
 						Type: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
 						Value: &ast.CallExpression{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 								Value: "getValues",
 							},
-							Args: []ast.Expression{},
+							Args: nil,
 						},
 					},
 					&ast.ExpressionStatement{
-						Expression: &ast.AssignmentExpression{
-							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+						Expression: &ast.Assignment{
+							Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 							Left: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 								Value: "c",
 							},
+							Operator: "=",
 							Right: &ast.CallExpression{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 								Name: &ast.Identifier{
-									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+									Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 									Value: "getValues",
 								},
-								Args: []ast.Expression{},
+								Args: nil,
 							},
-							Operator: "=",
 						},
 					},
 				},
@@ -1226,94 +1409,104 @@ func Test44(t *testing.T) {
 	}
 
 	// var c: int; var a: int, var: b: int, c = getValues();
-	// if program.String() != "var c: int; var a: int, var: b: int, c = getValues();" {
-	if program.String() != "var c: int;var a: int = getValues();var b: int = getValues();c = getValues();" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("var c: int;var a: int = getValues();var b: int = getValues();c = getValues();")
-	}
+	assert.Equal(t, "var c: int;var a: int = getValues();var b: int = getValues();c = getValues();", program.String())
 }
 
-func Test45(t *testing.T) {
+func Test16(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 					Value: "a",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value: "int",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Name:        "int",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
+				Value: nil,
 			},
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 					Value: "b",
 				},
 				Type: &ast.Type{
-					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value: "int",
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Name:        "int",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
+				Value: nil,
 			},
-			&ast.MultiValueAssignStmt{
-				Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+			&ast.MultiAssignment{
+				Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 				Objects: []ast.Statement{
 					&ast.ExpressionStatement{
-						Expression: &ast.AssignmentExpression{
-							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+						Expression: &ast.Assignment{
+							Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 							Left: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
+							Operator: "=",
 							Right: &ast.CallExpression{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 								Name: &ast.Identifier{
-									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+									Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 									Value: "getValues",
 								},
-								Args: []ast.Expression{},
+								Args: nil,
 							},
-							Operator: "=",
 						},
 					},
 					&ast.ExpressionStatement{
-						Expression: &ast.AssignmentExpression{
-							Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+						Expression: &ast.Assignment{
+							Token: &lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
 							Left: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
+							Operator: "=",
 							Right: &ast.CallExpression{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 								Name: &ast.Identifier{
-									Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+									Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 									Value: "getValues",
 								},
-								Args: []ast.Expression{},
+								Args: nil,
 							},
-							Operator: "=",
 						},
 					},
-					&ast.VarStatement{
-						Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+					&ast.VarAndConst{
+						Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 						Name: &ast.Identifier{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 							Value: "c",
 						},
 						Type: &ast.Type{
-							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-							Value: "int",
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
 						},
 						Value: &ast.CallExpression{
-							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+							Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 							Name: &ast.Identifier{
-								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
+								Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "getValues"},
 								Value: "getValues",
 							},
-							Args: []ast.Expression{},
+							Args: nil,
 						},
 					},
 				},
@@ -1322,53 +1515,53 @@ func Test45(t *testing.T) {
 	}
 
 	// var a: int; var b: int; a, b, var c: int = getValues();
-	// if program.String() != "var a: int; var b: int; a, b, var c: int = getValues();" {
-	if program.String() != "var a: int;var b: int;a = getValues();b = getValues();var c: int = getValues();" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("var a: int;var b: int;a = getValues();b = getValues();var c: int = getValues();")
-	}
+	assert.Equal(t, "var a: int;var b: int;a = getValues();b = getValues();var c: int = getValues();", program.String())
 }
 
-func Test46(t *testing.T) {
+func Test17(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 					Value: "a",
 				},
 				Type: &ast.Type{
-					Token:   lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value:   "int",
-					IsArray: true,
-				},
-				Value: &ast.ArrayValue{
-					Type: &ast.Type{
-						Token:   lexer.Token{Kind: lexer.TYPE, Value: "int"},
-						Value:   "int",
-						IsArray: true,
+					Kind:  ast.TypeArray,
+					Token: &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					ElementType: &ast.Type{
+						Kind:        ast.TypeBase,
+						Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Name:        "int",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
 					},
-					Token: lexer.Token{Kind: lexer.OPEN_BRACKET, Value: "{"},
+					KeyType:   nil,
+					ValueType: nil,
+				},
+				Value: &ast.Array{
+					Token: &lexer.Token{Kind: lexer.OPEN_SQUARE_BRACKET, Value: "["},
 					Values: []ast.Expression{
-						&ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "1"},
+						&ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "1"},
 							Value: 1,
 						},
-						&ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "2"},
+						&ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "2"},
 							Value: 2,
 						},
-						&ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "3"},
+						&ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "3"},
 							Value: 3,
 						},
-						&ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "4"},
+						&ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "4"},
 							Value: 4,
 						},
-						&ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "5"},
+						&ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "5"},
 							Value: 5,
 						},
 					},
@@ -1377,68 +1570,72 @@ func Test46(t *testing.T) {
 		},
 	}
 
-	if program.String() != "var a: int[] = [1, 2, 3, 4, 5];" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("Expected: var a: int[] = {1, 2, 3, 4, 5};")
-	}
+	assert.Equal(t, "var a: int[] = [1, 2, 3, 4, 5];", program.String())
 }
 
-func Test47(t *testing.T) {
+func Test18(t *testing.T) {
 	program := &ast.Program{
 		Statements: []ast.Statement{
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 					Value: "a",
 				},
 				Type: &ast.Type{
-					Token:   lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value:   "int",
-					IsArray: true,
-				},
-				Value: &ast.ArrayValue{
-					Type: &ast.Type{
-						Token:   lexer.Token{Kind: lexer.TYPE, Value: "int"},
-						Value:   "int",
-						IsArray: true,
+					Kind:  ast.TypeArray,
+					Token: &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					ElementType: &ast.Type{
+						Kind:        ast.TypeBase,
+						Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Name:        "int",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
 					},
-					Token: lexer.Token{Kind: lexer.OPEN_BRACKET, Value: "{"},
+					KeyType:   nil,
+					ValueType: nil,
+				},
+				Value: &ast.Array{
+					Token: &lexer.Token{Kind: lexer.OPEN_SQUARE_BRACKET, Value: "["},
 					Values: []ast.Expression{
-						&ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "1"},
+						&ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "1"},
 							Value: 1,
 						},
-						&ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "2"},
+						&ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "2"},
 							Value: 2,
 						},
-						&ast.IntegerValue{
-							Token: lexer.Token{Kind: lexer.INT, Value: "3"},
+						&ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "3"},
 							Value: 3,
 						},
 					},
 				},
 			},
-			&ast.VarStatement{
-				Token: lexer.Token{Kind: lexer.VAR, Value: "var"},
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
 				Name: &ast.Identifier{
-					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 					Value: "b",
 				},
 				Type: &ast.Type{
-					Token:   lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					Value:   "int",
-					IsArray: false,
+					Kind:        ast.TypeBase,
+					Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					Name:        "int",
+					ElementType: nil,
+					KeyType:     nil,
+					ValueType:   nil,
 				},
 				Value: &ast.IndexExpression{
-					Token: lexer.Token{Kind: lexer.OPEN_SQUARE_BRACKET, Value: "["},
+					Token: &lexer.Token{Kind: lexer.OPEN_SQUARE_BRACKET, Value: "["},
 					Left: &ast.Identifier{
-						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+						Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 						Value: "a",
 					},
-					Index: &ast.IntegerValue{
-						Token: lexer.Token{Kind: lexer.INT, Value: "0"},
+					Index: &ast.Integer{
+						Token: &lexer.Token{Kind: lexer.INT, Value: "0"},
 						Value: 0,
 					},
 				},
@@ -1446,8 +1643,115 @@ func Test47(t *testing.T) {
 		},
 	}
 
-	if program.String() != "var a: int[] = [1, 2, 3];var b: int = a[0];" {
-		t.Errorf("program.String() wrong. got=%q", program.String())
-		t.Errorf("Expected: var a: int[] = {1, 2, 3};var b: int = a[0];")
+	assert.Equal(t, "var a: int[] = [1, 2, 3];var b: int = a[0];", program.String())
+}
+
+func Test19(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+					Value: "a",
+				},
+				Type: &ast.Type{
+					Kind:  ast.TypeHashMap,
+					Token: &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					KeyType: &ast.Type{
+						Kind:        ast.TypeBase,
+						Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Name:        "int",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
+					},
+					ValueType: &ast.Type{
+						Kind:        ast.TypeBase,
+						Token:       &lexer.Token{Kind: lexer.TYPE, Value: "bool"},
+						Name:        "bool",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
+					},
+					ElementType: nil,
+				},
+				Value: &ast.HashMap{
+					Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+					KeyType: &ast.Type{
+						Kind:        ast.TypeBase,
+						Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Name:        "int",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
+					},
+					ValueType: &ast.Type{
+						Kind:        ast.TypeBase,
+						Token:       &lexer.Token{Kind: lexer.TYPE, Value: "bool"},
+						Name:        "bool",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
+					},
+					Pairs: map[ast.BaseType]ast.Expression{
+						&ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "1"},
+							Value: 1,
+						}: &ast.Bool{
+							Token: &lexer.Token{Kind: lexer.BOOL, Value: "true"},
+							Value: true,
+						},
+						&ast.Integer{
+							Token: &lexer.Token{Kind: lexer.INT, Value: "2"},
+							Value: 2,
+						}: &ast.Bool{
+							Token: &lexer.Token{Kind: lexer.BOOL, Value: "false"},
+							Value: false,
+						},
+					},
+				},
+			},
+			&ast.WhileLoop{
+				Token: &lexer.Token{Kind: lexer.WHILE, Value: "while"},
+				Condition: &ast.Bool{
+					Token: &lexer.Token{Kind: lexer.BOOL, Value: "true"},
+					Value: true,
+				},
+				Body: &ast.Body{
+					Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+					Statements: []ast.Statement{
+						&ast.If{
+							Token: &lexer.Token{Kind: lexer.IF, Value: "if"},
+							Condition: &ast.Bool{
+								Token: &lexer.Token{Kind: lexer.BOOL, Value: "true"},
+								Value: true,
+							},
+							Body: &ast.Body{
+								Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+								Statements: []ast.Statement{
+									&ast.Break{
+										Token: &lexer.Token{Kind: lexer.BREAK, Value: "break"},
+									},
+								},
+							},
+							MultiConditionals: nil,
+							Alternate: &ast.Else{
+								Token: &lexer.Token{Kind: lexer.ELSE, Value: "else"},
+								Body: &ast.Body{
+									Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
+									Statements: []ast.Statement{
+										&ast.Continue{
+											Token: &lexer.Token{Kind: lexer.CONTINUE, Value: "continue"},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
+	assert.Equal(t, "var a: int[bool] = {1: true, 2: false};while: (true): {if: (true): {break;}else: {continue;}}", program.String())
 }

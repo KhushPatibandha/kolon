@@ -17,19 +17,22 @@ import (
 // ------------------------------------------------------------------------------------------------------------------
 type Identifier struct {
 	Token *lexer.Token
-	value string
+	Value string
 }
 
 func (i *Identifier) expressionNode()    {}
 func (i *Identifier) TokenValue() string { return i.Token.Value }
 func (i *Identifier) String() string     { return i.TokenValue() }
+func (i *Identifier) Equals(other *Identifier) bool {
+	return i.Value == other.Value
+}
 
 // ------------------------------------------------------------------------------------------------------------------
 // Integer
 // ------------------------------------------------------------------------------------------------------------------
 type Integer struct {
 	Token *lexer.Token
-	value int64
+	Value int64
 }
 
 func (i *Integer) expressionNode()    {}
@@ -42,20 +45,20 @@ func (i *Integer) String() string     { return i.TokenValue() }
 // ------------------------------------------------------------------------------------------------------------------
 type Float struct {
 	Token *lexer.Token
-	value float64
+	Value float64
 }
 
 func (f *Float) expressionNode()    {}
 func (f *Float) baseTypeNode()      {}
-func (f *Float) TokenValue() string { return fmt.Sprintf("%g", f.value) }
-func (f *Float) String() string     { return f.TokenValue() }
+func (f *Float) TokenValue() string { return fmt.Sprintf("%g", f.Value) }
+func (f *Float) String() string     { return f.Token.Value }
 
 // ------------------------------------------------------------------------------------------------------------------
 // Bool
 // ------------------------------------------------------------------------------------------------------------------
 type Bool struct {
 	Token *lexer.Token
-	value bool
+	Value bool
 }
 
 func (b *Bool) expressionNode()    {}
@@ -68,7 +71,7 @@ func (b *Bool) String() string     { return b.TokenValue() }
 // ------------------------------------------------------------------------------------------------------------------
 type String struct {
 	Token *lexer.Token
-	value string
+	Value string
 }
 
 func (s *String) expressionNode()    {}
@@ -81,7 +84,7 @@ func (s *String) String() string     { return s.TokenValue() }
 // ------------------------------------------------------------------------------------------------------------------
 type Char struct {
 	Token *lexer.Token
-	value string
+	Value string
 }
 
 func (c *Char) expressionNode()    {}
@@ -230,13 +233,17 @@ func (ce *CallExpression) expressionNode()    {}
 func (ce *CallExpression) TokenValue() string { return ce.Token.Value }
 func (ce *CallExpression) String() string {
 	var out bytes.Buffer
-	args := []string{}
-	for _, a := range ce.Args {
-		args = append(args, a.String())
-	}
 	out.WriteString(ce.Name.String())
 	out.WriteString("(")
-	out.WriteString(strings.Join(args, ", "))
+
+	if ce.Args != nil {
+		args := []string{}
+		for _, a := range ce.Args {
+			args = append(args, a.String())
+		}
+		out.WriteString(strings.Join(args, ", "))
+	}
+
 	out.WriteString(")")
 	return out.String()
 }

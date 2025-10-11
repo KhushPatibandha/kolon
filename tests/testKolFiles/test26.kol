@@ -1,8 +1,0 @@
-fun: main() {
-    var a: int[] = [1, 2, 3, 4, 5];
-    var b: string = "khush";
-    println(slice(a, 1, 4));
-    println(slice(a, 1, 4, 2));
-    println(slice(b, 1, 4));
-    println(slice(b, 1, 4, 2));
-}

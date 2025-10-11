@@ -1,6 +1,0 @@
-fun: main() {
-    var a: string[int] = {};
-    println(a);
-    push(a, "khush", 1);
-    println(a);
-}

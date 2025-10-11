@@ -58,10 +58,12 @@ func (f *Function) String() string {
 
 	out.WriteString(f.TokenValue() + ": ")
 	out.WriteString(f.Name.String() + "(")
-	for i, param := range f.Parameters {
-		out.WriteString(param.String())
-		if i != len(f.Parameters)-1 {
-			out.WriteString(", ")
+	if f.Parameters != nil {
+		for i, param := range f.Parameters {
+			out.WriteString(param.String())
+			if i != len(f.Parameters)-1 {
+				out.WriteString(", ")
+			}
 		}
 	}
 	out.WriteString(")")
@@ -77,9 +79,11 @@ func (f *Function) String() string {
 		out.WriteString(")")
 	}
 
-	out.WriteString(" {")
-	out.WriteString(f.Body.String())
-	out.WriteString("}")
+	if f.Body != nil {
+		out.WriteString(" {")
+		out.WriteString(f.Body.String())
+		out.WriteString("}")
+	}
 
 	return out.String()
 }
@@ -157,7 +161,7 @@ func (r *Return) String() string {
 	if len(r.Value) > 1 {
 		out.WriteString(")")
 	}
-
+	out.WriteString(";")
 	return out.String()
 }
 
@@ -191,7 +195,7 @@ type If struct {
 	Condition         Expression
 	Body              *Body
 	MultiConditionals []*ElseIf
-	Consequence       *Else
+	Alternate         *Else
 }
 
 func (i *If) statementNode()     {}
@@ -207,8 +211,8 @@ func (i *If) String() string {
 			out.WriteString(i.MultiConditionals[x].String())
 		}
 	}
-	if i.Consequence != nil {
-		out.WriteString(i.Condition.String())
+	if i.Alternate != nil {
+		out.WriteString(i.Alternate.String())
 	}
 	return out.String()
 }

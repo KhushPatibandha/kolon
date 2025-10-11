@@ -20,3 +20,10 @@ func (fp *FunctionParameter) String() string {
 	out.WriteString(fp.ParameterType.String())
 	return out.String()
 }
+
+func (fp *FunctionParameter) Equals(other *FunctionParameter) bool {
+	if other == nil {
+		return false
+	}
+	return fp.ParameterName.Equals(other.ParameterName) && fp.ParameterType.Equals(other.ParameterType)
+}

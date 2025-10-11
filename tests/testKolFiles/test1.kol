@@ -1,8 +1,0 @@
-fun: main() {
-    var a: int = len("hi");
-    println(a);
-}
-
-fun: len(a: string): (int) {
-    return: 100;
-}

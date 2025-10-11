@@ -1,8 +1,0 @@
-println("hello");
-
-fun: main() {
-    println(1);
-    else: {
-        println(1);
-    }
-}
