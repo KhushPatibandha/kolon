@@ -432,13 +432,7 @@ func (p *Parser) parseIndex(left ast.Expression) (ast.Expression, error) {
 // GroupedExp
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseGroupedExp() (ast.Expression, error) {
-	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
-		return nil,
-			errors.New(
-				"expected an opening bracket (`(`) in grouped expression, got: " +
-					lexer.TokenKindString(p.peekToken.Kind),
-			)
-	}
+	p.nextToken()
 	exp, err := p.parseExpression(LOWEST)
 	if err != nil {
 		return nil, err

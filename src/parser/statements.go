@@ -359,6 +359,13 @@ func (p *Parser) parseIf() (*ast.If, error) {
 					lexer.TokenKindString(p.peekToken.Kind),
 			)
 	}
+	if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
+		return nil,
+			errors.New(
+				"expected an open bracket (`(`) after the colon (`:`) in `if` statement, got: " +
+					lexer.TokenKindString(p.peekToken.Kind),
+			)
+	}
 	condition, err := p.parseGroupedExp()
 	if err != nil {
 		return nil, err
@@ -399,6 +406,13 @@ func (p *Parser) parseIf() (*ast.If, error) {
 				return nil,
 					errors.New(
 						"expected a colon (`:`) after the `else if` keyword, got: " +
+							lexer.TokenKindString(p.peekToken.Kind),
+					)
+			}
+			if !p.expectedPeekToken(lexer.OPEN_BRACKET) {
+				return nil,
+					errors.New(
+						"expected an open bracket (`(`) after the colon (`:`) in `else if` statement, got: " +
 							lexer.TokenKindString(p.peekToken.Kind),
 					)
 			}
