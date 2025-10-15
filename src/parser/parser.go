@@ -862,9 +862,9 @@ func (p *Parser) parseVarStatement() (ast.Statement, error) {
 		case "bool":
 			stmt.Value = &ast.BooleanValue{Token: lexer.Token{Kind: lexer.BOOL, Value: "false"}, Value: false}
 		case "string":
-			stmt.Value = &ast.StringValue{Token: lexer.Token{Kind: lexer.STRING, Value: ""}, Value: ""}
+			stmt.Value = &ast.StringValue{Token: lexer.Token{Kind: lexer.STRING, Value: "\"\""}, Value: "\"\""}
 		case "char":
-			stmt.Value = &ast.CharValue{Token: lexer.Token{Kind: lexer.CHAR, Value: ""}, Value: ""}
+			stmt.Value = &ast.CharValue{Token: lexer.Token{Kind: lexer.CHAR, Value: "''"}, Value: "''"}
 		}
 	}
 
