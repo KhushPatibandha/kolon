@@ -48,11 +48,12 @@ func main() {
 		tokens := lexer.Tokenizer(string(bytes))
 
 		p := parser.New(tokens, false)
-		_, err = p.ParseProgram()
+		program, err := p.ParseProgram()
 		if err != nil {
 			fmt.Println("Error parsing program:", err)
 			return
 		}
+		fmt.Println(program.String())
 		return
 	} else if len(os.Args) == 4 && os.Args[1] == "debug:" && (os.Args[3] == "--tokens" || os.Args[3] == "--ast") {
 		filePath := os.Args[2]

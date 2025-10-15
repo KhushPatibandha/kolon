@@ -19,7 +19,7 @@ const (
 
 type Type struct {
 	Kind  TypeKind
-	Token *lexer.Token
+	Token lexer.Token
 
 	// For BaseTypes -- Kind == TypeBase
 	// eg: int, float, etc...

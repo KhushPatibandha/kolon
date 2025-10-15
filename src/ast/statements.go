@@ -14,7 +14,7 @@ import (
 // Expression
 // ------------------------------------------------------------------------------------------------------------------
 type ExpressionStatement struct {
-	Token      *lexer.Token
+	Token      lexer.Token
 	Expression StatementableExpression
 }
 
@@ -26,7 +26,7 @@ func (es *ExpressionStatement) String() string     { return es.Expression.String
 // Body
 // ------------------------------------------------------------------------------------------------------------------
 type Body struct {
-	Token      *lexer.Token
+	Token      lexer.Token
 	Statements []Statement
 }
 
@@ -44,7 +44,7 @@ func (b *Body) String() string {
 // Function
 // ------------------------------------------------------------------------------------------------------------------
 type Function struct {
-	Token       *lexer.Token
+	Token       lexer.Token
 	Name        *Identifier
 	Parameters  []*FunctionParameter
 	ReturnTypes []*Type
@@ -92,7 +92,7 @@ func (f *Function) String() string {
 // Var and Const
 // ------------------------------------------------------------------------------------------------------------------
 type VarAndConst struct {
-	Token *lexer.Token
+	Token lexer.Token
 	Name  *Identifier
 	Type  *Type
 	Value Expression
@@ -118,7 +118,7 @@ func (vac *VarAndConst) String() string {
 // Multi-Assignment
 // ------------------------------------------------------------------------------------------------------------------
 type MultiAssignment struct {
-	Token   *lexer.Token
+	Token   lexer.Token
 	Objects []Statement
 }
 
@@ -136,7 +136,7 @@ func (ma *MultiAssignment) String() string {
 // Return
 // ------------------------------------------------------------------------------------------------------------------
 type Return struct {
-	Token *lexer.Token
+	Token lexer.Token
 	Value []Expression
 }
 
@@ -169,7 +169,7 @@ func (r *Return) String() string {
 // Continue
 // ------------------------------------------------------------------------------------------------------------------
 type Continue struct {
-	Token *lexer.Token
+	Token lexer.Token
 }
 
 func (c *Continue) statementNode()     {}
@@ -180,7 +180,7 @@ func (c *Continue) String() string     { return c.TokenValue() + ";" }
 // Break
 // ------------------------------------------------------------------------------------------------------------------
 type Break struct {
-	Token *lexer.Token
+	Token lexer.Token
 }
 
 func (b *Break) statementNode()     {}
@@ -191,7 +191,7 @@ func (b *Break) String() string     { return b.TokenValue() + ";" }
 // If
 // ------------------------------------------------------------------------------------------------------------------
 type If struct {
-	Token             *lexer.Token
+	Token             lexer.Token
 	Condition         Expression
 	Body              *Body
 	MultiConditionals []*ElseIf
@@ -221,7 +221,7 @@ func (i *If) String() string {
 // ElseIf
 // ------------------------------------------------------------------------------------------------------------------
 type ElseIf struct {
-	Token     *lexer.Token
+	Token     lexer.Token
 	Condition Expression
 	Body      *Body
 }
@@ -240,7 +240,7 @@ func (ei *ElseIf) String() string {
 // Else
 // ------------------------------------------------------------------------------------------------------------------
 type Else struct {
-	Token *lexer.Token
+	Token lexer.Token
 	Body  *Body
 }
 
@@ -257,7 +257,7 @@ func (e *Else) String() string {
 // ForLoop
 // ------------------------------------------------------------------------------------------------------------------
 type ForLoop struct {
-	Token  *lexer.Token
+	Token  lexer.Token
 	Left   Statement
 	Middle *Infix
 	Right  StatementableExpression
@@ -280,7 +280,7 @@ func (f *ForLoop) String() string {
 // WhileLoop
 // ------------------------------------------------------------------------------------------------------------------
 type WhileLoop struct {
-	Token     *lexer.Token
+	Token     lexer.Token
 	Condition Expression
 	Body      *Body
 }

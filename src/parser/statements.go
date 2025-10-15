@@ -13,9 +13,7 @@ import (
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseStatement() (ast.Statement, error) {
 	switch p.currToken.Kind {
-	case lexer.VAR:
-		return p.parseVarConst()
-	case lexer.CONST:
+	case lexer.VAR, lexer.CONST:
 		return p.parseVarConst()
 	case lexer.RETURN:
 		return p.parseReturn()
@@ -40,7 +38,7 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 // Body
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseBody() (*ast.Body, error) {
-	body := &ast.Body{Token: &p.currToken, Statements: []ast.Statement{}}
+	body := &ast.Body{Token: p.currToken, Statements: []ast.Statement{}}
 	p.nextToken()
 	for !p.currTokenIsOk(lexer.CLOSE_CURLY_BRACKET) && !p.currTokenIsOk(lexer.EOF) {
 		stmt, err := p.parseStatement()
@@ -65,7 +63,7 @@ func (p *Parser) parseType() (*ast.Type, error) {
 	}
 	stmt := &ast.Type{
 		Kind:        ast.TypeBase,
-		Token:       &p.currToken,
+		Token:       p.currToken,
 		Name:        p.currToken.Value,
 		ElementType: nil,
 		KeyType:     nil,
@@ -124,21 +122,74 @@ func (p *Parser) parseExpressionStatement() (ast.Statement, error) {
 	if !p.inFunction && !p.inTesting {
 		return nil, errors.New("everything must be inside a function")
 	}
-	stmt := &ast.ExpressionStatement{Token: &p.currToken}
+	stmt := &ast.ExpressionStatement{Token: p.currToken}
 
+	if p.peekTokenIsOk(lexer.COMMA) {
+		stmt.Expression = &ast.Assignment{
+			Token:    lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+			Left:     &ast.Identifier{Token: p.currToken, Value: p.currToken.Value},
+			Operator: "=",
+		}
+		list := []ast.Statement{}
+		list = append(list, stmt)
+		p.nextToken()
+		p.nextToken()
+		return p.parseMultiAssign(list)
+	}
+
+	exp, err := p.parseExpression(LOWEST)
+	if err != nil {
+		return nil, err
+	}
+
+	if !p.inTesting {
+		switch t := exp.(type) {
+		case *ast.CallExpression:
+			stmt.Expression = t
+		case *ast.Postfix:
+			stmt.Expression = t
+		case *ast.Assignment:
+			stmt.Expression = t
+		default:
+			return nil,
+				errors.New(
+					"expected a function call, postfix expression or an assignment " +
+						"expression for expressions as statements, got: " +
+						fmt.Sprintf("%T", exp),
+				)
+		}
+	}
+
+	if !p.expectedPeekToken(lexer.SEMI_COLON) {
+		if !p.inTesting {
+			return nil,
+				errors.New(
+					"expected a semicolon (`;`) at the end of the statement, got: " +
+						lexer.TokenKindString(p.peekToken.Kind),
+				)
+		}
+	}
 	return stmt, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
 // VarAndConst
 // ------------------------------------------------------------------------------------------------------------------
-func (p *Parser) parseVarConst() (*ast.VarAndConst, error) {
+func (p *Parser) parseVarConst() (ast.Statement, error) {
 	if !p.inFunction && !p.inTesting {
 		return nil, errors.New("can't declare a variable outside a function")
 	}
 	stmt, err := p.parseVarConstSig()
 	if err != nil {
 		return nil, err
+	}
+
+	if p.peekTokenIsOk(lexer.COMMA) {
+		list := []ast.Statement{}
+		list = append(list, stmt)
+		p.nextToken()
+		p.nextToken()
+		return p.parseMultiAssign(list)
 	}
 
 	switch stmt.Type.Kind {
@@ -194,7 +245,7 @@ func (p *Parser) parseVarConst() (*ast.VarAndConst, error) {
 }
 
 func (p *Parser) parseVarConstSig() (*ast.VarAndConst, error) {
-	stmt := &ast.VarAndConst{Token: &p.currToken}
+	stmt := &ast.VarAndConst{Token: p.currToken}
 	if !p.expectedPeekToken(lexer.IDENTIFIER) {
 		return nil,
 			errors.New(
@@ -203,7 +254,7 @@ func (p *Parser) parseVarConstSig() (*ast.VarAndConst, error) {
 					lexer.TokenKindString(p.peekToken.Kind),
 			)
 	}
-	stmt.Name = &ast.Identifier{Token: &p.currToken, Value: p.currToken.Value}
+	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Value}
 
 	if !p.expectedPeekToken(lexer.COLON) {
 		return nil,
@@ -224,13 +275,181 @@ func (p *Parser) parseVarConstSig() (*ast.VarAndConst, error) {
 }
 
 // ------------------------------------------------------------------------------------------------------------------
+// Multi-Assignment
+// ------------------------------------------------------------------------------------------------------------------
+func (p *Parser) parseMultiAssign(list []ast.Statement) (*ast.MultiAssignment, error) {
+	if !p.inFunction && !p.inTesting {
+		return nil, errors.New("can't declare a variable outside a function")
+	}
+	stmt := &ast.MultiAssignment{Token: lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="}}
+
+	if p.currTokenIsOk(lexer.EQUAL_ASSIGN) {
+		return nil,
+			errors.New(
+				"expected an identifier or a `var`/`const` keyword after the comma (`,`), got: " +
+					lexer.TokenKindString(p.currToken.Kind),
+			)
+	}
+
+	for !p.currTokenIsOk(lexer.EQUAL_ASSIGN) {
+		ele, err := p.parseMultiAssignLHS()
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, ele)
+
+		if p.currTokenIsOk(lexer.COMMA) {
+			if p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
+				return nil,
+					errors.New(
+						"expected an identifier or a `var`/`const` keyword after the comma (`,`), got: " +
+							lexer.TokenKindString(p.peekToken.Kind),
+					)
+			}
+			p.nextToken()
+		} else if p.currTokenIsOk(lexer.EQUAL_ASSIGN) {
+			break
+		} else {
+			return nil,
+				errors.New(
+					"expected a comma (`,`) or an equal sign (`=`), got: " +
+						lexer.TokenKindString(p.currToken.Kind),
+				)
+		}
+	}
+	p.nextToken()
+
+	values, err := p.parseMultiAssignRHS()
+	if err != nil {
+		return nil, err
+	}
+
+	if err := p.matchAssignments(list, values); err != nil {
+		return nil, err
+	}
+	stmt.Objects = list
+	return stmt, nil
+}
+
+func (p *Parser) parseMultiAssignLHS() (ast.Statement, error) {
+	switch {
+	case p.currTokenIsOk(lexer.VAR), p.currTokenIsOk(lexer.CONST):
+		ele, err := p.parseVarConstSig()
+		if err != nil {
+			return nil, err
+		}
+		p.nextToken()
+		return ele, nil
+	case p.currTokenIsOk(lexer.IDENTIFIER):
+		ele := &ast.ExpressionStatement{
+			Token: p.currToken,
+			Expression: &ast.Assignment{
+				Token:    lexer.Token{Kind: lexer.EQUAL_ASSIGN, Value: "="},
+				Left:     &ast.Identifier{Token: p.currToken, Value: p.currToken.Value},
+				Operator: "=",
+			},
+		}
+		p.nextToken()
+		return ele, nil
+	default:
+		return nil,
+			errors.New(
+				"expected an identifier or a `var`/`const` keyword, got: " +
+					lexer.TokenKindString(p.currToken.Kind),
+			)
+	}
+}
+
+func (p *Parser) parseMultiAssignRHS() ([]ast.Expression, error) {
+	values := []ast.Expression{}
+
+	for {
+		exp, err := p.parseExpression(LOWEST)
+		if err != nil {
+			return nil, err
+		}
+		values = append(values, exp)
+		p.nextToken()
+
+		if p.currTokenIsOk(lexer.COMMA) {
+			if p.peekTokenIsOk(lexer.SEMI_COLON) {
+				return nil,
+					errors.New(
+						"expected an expression after comma (`,`) in " +
+							"multi-value assignment statement, got: " +
+							lexer.TokenKindString(p.peekToken.Kind))
+			}
+			p.nextToken()
+		} else if p.currTokenIsOk(lexer.SEMI_COLON) {
+			break
+		} else {
+			return nil,
+				errors.New(
+					"expected a comma (`,`) or a semicolon (`;`) after the expression, got: " +
+						lexer.TokenKindString(p.currToken.Kind))
+		}
+	}
+	return values, nil
+}
+
+func (p *Parser) matchAssignments(left []ast.Statement,
+	right []ast.Expression,
+) error {
+	if len(right) == 1 {
+		call, ok := right[0].(*ast.CallExpression)
+		if !ok {
+			return errors.New(
+				"number of expressions on the right side of multi-assignment = 1, " +
+					"expected a function call, got: " +
+					fmt.Sprintf("%T", right[0]),
+			)
+		}
+		for _, ele := range left {
+			switch t := ele.(type) {
+			case *ast.VarAndConst:
+				t.Value = call
+			case *ast.ExpressionStatement:
+				if exp, ok := t.Expression.(*ast.Assignment); ok {
+					exp.Right = call
+				}
+			}
+		}
+		return nil
+	}
+
+	if len(left) != len(right) {
+		return errors.New(
+			"number of expression on the right side of multi-assignment do not " +
+				"match the number of declarations on the left, left=" +
+				fmt.Sprint(len(left)) + ", right=" + fmt.Sprint(len(right)),
+		)
+	}
+
+	for i, ele := range left {
+		switch t := ele.(type) {
+		case *ast.VarAndConst:
+			p.assignTypeToValue(right[i], t.Type)
+			t.Value = right[i]
+		case *ast.ExpressionStatement:
+			if exp, ok := t.Expression.(*ast.Assignment); ok {
+				// TODO: check if we need to assignTypeToValue in case of assign x = [1, 2, 3]
+				// yes we do, look into this
+				exp.Right = right[i]
+			}
+		}
+	}
+
+	return nil
+}
+
+// ------------------------------------------------------------------------------------------------------------------
 // Function
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseFunction() (*ast.Function, error) {
 	if p.inFunction {
 		return nil, errors.New("can't declare a function inside a function")
 	}
-	stmt := &ast.Function{Token: &p.currToken, Parameters: nil, ReturnTypes: nil, Body: nil}
+	stmt := &ast.Function{Token: p.currToken, Parameters: nil, ReturnTypes: nil, Body: nil}
 
 	if !p.expectedPeekToken(lexer.COLON) {
 		return nil,
@@ -246,7 +465,7 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 					lexer.TokenKindString(p.peekToken.Kind),
 			)
 	}
-	stmt.Name = &ast.Identifier{Token: &p.currToken, Value: p.currToken.Value}
+	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Value}
 
 	if existing, ok := p.functionMap[stmt.Name.Value]; ok && existing.Body != nil && !p.inTesting {
 		return nil,
@@ -349,7 +568,7 @@ func (p *Parser) parseFunctionParams() ([]*ast.FunctionParameter, error) {
 				)
 		}
 		param := &ast.FunctionParameter{
-			ParameterName: &ast.Identifier{Token: &p.currToken, Value: p.currToken.Value},
+			ParameterName: &ast.Identifier{Token: p.currToken, Value: p.currToken.Value},
 		}
 		if !p.expectedPeekToken(lexer.COLON) {
 			return nil,
@@ -466,7 +685,7 @@ func (p *Parser) parseIf() (*ast.If, error) {
 	if !p.inFunction && !p.inTesting {
 		return nil, errors.New("if statement can only be used inside a function")
 	}
-	stmt := &ast.If{Token: &p.currToken}
+	stmt := &ast.If{Token: p.currToken}
 	if !p.expectedPeekToken(lexer.COLON) {
 		return nil,
 			errors.New(
@@ -516,7 +735,7 @@ func (p *Parser) parseIf() (*ast.If, error) {
 
 		for p.peekTokenIsOk(lexer.ELSE_IF) {
 			p.nextToken()
-			elseIfStmt := &ast.ElseIf{Token: &p.currToken}
+			elseIfStmt := &ast.ElseIf{Token: p.currToken}
 			if !p.expectedPeekToken(lexer.COLON) {
 				return nil,
 					errors.New(
@@ -571,7 +790,7 @@ func (p *Parser) parseIf() (*ast.If, error) {
 	// ------------------------------------------------------------------------------------------------------------------
 	if p.peekTokenIsOk(lexer.ELSE) {
 		p.nextToken()
-		elseStmt := &ast.Else{Token: &p.currToken}
+		elseStmt := &ast.Else{Token: p.currToken}
 
 		if !p.expectedPeekToken(lexer.COLON) {
 			return nil,
@@ -609,7 +828,7 @@ func (p *Parser) parseReturn() (*ast.Return, error) {
 	if !p.inFunction && !p.inTesting {
 		return nil, errors.New("return statement can only be used inside a function")
 	}
-	stmt := &ast.Return{Token: &p.currToken, Value: []ast.Expression{}}
+	stmt := &ast.Return{Token: p.currToken, Value: []ast.Expression{}}
 	if p.peekTokenIsOk(lexer.SEMI_COLON) {
 		stmt.Value = nil
 		p.nextToken()
@@ -690,7 +909,7 @@ func (p *Parser) parseForLoop() (*ast.ForLoop, error) {
 		return nil, errors.New("for loop can only be used inside a function")
 	}
 	p.inLoop = true
-	stmt := &ast.ForLoop{Token: &p.currToken}
+	stmt := &ast.ForLoop{Token: p.currToken}
 
 	if !p.expectedPeekToken(lexer.COLON) {
 		return nil,
@@ -821,7 +1040,7 @@ func (p *Parser) parseWhileLoop() (*ast.WhileLoop, error) {
 		return nil, errors.New("while loop can only be used inside a function")
 	}
 	p.inLoop = true
-	stmt := &ast.WhileLoop{Token: &p.currToken}
+	stmt := &ast.WhileLoop{Token: p.currToken}
 
 	if !p.expectedPeekToken(lexer.COLON) {
 		return nil,
@@ -882,7 +1101,7 @@ func (p *Parser) parseContinue() (*ast.Continue, error) {
 	if !p.inLoop {
 		return nil, errors.New("continue statement can only be used inside a `for loop`")
 	}
-	stmt := &ast.Continue{Token: &p.currToken}
+	stmt := &ast.Continue{Token: p.currToken}
 	if !p.expectedPeekToken(lexer.SEMI_COLON) {
 		return nil,
 			errors.New(
@@ -900,7 +1119,7 @@ func (p *Parser) parseBreak() (*ast.Break, error) {
 	if !p.inLoop {
 		return nil, errors.New("break statement can only be used inside a `for loop`")
 	}
-	stmt := &ast.Break{Token: &p.currToken}
+	stmt := &ast.Break{Token: p.currToken}
 	if !p.expectedPeekToken(lexer.SEMI_COLON) {
 		return nil,
 			errors.New(

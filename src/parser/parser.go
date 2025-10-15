@@ -53,6 +53,7 @@ func New(tokens []lexer.Token, inTesting bool) *Parser {
 			"slice":       true,
 		},
 	}
+	p.nextToken()
 
 	p.prefixParseFns = make(map[lexer.TokenKind]prefixParseFn)
 	p.addPrefix(lexer.IDENTIFIER, p.parseIdentifier)
@@ -102,7 +103,7 @@ func New(tokens []lexer.Token, inTesting bool) *Parser {
 func (p *Parser) ParseProgram() (*ast.Program, error) {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
-	for p.currToken.Kind != lexer.EOF {
+	for !p.currTokenIsOk(lexer.EOF) {
 		stmt, err := p.parseStatement()
 		if err != nil {
 			return nil, err

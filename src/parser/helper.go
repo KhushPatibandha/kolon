@@ -89,15 +89,15 @@ func (p *Parser) compareFunctionSig(f1, f2 *ast.Function) bool {
 func (p *Parser) assignDefaultValue(t *ast.Type) (ast.Expression, error) {
 	switch t.Name {
 	case "int":
-		return &ast.Integer{Token: &lexer.Token{Kind: lexer.INT, Value: "0"}, Value: 0}, nil
+		return &ast.Integer{Token: lexer.Token{Kind: lexer.INT, Value: "0"}, Value: 0}, nil
 	case "float":
-		return &ast.Float{Token: &lexer.Token{Kind: lexer.FLOAT, Value: "0.0"}, Value: 0.0}, nil
+		return &ast.Float{Token: lexer.Token{Kind: lexer.FLOAT, Value: "0.0"}, Value: 0.0}, nil
 	case "bool":
-		return &ast.Bool{Token: &lexer.Token{Kind: lexer.BOOL, Value: "false"}, Value: false}, nil
+		return &ast.Bool{Token: lexer.Token{Kind: lexer.BOOL, Value: "false"}, Value: false}, nil
 	case "string":
-		return &ast.String{Token: &lexer.Token{Kind: lexer.STRING, Value: "\"\""}, Value: "\"\""}, nil
+		return &ast.String{Token: lexer.Token{Kind: lexer.STRING, Value: "\"\""}, Value: "\"\""}, nil
 	case "char":
-		return &ast.Char{Token: &lexer.Token{Kind: lexer.CHAR, Value: "''"}, Value: "''"}, nil
+		return &ast.Char{Token: lexer.Token{Kind: lexer.CHAR, Value: "''"}, Value: "''"}, nil
 	default:
 		return nil, errors.New("can only assign default values to `int`, `float`, `bool`, `string` and `char` types")
 	}

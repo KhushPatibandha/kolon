@@ -16,7 +16,7 @@ import (
 // Identifier
 // ------------------------------------------------------------------------------------------------------------------
 type Identifier struct {
-	Token *lexer.Token
+	Token lexer.Token
 	Value string
 }
 
@@ -31,7 +31,7 @@ func (i *Identifier) Equals(other *Identifier) bool {
 // Integer
 // ------------------------------------------------------------------------------------------------------------------
 type Integer struct {
-	Token *lexer.Token
+	Token lexer.Token
 	Value int64
 }
 
@@ -44,7 +44,7 @@ func (i *Integer) String() string     { return i.TokenValue() }
 // Float
 // ------------------------------------------------------------------------------------------------------------------
 type Float struct {
-	Token *lexer.Token
+	Token lexer.Token
 	Value float64
 }
 
@@ -57,7 +57,7 @@ func (f *Float) String() string     { return f.Token.Value }
 // Bool
 // ------------------------------------------------------------------------------------------------------------------
 type Bool struct {
-	Token *lexer.Token
+	Token lexer.Token
 	Value bool
 }
 
@@ -70,7 +70,7 @@ func (b *Bool) String() string     { return b.TokenValue() }
 // String
 // ------------------------------------------------------------------------------------------------------------------
 type String struct {
-	Token *lexer.Token
+	Token lexer.Token
 	Value string
 }
 
@@ -83,7 +83,7 @@ func (s *String) String() string     { return s.TokenValue() }
 // Char
 // ------------------------------------------------------------------------------------------------------------------
 type Char struct {
-	Token *lexer.Token
+	Token lexer.Token
 	Value string
 }
 
@@ -96,7 +96,7 @@ func (c *Char) String() string     { return c.TokenValue() }
 // HashMap
 // ------------------------------------------------------------------------------------------------------------------
 type HashMap struct {
-	Token     *lexer.Token
+	Token     lexer.Token
 	KeyType   *Type
 	ValueType *Type
 	Pairs     map[BaseType]Expression
@@ -120,7 +120,7 @@ func (hm *HashMap) String() string {
 // Array
 // ------------------------------------------------------------------------------------------------------------------
 type Array struct {
-	Token  *lexer.Token
+	Token  lexer.Token
 	Type   *Type
 	Values []Expression
 }
@@ -143,7 +143,7 @@ func (a *Array) String() string {
 // Prefix
 // ------------------------------------------------------------------------------------------------------------------
 type Prefix struct {
-	Token    *lexer.Token
+	Token    lexer.Token
 	Operator string
 	Right    Expression
 }
@@ -163,7 +163,7 @@ func (p *Prefix) String() string {
 // Infix
 // ------------------------------------------------------------------------------------------------------------------
 type Infix struct {
-	Token    *lexer.Token
+	Token    lexer.Token
 	Left     Expression
 	Operator string
 	Right    Expression
@@ -185,7 +185,7 @@ func (i *Infix) String() string {
 // Postfix
 // ------------------------------------------------------------------------------------------------------------------
 type Postfix struct {
-	Token    *lexer.Token
+	Token    lexer.Token
 	Left     Expression
 	Operator string
 }
@@ -206,7 +206,7 @@ func (p *Postfix) String() string {
 // Assignment
 // ------------------------------------------------------------------------------------------------------------------
 type Assignment struct {
-	Token    *lexer.Token
+	Token    lexer.Token
 	Left     *Identifier
 	Operator string
 	Right    Expression
@@ -223,7 +223,7 @@ func (a *Assignment) String() string {
 // CallExpression
 // ------------------------------------------------------------------------------------------------------------------
 type CallExpression struct {
-	Token *lexer.Token
+	Token lexer.Token
 	Name  *Identifier
 	Args  []Expression
 }
@@ -252,7 +252,7 @@ func (ce *CallExpression) String() string {
 // IndexExpression
 // ------------------------------------------------------------------------------------------------------------------
 type IndexExpression struct {
-	Token *lexer.Token
+	Token lexer.Token
 	Left  Expression
 	Index Expression
 }

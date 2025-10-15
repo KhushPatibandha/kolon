@@ -115,14 +115,14 @@ func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
 // Identifier
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseIdentifier() (ast.Expression, error) {
-	return &ast.Identifier{Token: &p.currToken, Value: p.currToken.Value}, nil
+	return &ast.Identifier{Token: p.currToken, Value: p.currToken.Value}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
 // Integer
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseInteger() (ast.Expression, error) {
-	exp := &ast.Integer{Token: &p.currToken}
+	exp := &ast.Integer{Token: p.currToken}
 	val, err := strconv.ParseInt(p.currToken.Value, 0, 64)
 	if err != nil {
 		return nil, errors.New("could not parse " + p.currToken.Value + " as integer")
@@ -135,7 +135,7 @@ func (p *Parser) parseInteger() (ast.Expression, error) {
 // Float
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseFloat() (ast.Expression, error) {
-	exp := &ast.Float{Token: &p.currToken}
+	exp := &ast.Float{Token: p.currToken}
 	val, err := strconv.ParseFloat(p.currToken.Value, 64)
 	if err != nil {
 		return nil, errors.New("could not parse " + p.currToken.Value + " as float")
@@ -150,23 +150,23 @@ func (p *Parser) parseFloat() (ast.Expression, error) {
 func (p *Parser) parseBoolean() (ast.Expression, error) {
 	exp := p.currToken.Value
 	if exp == "true" {
-		return &ast.Bool{Token: &p.currToken, Value: true}, nil
+		return &ast.Bool{Token: p.currToken, Value: true}, nil
 	}
-	return &ast.Bool{Token: &p.currToken, Value: false}, nil
+	return &ast.Bool{Token: p.currToken, Value: false}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
 // String
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseString() (ast.Expression, error) {
-	return &ast.String{Token: &p.currToken, Value: p.currToken.Value}, nil
+	return &ast.String{Token: p.currToken, Value: p.currToken.Value}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
 // Char
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseChar() (ast.Expression, error) {
-	return &ast.Char{Token: &p.currToken, Value: p.currToken.Value}, nil
+	return &ast.Char{Token: p.currToken, Value: p.currToken.Value}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -180,7 +180,7 @@ func (p *Parser) parseHashMap() (ast.Expression, error) {
 					lexer.TokenKindString(p.currToken.Kind),
 			)
 	}
-	exp := &ast.HashMap{Token: &p.currToken, KeyType: nil, ValueType: nil, Pairs: map[ast.BaseType]ast.Expression{}}
+	exp := &ast.HashMap{Token: p.currToken, KeyType: nil, ValueType: nil, Pairs: map[ast.BaseType]ast.Expression{}}
 	p.nextToken()
 	if p.currTokenIsOk(lexer.CLOSE_CURLY_BRACKET) {
 		return exp, nil
@@ -250,7 +250,7 @@ func (p *Parser) parseArray() (ast.Expression, error) {
 					lexer.TokenKindString(p.currToken.Kind),
 			)
 	}
-	exp := &ast.Array{Token: &p.currToken, Values: []ast.Expression{}, Type: nil}
+	exp := &ast.Array{Token: p.currToken, Values: []ast.Expression{}, Type: nil}
 	p.nextToken()
 	if p.currTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
 		return exp, nil
@@ -298,7 +298,7 @@ func (p *Parser) parseArray() (ast.Expression, error) {
 // Prefix
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parsePrefix() (ast.Expression, error) {
-	exp := &ast.Prefix{Token: &p.currToken, Operator: p.currToken.Value}
+	exp := &ast.Prefix{Token: p.currToken, Operator: p.currToken.Value}
 	p.nextToken()
 	right, err := p.parseExpression(PREFIX)
 	if err != nil {
@@ -312,7 +312,7 @@ func (p *Parser) parsePrefix() (ast.Expression, error) {
 // Infix
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseInfix(left ast.Expression) (ast.Expression, error) {
-	exp := &ast.Infix{Token: &p.currToken, Operator: p.currToken.Value, Left: left}
+	exp := &ast.Infix{Token: p.currToken, Operator: p.currToken.Value, Left: left}
 	precedence := p.currentPrecedence()
 	p.nextToken()
 	right, err := p.parseExpression(precedence)
@@ -327,7 +327,7 @@ func (p *Parser) parseInfix(left ast.Expression) (ast.Expression, error) {
 // Postfix
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parsePostfix(left ast.Expression) (ast.Expression, error) {
-	return &ast.Postfix{Token: &p.currToken, Operator: p.currToken.Value, Left: left}, nil
+	return &ast.Postfix{Token: p.currToken, Operator: p.currToken.Value, Left: left}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -341,7 +341,7 @@ func (p *Parser) parseAssignment(left ast.Expression) (ast.Expression, error) {
 				fmt.Sprintf("%T", left),
 		)
 	}
-	exp := &ast.Assignment{Token: &p.currToken, Left: ident, Operator: p.currToken.Value}
+	exp := &ast.Assignment{Token: p.currToken, Left: ident, Operator: p.currToken.Value}
 	p.nextToken()
 	right, err := p.parseExpression(LOWEST)
 	if err != nil {
@@ -362,7 +362,7 @@ func (p *Parser) parseCall(left ast.Expression) (ast.Expression, error) {
 				fmt.Sprintf("%T", left),
 		)
 	}
-	exp := &ast.CallExpression{Token: &p.currToken, Name: ident, Args: nil}
+	exp := &ast.CallExpression{Token: p.currToken, Name: ident, Args: nil}
 	args, err := p.parseCallArgs(ident)
 	if err != nil {
 		return nil, err
@@ -409,7 +409,7 @@ func (p *Parser) parseCallArgs(left *ast.Identifier) ([]ast.Expression, error) {
 // IndexExpression
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseIndex(left ast.Expression) (ast.Expression, error) {
-	exp := &ast.IndexExpression{Token: &p.currToken, Left: left}
+	exp := &ast.IndexExpression{Token: p.currToken, Left: left}
 	p.nextToken()
 	idx, err := p.parseExpression(LOWEST)
 	if err != nil {
