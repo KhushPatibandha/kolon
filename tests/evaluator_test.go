@@ -478,9 +478,9 @@ func Test37(t *testing.T) {
 		hasErr         bool
 	}{
 		{"var a: int; return: a;", []object.Object{&object.Integer{Value: 0}}, false},
-		{"var a: string; return: a;", []object.Object{&object.String{Value: ""}}, false},
+		{"var a: string; return: a;", []object.Object{&object.String{Value: "\"\""}}, false},
 		{"var a: float; return: a;", []object.Object{&object.Float{Value: 0.0}}, false},
-		{"var a: char; return: a;", []object.Object{&object.Char{Value: ""}}, false},
+		{"var a: char; return: a;", []object.Object{&object.Char{Value: "''"}}, false},
 		{"var a: bool; return: a;", []object.Object{&object.Boolean{Value: false}}, false},
 		{"var a: int = 10; return: a;", []object.Object{&object.Integer{Value: 10}}, false},
 		{"var a: int = 10; const b: int = a++; return: (a, b);", []object.Object{&object.Integer{Value: 10}, &object.Integer{Value: 11}}, false},
