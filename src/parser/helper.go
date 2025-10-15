@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"errors"
+
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
@@ -82,4 +84,37 @@ func (p *Parser) compareFunctionSig(f1, f2 *ast.Function) bool {
 		}
 	}
 	return true
+}
+
+func (p *Parser) assignDefaultValue(t *ast.Type) (ast.Expression, error) {
+	switch t.Name {
+	case "int":
+		return &ast.Integer{Token: &lexer.Token{Kind: lexer.INT, Value: "0"}, Value: 0}, nil
+	case "float":
+		return &ast.Float{Token: &lexer.Token{Kind: lexer.FLOAT, Value: "0.0"}, Value: 0.0}, nil
+	case "bool":
+		return &ast.Bool{Token: &lexer.Token{Kind: lexer.BOOL, Value: "false"}, Value: false}, nil
+	case "string":
+		return &ast.String{Token: &lexer.Token{Kind: lexer.STRING, Value: "\"\""}, Value: "\"\""}, nil
+	case "char":
+		return &ast.Char{Token: &lexer.Token{Kind: lexer.CHAR, Value: "''"}, Value: "''"}, nil
+	default:
+		return nil, errors.New("can only assign default values to `int`, `float`, `bool`, `string` and `char` types")
+	}
+}
+
+func (p *Parser) assignTypeToValue(exp ast.Expression, t *ast.Type) {
+	switch t.Kind {
+	case ast.TypeArray:
+		if arr, ok := exp.(*ast.Array); ok {
+			arr.Type = t.ElementType
+		}
+	case ast.TypeHashMap:
+		if hash, ok := exp.(*ast.HashMap); ok {
+			hash.KeyType = t.KeyType
+			hash.ValueType = t.ValueType
+		}
+	default:
+		return
+	}
 }

@@ -180,12 +180,11 @@ func (p *Parser) parseHashMap() (ast.Expression, error) {
 					lexer.TokenKindString(p.currToken.Kind),
 			)
 	}
-	exp := &ast.HashMap{Token: &p.currToken, KeyType: nil, ValueType: nil, Pairs: nil}
+	exp := &ast.HashMap{Token: &p.currToken, KeyType: nil, ValueType: nil, Pairs: map[ast.BaseType]ast.Expression{}}
 	p.nextToken()
 	if p.currTokenIsOk(lexer.CLOSE_CURLY_BRACKET) {
 		return exp, nil
 	}
-	exp.Pairs = map[ast.BaseType]ast.Expression{}
 
 	for {
 		kExp, err := p.parseExpression(LOWEST)
@@ -251,12 +250,11 @@ func (p *Parser) parseArray() (ast.Expression, error) {
 					lexer.TokenKindString(p.currToken.Kind),
 			)
 	}
-	exp := &ast.Array{Token: &p.currToken, Values: nil, Type: nil}
+	exp := &ast.Array{Token: &p.currToken, Values: []ast.Expression{}, Type: nil}
 	p.nextToken()
 	if p.currTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
 		return exp, nil
 	}
-	exp.Values = []ast.Expression{}
 	for {
 		var val ast.Expression
 		var err error

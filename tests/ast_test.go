@@ -1538,6 +1538,7 @@ func Test17(t *testing.T) {
 						KeyType:     nil,
 						ValueType:   nil,
 					},
+					Name:      "",
 					KeyType:   nil,
 					ValueType: nil,
 				},
@@ -1593,6 +1594,7 @@ func Test18(t *testing.T) {
 						KeyType:     nil,
 						ValueType:   nil,
 					},
+					Name:      "",
 					KeyType:   nil,
 					ValueType: nil,
 				},
@@ -1675,6 +1677,7 @@ func Test19(t *testing.T) {
 						ValueType:   nil,
 					},
 					ElementType: nil,
+					Name:        "",
 				},
 				Value: &ast.HashMap{
 					Token: &lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
@@ -1754,4 +1757,113 @@ func Test19(t *testing.T) {
 		},
 	}
 	assert.Equal(t, "var a: int[bool] = {1: true, 2: false};while: (true): {if: (true): {break;}else: {continue;}}", program.String())
+}
+
+func Test20(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+					Value: "a",
+				},
+				Type: &ast.Type{
+					Kind:  ast.TypeHashMap,
+					Token: &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					KeyType: &ast.Type{
+						Kind:        ast.TypeBase,
+						Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Name:        "int",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
+					},
+					ValueType: &ast.Type{
+						Kind:  ast.TypeArray,
+						Token: &lexer.Token{Kind: lexer.TYPE, Value: "string"},
+						ElementType: &ast.Type{
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "string"},
+							Name:        "string",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
+						},
+						Name:      "",
+						KeyType:   nil,
+						ValueType: nil,
+					},
+					Name:        "",
+					ElementType: nil,
+				},
+				Value: nil,
+			},
+		},
+	}
+	assert.Equal(t, "var a: int[string[]];", program.String())
+}
+
+func Test21(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.VarAndConst{
+				Token: &lexer.Token{Kind: lexer.VAR, Value: "var"},
+				Name: &ast.Identifier{
+					Token: &lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
+					Value: "a",
+				},
+				Type: &ast.Type{
+					Kind:  ast.TypeHashMap,
+					Token: &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+					KeyType: &ast.Type{
+						Kind:  ast.TypeArray,
+						Token: &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						ElementType: &ast.Type{
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "int"},
+							Name:        "int",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
+						},
+						Name:      "",
+						KeyType:   nil,
+						ValueType: nil,
+					},
+					ValueType: &ast.Type{
+						Kind:  ast.TypeArray,
+						Token: &lexer.Token{Kind: lexer.TYPE, Value: "string"},
+						ElementType: &ast.Type{
+							Kind:        ast.TypeBase,
+							Token:       &lexer.Token{Kind: lexer.TYPE, Value: "string"},
+							Name:        "string",
+							ElementType: nil,
+							KeyType:     nil,
+							ValueType:   nil,
+						},
+						Name:      "",
+						KeyType:   nil,
+						ValueType: nil,
+					},
+					Name:        "",
+					ElementType: nil,
+				},
+				Value: nil,
+			},
+		},
+	}
+	assert.Equal(t, "var a: int[][string[]];", program.String())
+}
+
+func Test22(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.Return{
+				Token: &lexer.Token{Kind: lexer.RETURN, Value: "return"},
+				Value: nil,
+			},
+		},
+	}
+	assert.Equal(t, "return;", program.String())
 }

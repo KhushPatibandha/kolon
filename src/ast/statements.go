@@ -148,18 +148,18 @@ func (r *Return) String() string {
 	out.WriteString(r.TokenValue())
 	if r.Value != nil {
 		out.WriteString(": ")
-	}
-	if len(r.Value) > 1 {
-		out.WriteString("(")
-	}
-	for i, val := range r.Value {
-		out.WriteString(val.String())
-		if i != len(r.Value)-1 {
-			out.WriteString(", ")
+		if len(r.Value) > 1 {
+			out.WriteString("(")
 		}
-	}
-	if len(r.Value) > 1 {
-		out.WriteString(")")
+		for i, val := range r.Value {
+			out.WriteString(val.String())
+			if i != len(r.Value)-1 {
+				out.WriteString(", ")
+			}
+		}
+		if len(r.Value) > 1 {
+			out.WriteString(")")
+		}
 	}
 	out.WriteString(";")
 	return out.String()
