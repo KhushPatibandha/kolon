@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
+	"github.com/KhushPatibandha/Kolon/src/kType"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
 
@@ -18,8 +19,8 @@ func Test4(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "myVar"},
 					Value: "myVar",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 					Name:        "int",
 					ElementType: nil,
@@ -37,8 +38,8 @@ func Test4(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "someVar"},
 					Value: "someVar",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 					Name:        "int",
 					ElementType: nil,
@@ -56,8 +57,8 @@ func Test4(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "someString"},
 					Value: "someString",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "string"},
 					Name:        "string",
 					ElementType: nil,
@@ -75,8 +76,8 @@ func Test4(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "someFloat"},
 					Value: "someFloat",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "float"},
 					Name:        "float",
 					ElementType: nil,
@@ -94,8 +95,8 @@ func Test4(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "someBool"},
 					Value: "someBool",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "bool"},
 					Name:        "bool",
 					ElementType: nil,
@@ -113,8 +114,8 @@ func Test4(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "someChar"},
 					Value: "someChar",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "char"},
 					Name:        "char",
 					ElementType: nil,
@@ -153,8 +154,8 @@ func Test5(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -172,8 +173,8 @@ func Test5(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "bool"},
 								Name:        "bool",
 								ElementType: nil,
@@ -214,8 +215,8 @@ func Test6(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -233,8 +234,8 @@ func Test6(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -252,8 +253,8 @@ func Test6(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 								Value: "c",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -288,8 +289,8 @@ func Test6(t *testing.T) {
 											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
 											Value: "d",
 										},
-										Type: &ast.Type{
-											Kind:        ast.TypeBase,
+										Type: &ktype.Type{
+											Kind:        ktype.TypeBase,
 											Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 											Name:        "int",
 											ElementType: nil,
@@ -327,8 +328,8 @@ func Test6(t *testing.T) {
 													Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "e"},
 													Value: "e",
 												},
-												Type: &ast.Type{
-													Kind:        ast.TypeBase,
+												Type: &ktype.Type{
+													Kind:        ktype.TypeBase,
 													Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 													Name:        "int",
 													ElementType: nil,
@@ -355,8 +356,8 @@ func Test6(t *testing.T) {
 												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "f"},
 												Value: "f",
 											},
-											Type: &ast.Type{
-												Kind:        ast.TypeBase,
+											Type: &ktype.Type{
+												Kind:        ktype.TypeBase,
 												Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 												Name:        "int",
 												ElementType: nil,
@@ -387,8 +388,8 @@ func Test6(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 							Value: "a",
 						},
-						ParameterType: &ast.Type{
-							Kind:        ast.TypeBase,
+						ParameterType: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 							Name:        "int",
 							ElementType: nil,
@@ -401,8 +402,8 @@ func Test6(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 							Value: "b",
 						},
-						ParameterType: &ast.Type{
-							Kind:        ast.TypeBase,
+						ParameterType: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 							Name:        "int",
 							ElementType: nil,
@@ -411,9 +412,9 @@ func Test6(t *testing.T) {
 						},
 					},
 				},
-				ReturnTypes: []*ast.Type{
+				ReturnTypes: []*ktype.Type{
 					{
-						Kind:        ast.TypeBase,
+						Kind:        ktype.TypeBase,
 						Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 						Name:        "int",
 						ElementType: nil,
@@ -421,7 +422,7 @@ func Test6(t *testing.T) {
 						ValueType:   nil,
 					},
 					{
-						Kind:        ast.TypeBase,
+						Kind:        ktype.TypeBase,
 						Token:       lexer.Token{Kind: lexer.TYPE, Value: "bool"},
 						Name:        "bool",
 						ElementType: nil,
@@ -485,8 +486,8 @@ func Test7(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -524,8 +525,8 @@ func Test7(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -560,8 +561,8 @@ func Test7(t *testing.T) {
 											Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 											Value: "c",
 										},
-										Type: &ast.Type{
-											Kind:        ast.TypeBase,
+										Type: &ktype.Type{
+											Kind:        ktype.TypeBase,
 											Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 											Name:        "int",
 											ElementType: nil,
@@ -594,8 +595,8 @@ func Test7(t *testing.T) {
 												Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
 												Value: "d",
 											},
-											Type: &ast.Type{
-												Kind:        ast.TypeBase,
+											Type: &ktype.Type{
+												Kind:        ktype.TypeBase,
 												Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 												Name:        "int",
 												ElementType: nil,
@@ -649,8 +650,8 @@ func Test8(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -668,8 +669,8 @@ func Test8(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -687,8 +688,8 @@ func Test8(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 								Value: "c",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -726,8 +727,8 @@ func Test9(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -745,8 +746,8 @@ func Test9(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 								Value: "b",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -764,8 +765,8 @@ func Test9(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 								Value: "c",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -812,8 +813,8 @@ func Test9(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
 								Value: "d",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "string"},
 								Name:        "string",
 								ElementType: nil,
@@ -840,8 +841,8 @@ func Test9(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 							Value: "a",
 						},
-						ParameterType: &ast.Type{
-							Kind:        ast.TypeBase,
+						ParameterType: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 							Name:        "int",
 							ElementType: nil,
@@ -854,8 +855,8 @@ func Test9(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 							Value: "b",
 						},
-						ParameterType: &ast.Type{
-							Kind:  ast.TypeBase,
+						ParameterType: &ktype.Type{
+							Kind:  ktype.TypeBase,
 							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
 
 							Name:        "int",
@@ -865,9 +866,9 @@ func Test9(t *testing.T) {
 						},
 					},
 				},
-				ReturnTypes: []*ast.Type{
+				ReturnTypes: []*ktype.Type{
 					{
-						Kind:        ast.TypeBase,
+						Kind:        ktype.TypeBase,
 						Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 						Name:        "int",
 						ElementType: nil,
@@ -916,8 +917,8 @@ func Test10(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "x"},
 					Value: "x",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 					Name:        "int",
 					ElementType: nil,
@@ -935,8 +936,8 @@ func Test10(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "s"},
 					Value: "s",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 					Name:        "int",
 					ElementType: nil,
@@ -960,8 +961,8 @@ func Test10(t *testing.T) {
 						Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "i"},
 						Value: "i",
 					},
-					Type: &ast.Type{
-						Kind:        ast.TypeBase,
+					Type: &ktype.Type{
+						Kind:        ktype.TypeBase,
 						Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 						Name:        "int",
 						ElementType: nil,
@@ -1002,8 +1003,8 @@ func Test10(t *testing.T) {
 								Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 								Value: "a",
 							},
-							Type: &ast.Type{
-								Kind:        ast.TypeBase,
+							Type: &ktype.Type{
+								Kind:        ktype.TypeBase,
 								Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 								Name:        "int",
 								ElementType: nil,
@@ -1033,8 +1034,8 @@ func Test11(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "s"},
 					Value: "s",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 					Name:        "int",
 					ElementType: nil,
@@ -1075,8 +1076,8 @@ func Test12(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 							Value: "a",
 						},
-						Type: &ast.Type{
-							Kind:        ast.TypeBase,
+						Type: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 							Name:        "int",
 							ElementType: nil,
@@ -1094,8 +1095,8 @@ func Test12(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 							Value: "b",
 						},
-						Type: &ast.Type{
-							Kind:        ast.TypeBase,
+						Type: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 							Name:        "int",
 							ElementType: nil,
@@ -1125,8 +1126,8 @@ func Test13(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "d"},
 					Value: "d",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 					Name:        "int",
 					ElementType: nil,
@@ -1144,8 +1145,8 @@ func Test13(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 							Value: "a",
 						},
-						Type: &ast.Type{
-							Kind:        ast.TypeBase,
+						Type: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 							Name:        "int",
 							ElementType: nil,
@@ -1163,8 +1164,8 @@ func Test13(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 							Value: "b",
 						},
-						Type: &ast.Type{
-							Kind:        ast.TypeBase,
+						Type: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 							Name:        "int",
 							ElementType: nil,
@@ -1182,8 +1183,8 @@ func Test13(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 							Value: "c",
 						},
-						Type: &ast.Type{
-							Kind:        ast.TypeBase,
+						Type: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "string"},
 							Name:        "string",
 							ElementType: nil,
@@ -1227,8 +1228,8 @@ func Test14(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 					Value: "a",
 				},
-				Type: &ast.Type{
-					Kind:  ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:  ktype.TypeBase,
 					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
 
 					Name:        "int",
@@ -1244,8 +1245,8 @@ func Test14(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 					Value: "b",
 				},
-				Type: &ast.Type{
-					Kind:  ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:  ktype.TypeBase,
 					Token: lexer.Token{Kind: lexer.TYPE, Value: "string"},
 
 					Name:        "string",
@@ -1292,8 +1293,8 @@ func Test14(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 							Value: "c",
 						},
-						Type: &ast.Type{
-							Kind:  ast.TypeBase,
+						Type: &ktype.Type{
+							Kind:  ktype.TypeBase,
 							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
 
 							Name:        "int",
@@ -1324,8 +1325,8 @@ func Test15(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 					Value: "c",
 				},
-				Type: &ast.Type{
-					Kind:  ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:  ktype.TypeBase,
 					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
 
 					Name:        "int",
@@ -1344,8 +1345,8 @@ func Test15(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 							Value: "a",
 						},
-						Type: &ast.Type{
-							Kind:  ast.TypeBase,
+						Type: &ktype.Type{
+							Kind:  ktype.TypeBase,
 							Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
 
 							Name:        "int",
@@ -1368,8 +1369,8 @@ func Test15(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 							Value: "b",
 						},
-						Type: &ast.Type{
-							Kind:        ast.TypeBase,
+						Type: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 							Name:        "int",
 							ElementType: nil,
@@ -1421,8 +1422,8 @@ func Test16(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 					Value: "a",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 					Name:        "int",
 					ElementType: nil,
@@ -1437,8 +1438,8 @@ func Test16(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 					Value: "b",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 					Name:        "int",
 					ElementType: nil,
@@ -1492,8 +1493,8 @@ func Test16(t *testing.T) {
 							Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "c"},
 							Value: "c",
 						},
-						Type: &ast.Type{
-							Kind:        ast.TypeBase,
+						Type: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 							Name:        "int",
 							ElementType: nil,
@@ -1527,11 +1528,11 @@ func Test17(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 					Value: "a",
 				},
-				Type: &ast.Type{
-					Kind:  ast.TypeArray,
+				Type: &ktype.Type{
+					Kind:  ktype.TypeArray,
 					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					ElementType: &ast.Type{
-						Kind:        ast.TypeBase,
+					ElementType: &ktype.Type{
+						Kind:        ktype.TypeBase,
 						Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 						Name:        "int",
 						ElementType: nil,
@@ -1544,6 +1545,14 @@ func Test17(t *testing.T) {
 				},
 				Value: &ast.Array{
 					Token: lexer.Token{Kind: lexer.OPEN_SQUARE_BRACKET, Value: "["},
+					Type: &ktype.Type{
+						Kind:        ktype.TypeBase,
+						Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Name:        "int",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
+					},
 					Values: []ast.Expression{
 						&ast.Integer{
 							Token: lexer.Token{Kind: lexer.INT, Value: "1"},
@@ -1583,11 +1592,11 @@ func Test18(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 					Value: "a",
 				},
-				Type: &ast.Type{
-					Kind:  ast.TypeArray,
+				Type: &ktype.Type{
+					Kind:  ktype.TypeArray,
 					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					ElementType: &ast.Type{
-						Kind:        ast.TypeBase,
+					ElementType: &ktype.Type{
+						Kind:        ktype.TypeBase,
 						Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 						Name:        "int",
 						ElementType: nil,
@@ -1600,6 +1609,14 @@ func Test18(t *testing.T) {
 				},
 				Value: &ast.Array{
 					Token: lexer.Token{Kind: lexer.OPEN_SQUARE_BRACKET, Value: "["},
+					Type: &ktype.Type{
+						Kind:        ktype.TypeBase,
+						Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
+						Name:        "int",
+						ElementType: nil,
+						KeyType:     nil,
+						ValueType:   nil,
+					},
 					Values: []ast.Expression{
 						&ast.Integer{
 							Token: lexer.Token{Kind: lexer.INT, Value: "1"},
@@ -1622,8 +1639,8 @@ func Test18(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "b"},
 					Value: "b",
 				},
-				Type: &ast.Type{
-					Kind:        ast.TypeBase,
+				Type: &ktype.Type{
+					Kind:        ktype.TypeBase,
 					Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 					Name:        "int",
 					ElementType: nil,
@@ -1657,19 +1674,19 @@ func Test19(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 					Value: "a",
 				},
-				Type: &ast.Type{
-					Kind:  ast.TypeHashMap,
+				Type: &ktype.Type{
+					Kind:  ktype.TypeHashMap,
 					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					KeyType: &ast.Type{
-						Kind:        ast.TypeBase,
+					KeyType: &ktype.Type{
+						Kind:        ktype.TypeBase,
 						Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 						Name:        "int",
 						ElementType: nil,
 						KeyType:     nil,
 						ValueType:   nil,
 					},
-					ValueType: &ast.Type{
-						Kind:        ast.TypeBase,
+					ValueType: &ktype.Type{
+						Kind:        ktype.TypeBase,
 						Token:       lexer.Token{Kind: lexer.TYPE, Value: "bool"},
 						Name:        "bool",
 						ElementType: nil,
@@ -1681,16 +1698,16 @@ func Test19(t *testing.T) {
 				},
 				Value: &ast.HashMap{
 					Token: lexer.Token{Kind: lexer.OPEN_CURLY_BRACKET, Value: "{"},
-					KeyType: &ast.Type{
-						Kind:        ast.TypeBase,
+					KeyType: &ktype.Type{
+						Kind:        ktype.TypeBase,
 						Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 						Name:        "int",
 						ElementType: nil,
 						KeyType:     nil,
 						ValueType:   nil,
 					},
-					ValueType: &ast.Type{
-						Kind:        ast.TypeBase,
+					ValueType: &ktype.Type{
+						Kind:        ktype.TypeBase,
 						Token:       lexer.Token{Kind: lexer.TYPE, Value: "bool"},
 						Name:        "bool",
 						ElementType: nil,
@@ -1768,22 +1785,22 @@ func Test20(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 					Value: "a",
 				},
-				Type: &ast.Type{
-					Kind:  ast.TypeHashMap,
+				Type: &ktype.Type{
+					Kind:  ktype.TypeHashMap,
 					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					KeyType: &ast.Type{
-						Kind:        ast.TypeBase,
+					KeyType: &ktype.Type{
+						Kind:        ktype.TypeBase,
 						Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 						Name:        "int",
 						ElementType: nil,
 						KeyType:     nil,
 						ValueType:   nil,
 					},
-					ValueType: &ast.Type{
-						Kind:  ast.TypeArray,
+					ValueType: &ktype.Type{
+						Kind:  ktype.TypeArray,
 						Token: lexer.Token{Kind: lexer.TYPE, Value: "string"},
-						ElementType: &ast.Type{
-							Kind:        ast.TypeBase,
+						ElementType: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "string"},
 							Name:        "string",
 							ElementType: nil,
@@ -1813,14 +1830,14 @@ func Test21(t *testing.T) {
 					Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: "a"},
 					Value: "a",
 				},
-				Type: &ast.Type{
-					Kind:  ast.TypeHashMap,
+				Type: &ktype.Type{
+					Kind:  ktype.TypeHashMap,
 					Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-					KeyType: &ast.Type{
-						Kind:  ast.TypeArray,
+					KeyType: &ktype.Type{
+						Kind:  ktype.TypeArray,
 						Token: lexer.Token{Kind: lexer.TYPE, Value: "int"},
-						ElementType: &ast.Type{
-							Kind:        ast.TypeBase,
+						ElementType: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "int"},
 							Name:        "int",
 							ElementType: nil,
@@ -1831,11 +1848,11 @@ func Test21(t *testing.T) {
 						KeyType:   nil,
 						ValueType: nil,
 					},
-					ValueType: &ast.Type{
-						Kind:  ast.TypeArray,
+					ValueType: &ktype.Type{
+						Kind:  ktype.TypeArray,
 						Token: lexer.Token{Kind: lexer.TYPE, Value: "string"},
-						ElementType: &ast.Type{
-							Kind:        ast.TypeBase,
+						ElementType: &ktype.Type{
+							Kind:        ktype.TypeBase,
 							Token:       lexer.Token{Kind: lexer.TYPE, Value: "string"},
 							Name:        "string",
 							ElementType: nil,

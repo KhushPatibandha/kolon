@@ -3,6 +3,7 @@ package ast
 import (
 	"bytes"
 
+	ktype "github.com/KhushPatibandha/Kolon/src/kType"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
 
@@ -47,7 +48,7 @@ type Function struct {
 	Token       lexer.Token
 	Name        *Identifier
 	Parameters  []*FunctionParameter
-	ReturnTypes []*Type
+	ReturnTypes []*ktype.Type
 	Body        *Body
 }
 
@@ -94,7 +95,7 @@ func (f *Function) String() string {
 type VarAndConst struct {
 	Token lexer.Token
 	Name  *Identifier
-	Type  *Type
+	Type  *ktype.Type
 	Value Expression
 }
 
@@ -118,8 +119,9 @@ func (vac *VarAndConst) String() string {
 // Multi-Assignment
 // ------------------------------------------------------------------------------------------------------------------
 type MultiAssignment struct {
-	Token   lexer.Token
-	Objects []Statement
+	Token              lexer.Token
+	Objects            []Statement
+	SingleFunctionCall bool
 }
 
 func (ma *MultiAssignment) statementNode()     {}

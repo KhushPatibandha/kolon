@@ -2,6 +2,8 @@ package ast
 
 import (
 	"bytes"
+
+	ktype "github.com/KhushPatibandha/Kolon/src/kType"
 )
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -9,7 +11,7 @@ import (
 // ------------------------------------------------------------------------------------------------------------------
 type FunctionParameter struct {
 	ParameterName *Identifier
-	ParameterType *Type
+	ParameterType *ktype.Type
 }
 
 func (fp *FunctionParameter) TokenValue() string { return fp.ParameterName.Token.Value }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
+	"github.com/KhushPatibandha/Kolon/src/environment"
+	"github.com/KhushPatibandha/Kolon/src/kType"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
 
@@ -54,15 +56,15 @@ func (p *Parser) parseBody() (*ast.Body, error) {
 // ------------------------------------------------------------------------------------------------------------------
 // Types
 // ------------------------------------------------------------------------------------------------------------------
-func (p *Parser) parseType() (*ast.Type, error) {
+func (p *Parser) parseType() (*ktype.Type, error) {
 	if !p.expectedPeekToken(lexer.TYPE) {
 		return nil,
 			errors.New(
 				"expected a type, got: " + lexer.TokenKindString(p.peekToken.Kind),
 			)
 	}
-	stmt := &ast.Type{
-		Kind:        ast.TypeBase,
+	stmt := &ktype.Type{
+		Kind:        ktype.TypeBase,
 		Token:       p.currToken,
 		Name:        p.currToken.Value,
 		ElementType: nil,
@@ -74,8 +76,8 @@ func (p *Parser) parseType() (*ast.Type, error) {
 		p.nextToken()
 
 		if p.peekTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
-			stmt = &ast.Type{
-				Kind:        ast.TypeArray,
+			stmt = &ktype.Type{
+				Kind:        ktype.TypeArray,
 				Token:       stmt.Token,
 				ElementType: stmt,
 				Name:        "",
@@ -103,8 +105,8 @@ func (p *Parser) parseType() (*ast.Type, error) {
 						lexer.TokenKindString(p.peekToken.Kind),
 				)
 		}
-		stmt = &ast.Type{
-			Kind:        ast.TypeHashMap,
+		stmt = &ktype.Type{
+			Kind:        ktype.TypeHashMap,
 			Token:       stmt.Token,
 			KeyType:     stmt,
 			ValueType:   val,
@@ -142,22 +144,20 @@ func (p *Parser) parseExpressionStatement() (ast.Statement, error) {
 		return nil, err
 	}
 
-	if !p.inTesting {
-		switch t := exp.(type) {
-		case *ast.CallExpression:
-			stmt.Expression = t
-		case *ast.Postfix:
-			stmt.Expression = t
-		case *ast.Assignment:
-			stmt.Expression = t
-		default:
-			return nil,
-				errors.New(
-					"expected a function call, postfix expression or an assignment " +
-						"expression for expressions as statements, got: " +
-						fmt.Sprintf("%T", exp),
-				)
-		}
+	switch t := exp.(type) {
+	case *ast.CallExpression:
+		stmt.Expression = t
+	case *ast.Postfix:
+		stmt.Expression = t
+	case *ast.Assignment:
+		stmt.Expression = t
+	default:
+		return nil,
+			errors.New(
+				"expected a function call, postfix expression or an assignment " +
+					"expression for expressions as statements, got: " +
+					fmt.Sprintf("%T", exp),
+			)
 	}
 
 	if !p.expectedPeekToken(lexer.SEMI_COLON) {
@@ -192,30 +192,6 @@ func (p *Parser) parseVarConst() (ast.Statement, error) {
 		return p.parseMultiAssign(list)
 	}
 
-	switch stmt.Type.Kind {
-	case ast.TypeArray:
-		if !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
-			return nil,
-				errors.New(
-					"array `" + stmt.Name.Value + "` must always be " +
-						"initialized while declaring, for empty array use `[]`")
-		}
-	case ast.TypeHashMap:
-		if !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
-			return nil,
-				errors.New(
-					"hashmap `" + stmt.Name.Value +
-						"` must always be initialized while declaring, for empty hashmap use `{}`")
-		}
-	default:
-		if stmt.Token.Kind == lexer.CONST && !p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
-			return nil,
-				errors.New(
-					"const variable `" + stmt.Name.Value +
-						"` must be initialized while declaring")
-		}
-	}
-
 	var value ast.Expression
 	if p.peekTokenIsOk(lexer.EQUAL_ASSIGN) {
 		p.nextToken()
@@ -224,12 +200,8 @@ func (p *Parser) parseVarConst() (ast.Statement, error) {
 		if err != nil {
 			return nil, err
 		}
-		p.assignTypeToValue(value, stmt.Type)
 	} else {
-		value, err = p.assignDefaultValue(stmt.Type)
-		if err != nil {
-			return nil, err
-		}
+		value = p.assignDefaultValue(stmt.Type)
 	}
 	stmt.Value = value
 
@@ -240,6 +212,11 @@ func (p *Parser) parseVarConst() (ast.Statement, error) {
 					"variable declaration, got: " +
 					lexer.TokenKindString(p.peekToken.Kind),
 			)
+	}
+
+	err = typeCheckVarAndConst(stmt, p.stack.Top())
+	if err != nil {
+		return nil, err
 	}
 	return stmt, nil
 }
@@ -270,6 +247,7 @@ func (p *Parser) parseVarConstSig() (*ast.VarAndConst, error) {
 		return nil, err
 	}
 	stmt.Type = typ
+	stmt.Name.Type = typ
 
 	return stmt, nil
 }
@@ -323,11 +301,19 @@ func (p *Parser) parseMultiAssign(list []ast.Statement) (*ast.MultiAssignment, e
 	if err != nil {
 		return nil, err
 	}
+	if len(values) == 1 {
+		stmt.SingleFunctionCall = true
+	}
 
 	if err := p.matchAssignments(list, values); err != nil {
 		return nil, err
 	}
 	stmt.Objects = list
+
+	err = typeCheckMultiAssign(stmt, p.stack.Top())
+	if err != nil {
+		return nil, err
+	}
 	return stmt, nil
 }
 
@@ -396,21 +382,13 @@ func (p *Parser) matchAssignments(left []ast.Statement,
 	right []ast.Expression,
 ) error {
 	if len(right) == 1 {
-		call, ok := right[0].(*ast.CallExpression)
-		if !ok {
-			return errors.New(
-				"number of expressions on the right side of multi-assignment = 1, " +
-					"expected a function call, got: " +
-					fmt.Sprintf("%T", right[0]),
-			)
-		}
 		for _, ele := range left {
 			switch t := ele.(type) {
 			case *ast.VarAndConst:
-				t.Value = call
+				t.Value = right[0]
 			case *ast.ExpressionStatement:
 				if exp, ok := t.Expression.(*ast.Assignment); ok {
-					exp.Right = call
+					exp.Right = right[0]
 				}
 			}
 		}
@@ -420,20 +398,17 @@ func (p *Parser) matchAssignments(left []ast.Statement,
 	if len(left) != len(right) {
 		return errors.New(
 			"number of expression on the right side of multi-assignment do not " +
-				"match the number of declarations on the left, left=" +
-				fmt.Sprint(len(left)) + ", right=" + fmt.Sprint(len(right)),
+				"match the number of declarations on the left, left: " +
+				fmt.Sprint(len(left)) + ", right: " + fmt.Sprint(len(right)),
 		)
 	}
 
 	for i, ele := range left {
 		switch t := ele.(type) {
 		case *ast.VarAndConst:
-			p.assignTypeToValue(right[i], t.Type)
 			t.Value = right[i]
 		case *ast.ExpressionStatement:
 			if exp, ok := t.Expression.(*ast.Assignment); ok {
-				// TODO: check if we need to assignTypeToValue in case of assign x = [1, 2, 3]
-				// yes we do, look into this
 				exp.Right = right[i]
 			}
 		}
@@ -467,14 +442,16 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 	}
 	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Value}
 
-	if existing, ok := p.functionMap[stmt.Name.Value]; ok && existing.Body != nil && !p.inTesting {
+	if existing, ok := p.env.GetFunc(stmt.Name.Value); ok &&
+		existing.Func.Function.Body != nil && !p.inTesting {
 		return nil,
 			errors.New(
 				"can't declare a function twice, function with the same name `" +
 					stmt.Name.Value + "` already exists",
 			)
 	}
-	if _, ok := p.builtinMap[stmt.Name.Value]; ok && !p.inTesting {
+	if existing, ok := p.env.GetFunc(stmt.Name.Value); ok &&
+		existing.Func.Builtin && !p.inTesting {
 		return nil,
 			errors.New(
 				"can't override a built-in function, function `" +
@@ -496,16 +473,30 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 		stmt.ReturnTypes = ret
 	} else if p.peekTokenIsOk(lexer.SEMI_COLON) {
 		p.nextToken()
-		if _, ok := p.functionMap[stmt.Name.Value]; ok {
+		if _, ok := p.env.GetFunc(stmt.Name.Value); ok {
 			return nil,
 				errors.New(
-					"can't declare a function twice, function with the same name `" +
+					"can't declare a function twice, function with the same name. `" +
 						stmt.Name.Value + "` already exists",
 				)
 		}
-		p.functionMap[stmt.Name.Value] = stmt
+
+		funcLocalEnv := p.BootstrapFuncEnv(stmt)
+		p.env.Set(&environment.Symbol{
+			IdentType: environment.FUNCTION,
+			Ident:     stmt.Name,
+			Func: &environment.FuncInfo{
+				Function: stmt,
+				Builtin:  false,
+			},
+			Env:  funcLocalEnv,
+			Type: nil,
+		})
+
 		return stmt, nil
 	}
+
+	p.currFunction = stmt
 
 	if !p.expectedPeekToken(lexer.OPEN_CURLY_BRACKET) {
 		return nil,
@@ -516,8 +507,8 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 			)
 	}
 
-	existing, ok := p.functionMap[stmt.Name.Value]
-	if ok && !p.compareFunctionSig(existing, stmt) {
+	existing, ok := p.env.GetFunc(stmt.Name.Value)
+	if ok && !p.compareFunctionSig(existing.Func.Function, stmt) {
 		return nil,
 			errors.New(
 				"function signature of " + stmt.Name.Value +
@@ -525,21 +516,34 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 			)
 	}
 
+	if !ok {
+		funcLocalEnv := p.BootstrapFuncEnv(stmt)
+		p.env.Set(&environment.Symbol{
+			IdentType: environment.FUNCTION,
+			Ident:     stmt.Name,
+			Func: &environment.FuncInfo{
+				Function: stmt,
+				Builtin:  false,
+			},
+			Type: nil,
+			Env:  funcLocalEnv,
+		})
+	}
+	f, _ := p.env.GetFunc(stmt.Name.Value)
+
 	p.inFunction = true
+	p.stack.Push(f.Env)
 	funBody, err := p.parseBody()
 	if err != nil {
 		return nil, err
 	}
+	p.stack.Pop()
 	p.inFunction = false
+	p.currFunction = nil
 
-	if ok {
-		existing.Body = funBody
-		return existing, nil
-	}
+	f.Func.Function.Body = funBody
 
-	stmt.Body = funBody
-	p.functionMap[stmt.Name.Value] = stmt
-	return stmt, nil
+	return f.Func.Function, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -617,7 +621,7 @@ func (p *Parser) parseFunctionParams() ([]*ast.FunctionParameter, error) {
 // ------------------------------------------------------------------------------------------------------------------
 // Function Return Types
 // ------------------------------------------------------------------------------------------------------------------
-func (p *Parser) parseFunctionReturnTypes() ([]*ast.Type, error) {
+func (p *Parser) parseFunctionReturnTypes() ([]*ktype.Type, error) {
 	if !p.expectedPeekToken(lexer.COLON) {
 		return nil,
 			errors.New(
@@ -639,7 +643,7 @@ func (p *Parser) parseFunctionReturnTypes() ([]*ast.Type, error) {
 			)
 	}
 
-	var returnTypes []*ast.Type
+	var returnTypes []*ktype.Type
 
 	for {
 		retType, err := p.parseType()
@@ -706,6 +710,11 @@ func (p *Parser) parseIf() (*ast.If, error) {
 	}
 	stmt.Condition = condition
 
+	err = typeCheckBoolCon(stmt.Condition, "if")
+	if err != nil {
+		return nil, err
+	}
+
 	if !p.expectedPeekToken(lexer.COLON) {
 		return nil,
 			errors.New(
@@ -721,10 +730,15 @@ func (p *Parser) parseIf() (*ast.If, error) {
 			)
 	}
 
+	ifLocalEnv := environment.NewEnclosedEnvironment(p.stack.Top())
+	p.stack.Push(ifLocalEnv)
+
 	body, err := p.parseBody()
 	if err != nil {
 		return nil, err
 	}
+
+	p.stack.Pop()
 	stmt.Body = body
 
 	// ------------------------------------------------------------------------------------------------------------------
@@ -755,6 +769,10 @@ func (p *Parser) parseIf() (*ast.If, error) {
 				return nil, err
 			}
 			elseIfStmt.Condition = elseIfCondition
+			err = typeCheckBoolCon(elseIfStmt.Condition, "else if")
+			if err != nil {
+				return nil, err
+			}
 
 			if !p.expectedPeekToken(lexer.COLON) {
 				return nil,
@@ -773,10 +791,15 @@ func (p *Parser) parseIf() (*ast.If, error) {
 					)
 			}
 
+			ifElseLocalEnv := environment.NewEnclosedEnvironment(p.stack.Top())
+			p.stack.Push(ifElseLocalEnv)
+
 			elseIfBody, err := p.parseBody()
 			if err != nil {
 				return nil, err
 			}
+
+			p.stack.Pop()
 			elseIfStmt.Body = elseIfBody
 			elseIfList = append(elseIfList, elseIfStmt)
 		}
@@ -808,10 +831,16 @@ func (p *Parser) parseIf() (*ast.If, error) {
 				)
 		}
 
+		elseLocalEnv := environment.NewEnclosedEnvironment(p.stack.Top())
+		p.stack.Push(elseLocalEnv)
+
 		elseBody, err := p.parseBody()
 		if err != nil {
 			return nil, err
 		}
+
+		p.stack.Pop()
+
 		elseStmt.Body = elseBody
 		stmt.Alternate = elseStmt
 	} else {
@@ -886,9 +915,14 @@ func (p *Parser) parseReturn() (*ast.Return, error) {
 				errors.New(
 					"expected a semicolon (`;`), got: " +
 						lexer.TokenKindString(p.peekToken.Kind) +
-						". To return multiple values, use `return: (val1, val2, ...)`",
+						". to return multiple values, use `return: (val1, val2, ...)`",
 				)
 		}
+	}
+
+	err := typeCheckReturn(stmt, p.currFunction)
+	if err != nil {
+		return nil, err
 	}
 
 	if !p.expectedPeekToken(lexer.SEMI_COLON) {
@@ -926,39 +960,13 @@ func (p *Parser) parseForLoop() (*ast.ForLoop, error) {
 			)
 	}
 
+	forLoopLocalEnv := environment.NewEnclosedEnvironment(p.stack.Top())
+	p.stack.Push(forLoopLocalEnv)
+
 	p.nextToken()
 	left, err := p.parseStatement()
 	if err != nil {
 		return nil, err
-	}
-	if _, ok := left.(*ast.VarAndConst); !ok {
-		if _, ok := left.(*ast.ExpressionStatement); !ok {
-			return nil,
-				errors.New(
-					"expected a `var` statement or an assignment expression " +
-						"after an open bracket (`(`) in `for loop` statement, got: " +
-						fmt.Sprintf("%T", left),
-				)
-		} else {
-			assign, ok := left.(*ast.ExpressionStatement).Expression.(*ast.Assignment)
-			if !ok {
-				return nil,
-					errors.New(
-						"expected a `var` statement or an assignment expression " +
-							"after an open bracket (`(`) in `for loop` statement, got: " +
-							fmt.Sprintf("%T", left.(*ast.ExpressionStatement).Expression),
-					)
-			} else {
-				if assign.Operator != "=" {
-					return nil,
-						errors.New(
-							"expected assignment-equal operator (`=`) in assignment " +
-								"expression in `for loop` statement, got: " +
-								assign.Operator,
-						)
-				}
-			}
-		}
 	}
 	stmt.Left = left
 
@@ -1008,6 +1016,12 @@ func (p *Parser) parseForLoop() (*ast.ForLoop, error) {
 					lexer.TokenKindString(p.peekToken.Kind),
 			)
 	}
+
+	err = typeCheckForLoop(stmt, forLoopLocalEnv)
+	if err != nil {
+		return nil, err
+	}
+
 	if !p.expectedPeekToken(lexer.COLON) {
 		return nil,
 			errors.New(
@@ -1028,6 +1042,7 @@ func (p *Parser) parseForLoop() (*ast.ForLoop, error) {
 	}
 	stmt.Body = body
 
+	p.stack.Pop()
 	p.inLoop = false
 	return stmt, nil
 }
@@ -1057,11 +1072,20 @@ func (p *Parser) parseWhileLoop() (*ast.WhileLoop, error) {
 			)
 	}
 	p.nextToken()
+
+	whileLoopLocalEnv := environment.NewEnclosedEnvironment(p.stack.Top())
+	p.stack.Push(whileLoopLocalEnv)
+
 	condition, err := p.parseExpression(LOWEST)
 	if err != nil {
 		return nil, err
 	}
 	stmt.Condition = condition
+
+	err = typeCheckBoolCon(stmt.Condition, "while")
+	if err != nil {
+		return nil, err
+	}
 
 	if !p.expectedPeekToken(lexer.CLOSE_BRACKET) {
 		return nil,
@@ -1090,6 +1114,7 @@ func (p *Parser) parseWhileLoop() (*ast.WhileLoop, error) {
 	}
 	stmt.Body = body
 
+	p.stack.Pop()
 	p.inLoop = false
 	return stmt, nil
 }

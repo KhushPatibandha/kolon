@@ -1,6 +1,10 @@
 package ast
 
-import "bytes"
+import (
+	"bytes"
+
+	ktype "github.com/KhushPatibandha/Kolon/src/kType"
+)
 
 type Program struct{ Statements []Statement }
 
@@ -17,6 +21,7 @@ type Statement interface {
 // ------------------------------------------------------------------------------------------------------------------
 type Expression interface {
 	Node
+	GetType() *ktype.TypeCheckResult
 	expressionNode()
 }
 

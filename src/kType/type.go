@@ -1,4 +1,4 @@
-package ast
+package ktype
 
 import (
 	"fmt"
@@ -16,6 +16,11 @@ const (
 	TypeArray                   // For Array types
 	TypeHashMap                 // For HashMap types
 )
+
+type TypeCheckResult struct {
+	Types   []*Type
+	TypeLen int
+}
 
 type Type struct {
 	Kind  TypeKind
@@ -45,6 +50,7 @@ func (t *Type) String() string {
 	}
 }
 
+// TODO: what if the map or array are defined with just [] or {}, it will be nil
 func (t *Type) Equals(other *Type) bool {
 	if other == nil || t.Kind != other.Kind {
 		return false
@@ -56,5 +62,18 @@ func (t *Type) Equals(other *Type) bool {
 		return t.ElementType.Equals(other.ElementType)
 	default:
 		return t.KeyType.Equals(other.KeyType) && t.ValueType.Equals(other.ValueType)
+	}
+}
+
+func (t *Type) TypeKindToString() string {
+	switch t.Kind {
+	case TypeBase:
+		return "TypeBase"
+	case TypeArray:
+		return "TypeArray"
+	case TypeHashMap:
+		return "TypeHashMap"
+	default:
+		return "UnknownTypeKind"
 	}
 }

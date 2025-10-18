@@ -115,7 +115,14 @@ func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
 // Identifier
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseIdentifier() (ast.Expression, error) {
-	return &ast.Identifier{Token: p.currToken, Value: p.currToken.Value}, nil
+	exp := &ast.Identifier{Token: p.currToken, Value: p.currToken.Value}
+	// TODO: investigate this
+	// t, err := typeCheckIdent(exp, p.stack.Top())
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// exp.Type = t.Types[0]
+	return exp, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -128,6 +135,11 @@ func (p *Parser) parseInteger() (ast.Expression, error) {
 		return nil, errors.New("could not parse " + p.currToken.Value + " as integer")
 	}
 	exp.Value = val
+	t, err := typeCheckInteger()
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
 	return exp, nil
 }
 
@@ -141,6 +153,11 @@ func (p *Parser) parseFloat() (ast.Expression, error) {
 		return nil, errors.New("could not parse " + p.currToken.Value + " as float")
 	}
 	exp.Value = val
+	t, err := typeCheckFloat()
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
 	return exp, nil
 }
 
@@ -148,25 +165,44 @@ func (p *Parser) parseFloat() (ast.Expression, error) {
 // Boolean
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseBoolean() (ast.Expression, error) {
-	exp := p.currToken.Value
-	if exp == "true" {
-		return &ast.Bool{Token: p.currToken, Value: true}, nil
+	exp := &ast.Bool{Token: p.currToken}
+	if p.currToken.Value == "true" {
+		exp.Value = true
+	} else {
+		exp.Value = false
 	}
-	return &ast.Bool{Token: p.currToken, Value: false}, nil
+	t, err := typeCheckBool()
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
+	return exp, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
 // String
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseString() (ast.Expression, error) {
-	return &ast.String{Token: p.currToken, Value: p.currToken.Value}, nil
+	exp := &ast.String{Token: p.currToken, Value: p.currToken.Value}
+	t, err := typeCheckString()
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
+	return exp, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
 // Char
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseChar() (ast.Expression, error) {
-	return &ast.Char{Token: p.currToken, Value: p.currToken.Value}, nil
+	exp := &ast.Char{Token: p.currToken, Value: p.currToken.Value}
+	t, err := typeCheckChar()
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
+	return exp, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -180,7 +216,12 @@ func (p *Parser) parseHashMap() (ast.Expression, error) {
 					lexer.TokenKindString(p.currToken.Kind),
 			)
 	}
-	exp := &ast.HashMap{Token: p.currToken, KeyType: nil, ValueType: nil, Pairs: map[ast.BaseType]ast.Expression{}}
+	exp := &ast.HashMap{
+		Token:     p.currToken,
+		KeyType:   nil,
+		ValueType: nil,
+		Pairs:     map[ast.BaseType]ast.Expression{},
+	}
 	p.nextToken()
 	if p.currTokenIsOk(lexer.CLOSE_CURLY_BRACKET) {
 		return exp, nil
@@ -236,6 +277,12 @@ func (p *Parser) parseHashMap() (ast.Expression, error) {
 				)
 		}
 	}
+	t, err := typeCheckHashMap(exp, p.stack.Top())
+	if err != nil {
+		return nil, err
+	}
+	exp.KeyType = t.Types[0].KeyType
+	exp.ValueType = t.Types[0].ValueType
 	return exp, nil
 }
 
@@ -291,6 +338,11 @@ func (p *Parser) parseArray() (ast.Expression, error) {
 				)
 		}
 	}
+	t, err := typeCheckArray(exp, p.stack.Top())
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
 	return exp, nil
 }
 
@@ -305,6 +357,11 @@ func (p *Parser) parsePrefix() (ast.Expression, error) {
 		return nil, err
 	}
 	exp.Right = right
+	t, err := typeCheckPrefix(exp, p.stack.Top())
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
 	return exp, nil
 }
 
@@ -320,6 +377,11 @@ func (p *Parser) parseInfix(left ast.Expression) (ast.Expression, error) {
 		return nil, err
 	}
 	exp.Right = right
+	t, err := typeCheckInfix(exp, p.stack.Top())
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
 	return exp, nil
 }
 
@@ -327,7 +389,13 @@ func (p *Parser) parseInfix(left ast.Expression) (ast.Expression, error) {
 // Postfix
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parsePostfix(left ast.Expression) (ast.Expression, error) {
-	return &ast.Postfix{Token: p.currToken, Operator: p.currToken.Value, Left: left}, nil
+	exp := &ast.Postfix{Token: p.currToken, Operator: p.currToken.Value, Left: left}
+	t, err := typeCheckPostfix(exp, p.stack.Top())
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
+	return exp, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -348,6 +416,11 @@ func (p *Parser) parseAssignment(left ast.Expression) (ast.Expression, error) {
 		return nil, err
 	}
 	exp.Right = right
+	t, err := typeCheckAssignment(exp, p.stack.Top())
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
 	return exp, nil
 }
 
@@ -368,6 +441,11 @@ func (p *Parser) parseCall(left ast.Expression) (ast.Expression, error) {
 		return nil, err
 	}
 	exp.Args = args
+	t, err := typeCheckCallExp(exp, p.stack.Top())
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types
 	return exp, nil
 }
 
@@ -423,6 +501,11 @@ func (p *Parser) parseIndex(left ast.Expression) (ast.Expression, error) {
 					lexer.TokenKindString(p.peekToken.Kind),
 			)
 	}
+	t, err := typeCheckIndexExp(exp, p.stack.Top())
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
 	return exp, nil
 }
 

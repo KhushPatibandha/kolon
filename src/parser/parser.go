@@ -2,6 +2,7 @@ package parser
 
 import (
 	"github.com/KhushPatibandha/Kolon/src/ast"
+	"github.com/KhushPatibandha/Kolon/src/environment"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
 
@@ -11,51 +12,38 @@ type Parser struct {
 	currToken lexer.Token
 	peekToken lexer.Token
 
-	functionMap map[string]*ast.Function
-	builtinMap  map[string]bool
-	inLoop      bool
-	inFunction  bool
+	inLoop     bool
+	inFunction bool
 
 	inTesting bool
 
 	prefixParseFns  map[lexer.TokenKind]prefixParseFn
 	infixParseFns   map[lexer.TokenKind]infixParseFn
 	postfixParseFns map[lexer.TokenKind]postfixParseFn
+
+	env          *environment.Environment
+	stack        *environment.Stack
+	currFunction *ast.Function
 }
 
 func New(tokens []lexer.Token, inTesting bool) *Parser {
 	p := &Parser{
-		tokens:      tokens,
-		tokenPtr:    1,
-		peekToken:   tokens[0],
-		inTesting:   inTesting,
-		inLoop:      false,
-		inFunction:  false,
-		functionMap: make(map[string]*ast.Function),
-		builtinMap: map[string]bool{
-			"print":       true,
-			"println":     true,
-			"scan":        true,
-			"scanln":      true,
-			"len":         true,
-			"toString":    true,
-			"toFloat":     true,
-			"toInt":       true,
-			"push":        true,
-			"pop":         true,
-			"insert":      true,
-			"remove":      true,
-			"getIndex":    true,
-			"keys":        true,
-			"values":      true,
-			"containsKey": true,
-			"typeOf":      true,
-			"slice":       true,
-		},
+		tokens:          tokens,
+		tokenPtr:        1,
+		peekToken:       tokens[0],
+		inTesting:       inTesting,
+		inLoop:          false,
+		inFunction:      false,
+		prefixParseFns:  make(map[lexer.TokenKind]prefixParseFn),
+		infixParseFns:   make(map[lexer.TokenKind]infixParseFn),
+		postfixParseFns: make(map[lexer.TokenKind]postfixParseFn),
+		env:             environment.NewEnvironment(),
+		stack:           environment.NewStack(),
 	}
 	p.nextToken()
+	p.stack.Push(p.env)
+	p.loadBuiltins()
 
-	p.prefixParseFns = make(map[lexer.TokenKind]prefixParseFn)
 	p.addPrefix(lexer.IDENTIFIER, p.parseIdentifier)
 	p.addPrefix(lexer.INT, p.parseInteger)
 	p.addPrefix(lexer.FLOAT, p.parseFloat)
@@ -68,7 +56,6 @@ func New(tokens []lexer.Token, inTesting bool) *Parser {
 	p.addPrefix(lexer.OPEN_SQUARE_BRACKET, p.parseArray)
 	p.addPrefix(lexer.OPEN_CURLY_BRACKET, p.parseHashMap)
 
-	p.infixParseFns = make(map[lexer.TokenKind]infixParseFn)
 	p.addInfix(lexer.PLUS, p.parseInfix)
 	p.addInfix(lexer.DASH, p.parseInfix)
 	p.addInfix(lexer.SLASH, p.parseInfix)
@@ -93,7 +80,6 @@ func New(tokens []lexer.Token, inTesting bool) *Parser {
 	p.addInfix(lexer.PERCENT_EQUAL, p.parseAssignment)
 	p.addInfix(lexer.OPEN_SQUARE_BRACKET, p.parseIndex)
 
-	p.postfixParseFns = make(map[lexer.TokenKind]postfixParseFn)
 	p.addPostfix(lexer.PLUS_PLUS, p.parsePostfix)
 	p.addPostfix(lexer.MINUS_MINUS, p.parsePostfix)
 

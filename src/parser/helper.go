@@ -2,8 +2,11 @@ package parser
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
+	"github.com/KhushPatibandha/Kolon/src/environment"
+	ktype "github.com/KhushPatibandha/Kolon/src/kType"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
 
@@ -86,35 +89,115 @@ func (p *Parser) compareFunctionSig(f1, f2 *ast.Function) bool {
 	return true
 }
 
-func (p *Parser) assignDefaultValue(t *ast.Type) (ast.Expression, error) {
-	switch t.Name {
-	case "int":
-		return &ast.Integer{Token: lexer.Token{Kind: lexer.INT, Value: "0"}, Value: 0}, nil
-	case "float":
-		return &ast.Float{Token: lexer.Token{Kind: lexer.FLOAT, Value: "0.0"}, Value: 0.0}, nil
-	case "bool":
-		return &ast.Bool{Token: lexer.Token{Kind: lexer.BOOL, Value: "false"}, Value: false}, nil
-	case "string":
-		return &ast.String{Token: lexer.Token{Kind: lexer.STRING, Value: "\"\""}, Value: "\"\""}, nil
-	case "char":
-		return &ast.Char{Token: lexer.Token{Kind: lexer.CHAR, Value: "''"}, Value: "''"}, nil
+func (p *Parser) assignDefaultValue(t *ktype.Type) ast.Expression {
+	switch t.Kind {
+	case ktype.TypeBase:
+		switch t.Name {
+		case "int":
+			return &ast.Integer{
+				Token: lexer.Token{Kind: lexer.INT, Value: "0"},
+				Value: 0,
+				Type: &ktype.Type{
+					Kind: ktype.TypeBase,
+					Name: "int",
+				},
+			}
+		case "float":
+			return &ast.Float{
+				Token: lexer.Token{Kind: lexer.FLOAT, Value: "0.0"},
+				Value: 0.0,
+				Type: &ktype.Type{
+					Kind: ktype.TypeBase,
+					Name: "float",
+				},
+			}
+		case "bool":
+			return &ast.Bool{
+				Token: lexer.Token{Kind: lexer.BOOL, Value: "false"},
+				Value: false,
+				Type: &ktype.Type{
+					Kind: ktype.TypeBase,
+					Name: "bool",
+				},
+			}
+		case "string":
+			return &ast.String{
+				Token: lexer.Token{Kind: lexer.STRING, Value: "\"\""},
+				Value: "\"\"",
+				Type: &ktype.Type{
+					Kind: ktype.TypeBase,
+					Name: "string",
+				},
+			}
+		case "char":
+			return &ast.Char{
+				Token: lexer.Token{Kind: lexer.CHAR, Value: "''"},
+				Value: "''",
+				Type: &ktype.Type{
+					Kind: ktype.TypeBase,
+					Name: "string",
+				},
+			}
+		default:
+			return nil
+		}
 	default:
-		return nil, errors.New("can only assign default values to `int`, `float`, `bool`, `string` and `char` types")
+		return nil
 	}
 }
 
-func (p *Parser) assignTypeToValue(exp ast.Expression, t *ast.Type) {
-	switch t.Kind {
-	case ast.TypeArray:
-		if arr, ok := exp.(*ast.Array); ok {
-			arr.Type = t.ElementType
-		}
-	case ast.TypeHashMap:
-		if hash, ok := exp.(*ast.HashMap); ok {
-			hash.KeyType = t.KeyType
-			hash.ValueType = t.ValueType
-		}
-	default:
-		return
+func (p *Parser) loadBuiltins() {
+	builtins := []string{
+		"print", "println", "scan", "scanln", "len", "toString", "toFloat", "toInt",
+		"push", "pop", "insert", "remove", "getIndex", "keys", "values", "containsKey",
+		"typeOf", "slice",
 	}
+	for _, name := range builtins {
+		p.env.FuncNameSpace[name] = &environment.Symbol{
+			IdentType: environment.FUNCTION,
+			Ident: &ast.Identifier{
+				Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: name},
+				Value: name,
+			},
+			Func: &environment.FuncInfo{
+				Builtin:  true,
+				Function: nil,
+			},
+			Type: nil,
+			Env:  nil,
+		}
+	}
+}
+
+func (p *Parser) BootstrapFuncEnv(stmt *ast.Function) *environment.Environment {
+	funcLocalEnv := environment.NewEnclosedEnvironment(p.env)
+	for _, param := range stmt.Parameters {
+		funcLocalEnv.Set(&environment.Symbol{
+			IdentType: environment.VAR,
+			Ident:     param.ParameterName,
+			Type:      param.ParameterType,
+			Func:      nil,
+			Env:       nil,
+		})
+	}
+	return funcLocalEnv
+}
+
+func typeCheckBoolCon(exp ast.Expression, keyword string) error {
+	con := exp.GetType()
+	if con.TypeLen != 1 {
+		return errors.New(
+			"`" + keyword + "` condition must evaluate to a single boolean value, got: " +
+				strconv.Itoa(con.TypeLen) +
+				". in case of call expression, it must return a single value",
+		)
+	}
+	b, _ := typeCheckBool()
+	if !con.Types[0].Equals(b.Types[0]) {
+		return errors.New(
+			"condition for `" + keyword + "` statement must always result in a boolean value, got: " +
+				con.Types[0].String(),
+		)
+	}
+	return nil
 }
