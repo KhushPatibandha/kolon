@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,161 +11,175 @@ import (
 )
 
 func Test23(t *testing.T) {
-	input := "var x: int = 10;var y: int = 100;var foobar: int = 10000;const age: int = 100;const heh: string = \"hello\";"
-	helper(t, []string{input})
+	input := map[string]bool{
+		"var x: int = 10;var y: int = 100;var foobar: int = 10000;const age: int = 100;const heh: string = \"hello\";": true,
+
+		"fun: test(): (int) {return: 5;}fun: test1(): (int) {return: 100;}fun: test2(): (int) " +
+			"{return: 312413;}fun: test3(): (int, bool, string) {return: ((5 + 1), true, \"hello\");}": true,
+
+		"fun: hehe(name: string, age: int): (bool, int) {var a: int = 5;return: (true, 5);}": true,
+
+		"fun: main() {var a: int = 10;var b: int = 20;var c: int = 30;if: ((a > b)): {var d: int = 40;}else " +
+			"if: ((b > c)): {var e: int = 50;}else: {var f: int = 60;}}fun: add(a: int, b: int): (int) {return: (a + b);}": true,
+
+		"var a: int = 0;var b: int = 0;a = b;": true,
+
+		"var a: int = 0;a = 10;": true,
+
+		"var a: bool = true;var b: int = 0;a = (!true);b = (-1);": true,
+
+		"var a: bool = true;": true,
+
+		"var b: bool = false;": true,
+
+		"fun: add(a: int, b: int) {add(a, b);}": true,
+
+		"fun: add(c: int, d: int) {var a: int = c;var b: int = d;add(a, b);}": true,
+
+		"fun: main() {var a: int = 1;var b: int = a;}": true,
+
+		"var a: int = 1;(a++);": true,
+
+		"var a: int = 1;(a--);": true,
+
+		"var a: int[string] = {};": true,
+
+		"var a: int[] = [1];":   true,
+		"var a: int[] = [1.1];": false,
+
+		"var a: int[float] = {1: 1.1};":   true,
+		"var a: int[float] = {1.1: 1.1};": false,
+	}
+	helper(t, []map[string]bool{input})
 }
 
 func Test24(t *testing.T) {
-	input := "fun: test(): (int) {return: 5;}fun: test1(): (int) {return: 100;}fun: test2(): (int) {return: 312413;}fun: test3(): (int, bool, string) {return: ((5 + 1), true, \"hello\");}"
-	helper(t, []string{input})
+	test := map[string]string{
+		"var a: int;var b:int;if: ((a < b)): {var c: int = 10;}else: " +
+			"{var d: int = 20;}": "var a: int = 0;var b: int = 0;if: ((a < b)): {var c: int = 10;}else: {var d: int = 20;}",
+
+		"var t: int = 1;t = 5++;": "var t: int = 1;t = (5++);",
+
+		"var t: int = 1;t = 5--;": "var t: int = 1;t = (5--);",
+	}
+	helper1(t, []map[string]string{test})
 }
 
 func Test25(t *testing.T) {
-	input := "fun: hehe(name: string, age: int): (bool, int) {var a: int = 5;return: (true, 5);}"
-	helper(t, []string{input})
+	test := map[string]string{
+		"fun: add(a: int): (int) {var b: int, var c: int, var d: int, var l: int = 0, 0, 0, 0;l = a + add(b * c) + d;}": "fun: " +
+			"add(a: int): (int) {var b: int = 0;var c: int = 0;var d: int = 0;var l: int = 0;l = ((a + add((b * c))) + d);}",
+
+		"fun: add(a: int, b: int, c: int, d: int, e: int, f: int): (int) {var l: int = add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8, 3, 4, 5, 6));}": "fun: " +
+			"add(a: int, b: int, c: int, d: int, e: int, f: int): (int) {var l: int = add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8), 3, 4, 5, 6));}",
+
+		"fun: add(a: int): (int) {return: a;}fun: sub(a: int, b: int, c: int, d: int, f: int, g: int) {var l: int = add(a + b + c * d / f + g);}": "fun: add(a: int): (int) {return: a;}fun: " +
+			"sub(a: int, b: int, c: int, d: int, f: int, g: int) {var l: int = add((((a + b) + ((c * d) / f)) + g));}",
+
+		"var l: int = 1 + (2 + 3) + 4;": "var l: int = ((1 + (2 + 3)) + 4);",
+
+		"var l: int = (5 + 5) * 2;": "var l: int = ((5 + 5) * 2);",
+
+		"var l: int = 2 / (5 + 5);": "var l: int = (2 / (5 + 5));",
+
+		"var l: int = -(5 + 5);": "var l: int = (-(5 + 5));",
+
+		"var l: bool = !(true == true);": "var l: bool = (!(true == true));",
+
+		"var l: bool = true;": "var l: bool = true;",
+
+		"var l: bool = false;": "var l: bool = false;",
+
+		"var l: bool = 3 > 5 == false;": "var l: bool = ((3 > 5) == false);",
+
+		"var l: bool = 3 < 5 == true;": "var l: bool = ((3 < 5) == true);",
+
+		"var a: int;var b: int;var l: int = -a * b;": "var a: int = 0;var b: int = 0;var l: int = ((-a) * b);",
+
+		// "var l: bool = !-a;": "var l: bool = (!(-a));",
+
+		"var a: int;var b: int;var c: int;var l: int = a + b + c;": "var a: int = 0;var b: int = 0;var c: int = 0;var l: int = ((a + b) + c);",
+
+		"var a: int;var b: int;var c: int;var l: int = a + b - c;": "var a: int = 0;var b: int = 0;var c: int = 0;var l: int = ((a + b) - c);",
+
+		"var a: int;var b: int;var c: int;var l: int = a * b * c;": "var a: int = 0;var b: int = 0;var c: int = 0;var l: int = ((a * b) * c);",
+
+		"var a: int;var b: int;var c: int;var l: int = a * b / c;": "var a: int = 0;var b: int = 0;var c: int = 0;var l: int = ((a * b) / c);",
+
+		"var a: int;var b: int;var c: int;var l: int = a + b / c;": "var a: int = 0;var b: int = 0;var c: int = 0;var l: int = (a + (b / c));",
+
+		"var a: int;var b: int;var c: int;var d: int;var e: int;var f: int;var l: int = a + b * c + d / e - f;": "var a: int = 0;var b: int = 0;" +
+			"var c: int = 0;var d: int = 0;var e: int = 0;var f: int = 0;var l: int = (((a + (b * c)) + (d / e)) - f);",
+
+		"var l: int = 3 + 4;l = -5 * 5;": "var l: int = (3 + 4);l = ((-5) * 5);",
+
+		"var l: bool = 5 > 4 == 3 < 4;": "var l: bool = ((5 > 4) == (3 < 4));",
+
+		"var l: bool = 5 < 4 != 3 > 4;": "var l: bool = ((5 < 4) != (3 > 4));",
+
+		"var l: bool = 3 + 4 * 5 == 3 * 1 + 4 * 5;": "var l: bool = ((3 + (4 * 5)) == ((3 * 1) + (4 * 5)));",
+
+		"var l: int = -5--;": "var l: int = (-(5--));",
+
+		"var l: bool = 1 == 1 && 2 == 2 && 3 == 3;": "var l: bool = (((1 == 1) && (2 == 2)) && (3 == 3));",
+	}
+	helper1(t, []map[string]string{test})
 }
 
 func Test26(t *testing.T) {
-	input := "fun: main() {var a: int = 10;var b: int = 20;var c: int = 30;if: ((a > b)): {var d: int = 40;}else if: ((b > c)): {var e: int = 50;}else: {var f: int = 60;}}fun: add(a: int, b: int): (int) {return: (a + b);}"
-	helper(t, []string{input})
-}
-
-func Test27(t *testing.T) {
-	input := "fun: main() {var a: int = 10;var b: int = 20;var c: int = 30;if: ((a > b)): {var d: int = 40;}else if: ((b > c)): {var e: int = 50;}else: {var f: int = 60;}}fun: add(a: int, b: int): (int) {return: (a + b);}"
-	helper(t, []string{input})
-}
-
-func Test28(t *testing.T) {
-	input := "var a: int;var b:int;if: ((a < b)): {var c: int = 10;}else: {var d: int = 20;}"
-	expected := "var a: int = 0;var b: int = 0;if: ((a < b)): {var c: int = 10;}else: {var d: int = 20;}"
-	helper1(t, []string{input}, []string{expected})
-}
-
-func Test29(t *testing.T) {
-	input := "var a: int = 0;var b: int = 0;a = b;"
-	helper(t, []string{input})
-}
-
-func Test30(t *testing.T) {
-	input := "var a: int = 0;a = 10;"
-	helper(t, []string{input})
-}
-
-func Test31(t *testing.T) {
-	input := "var a: bool = true;var b: int = 0;a = (!true);b = (-1);"
-	helper(t, []string{input})
-}
-
-func Test32(t *testing.T) {
-	input := "a = (5 + 5);b = (5 - 5);c = (5 * 5);d = (5 / 5);e = (5 % 5);f = (5 > 5);" +
-		"g = (5 < 5);h = (5 >= 5);i = (5 <= 5);j = (5 == 5);k = (5 != 5);l = (5 && 5);m = (5 || 5);" +
-		"n = (5 & 5);o = (5 | 5);p = (true == true);q = (false != false);r = (true && false);s = (true || false);"
-	helper(t, []string{input})
-}
-
-func Test33(t *testing.T) {
-	input := []string{
-		"l = a + add(b * c) + d;",
-		"l = add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8));",
-		"l = add(a + b + c * d / f + g);",
-		"l = 1 + (2 + 3) + 4;",
-		"l = (5 + 5) * 2;",
-		"l = 2 / (5 + 5);",
-		"l = -(5 + 5);",
-		"l = !(true == true);",
-		"l = true;",
-		"l = false;",
-		"l = 3 > 5 == false;",
-		"l = 3 < 5 == true;",
-		"l = -a * b;",
-		"l = !-a;",
-		"l = a + b + c;",
-		"l = a + b - c;",
-		"l = a * b * c;",
-		"l = a * b / c;",
-		"l = a + b / c;",
-		"l = a + b * c + d / e - f;",
-		"l = 3 + 4;l = -5 * 5;",
-		"l = 5 > 4 == 3 < 4;",
-		"l = 5 < 4 != 3 > 4;",
-		"l = 3 + 4 * 5 == 3 * 1 + 4 * 5;",
-		"l = -5--;",
-		"l = 1 == 1 && 2 == 2 && 3 == 3;",
+	input := map[string]bool{
+		"var a: int = (5 + 5);":           true,
+		"var b: int = (5 - 5);":           true,
+		"var c: int = (5 * 5);":           true,
+		"var d: int = (5 / 5);":           true,
+		"var e: int = (5 % 5);":           true,
+		"var n: int = (5 & 5);":           true,
+		"var o: int = (5 | 5);":           true,
+		"var f: bool = (5 > 5);":          true,
+		"var g: bool = (5 < 5);":          true,
+		"var h: bool = (5 >= 5);":         true,
+		"var i: bool = (5 <= 5);":         true,
+		"var j: bool = (5 == 5);":         true,
+		"var k: bool = (5 != 5);":         true,
+		"var l: bool = (5 && 5);":         false,
+		"var m: bool = (5 || 5);":         false,
+		"var p: bool = (true == true);":   true,
+		"var q: bool = (false != false);": true,
+		"var r: bool = (true && false);":  true,
+		"var s: bool = (true || false);":  true,
 	}
-	expected := []string{
-		"l = ((a + add((b * c))) + d);",
-		"l = add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)));",
-		"l = add((((a + b) + ((c * d) / f)) + g));",
-		"l = ((1 + (2 + 3)) + 4);",
-		"l = ((5 + 5) * 2);",
-		"l = (2 / (5 + 5));",
-		"l = (-(5 + 5));",
-		"l = (!(true == true));",
-		"l = true;",
-		"l = false;",
-		"l = ((3 > 5) == false);",
-		"l = ((3 < 5) == true);",
-		"l = ((-a) * b);",
-		"l = (!(-a));",
-		"l = ((a + b) + c);",
-		"l = ((a + b) - c);",
-		"l = ((a * b) * c);",
-		"l = ((a * b) / c);",
-		"l = (a + (b / c));",
-		"l = (((a + (b * c)) + (d / e)) - f);",
-		"l = (3 + 4);l = ((-5) * 5);",
-		"l = ((5 > 4) == (3 < 4));",
-		"l = ((5 < 4) != (3 > 4));",
-		"l = ((3 + (4 * 5)) == ((3 * 1) + (4 * 5)));",
-		"l = (-(5--));",
-		"l = (((1 == 1) && (2 == 2)) && (3 == 3));",
-	}
-	helper1(t, input, expected)
+	helper(t, []map[string]bool{input})
 }
 
-func Test34(t *testing.T) {
-	input := []string{
-		"var t: int = 1;t = 5++;",
-		"var t: int = 1;t = 5--;",
-	}
-	expected := []string{
-		"var t: int = 1;t = (5++);",
-		"var t: int = 1;t = (5--);",
-	}
-	helper1(t, input, expected)
-}
-
-func Test35(t *testing.T) {
-	input := []string{
-		"var a: bool = true;",
-		"var b: bool = false;",
-		"fun: add(a: int, b: int) {add(a, b);}",
-		"var a: int = 1;(a++);",
-		"var a: int = 1;(a--);",
-	}
-	helper(t, input)
-}
-
-func helper(t *testing.T, input []string) {
-	for _, str := range input {
-		tokens := lexer.Tokenizer(str)
-		parser := parser.New(tokens, true)
-		program, err := parser.ParseProgram()
-		if err != nil {
-			t.Fatalf("ParseProgram() returned error: %s", err)
+func helper(t *testing.T, input []map[string]bool) {
+	for _, test := range input {
+		for key, val := range test {
+			tokens := lexer.Tokenizer(key)
+			parser := parser.New(tokens, true)
+			program, err := parser.ParseProgram()
+			if val {
+				if err != nil {
+					t.Fatalf("ParseProgram() returned error: %s", err)
+				}
+				assert.Equal(t, key, program.String())
+			} else {
+				assert.Error(t, err)
+			}
 		}
-		assert.Equal(t, str, program.String())
 	}
 }
 
-func helper1(t *testing.T, input []string, expected []string) {
-	for i, str := range input {
-		tokens := lexer.Tokenizer(str)
-		parser := parser.New(tokens, true)
-		program, err := parser.ParseProgram()
-		if err != nil {
-			t.Fatalf("ParseProgram() returned error: %s", err)
+func helper1(t *testing.T, test []map[string]string) {
+	for _, pair := range test {
+		for input, expected := range pair {
+			tokens := lexer.Tokenizer(input)
+			parser := parser.New(tokens, true)
+			program, err := parser.ParseProgram()
+			if err != nil {
+				fmt.Println(input)
+				t.Fatalf("ParseProgram() returned error: %s", err)
+			}
+			assert.Equal(t, expected, program.String())
 		}
-		assert.Equal(t, expected[i], program.String())
 	}
 }

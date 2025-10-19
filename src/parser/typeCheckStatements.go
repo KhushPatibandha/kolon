@@ -19,17 +19,6 @@ import (
 // VarAndConst
 // ------------------------------------------------------------------------------------------------------------------
 func typeCheckVarAndConst(stmt *ast.VarAndConst, env *environment.Environment) error {
-	right := stmt.Value.GetType()
-
-	if right.TypeLen != 1 {
-		return errors.New(
-			"variable (`var`) and constant (`const`) declarations " +
-				"must be assigned a single value, got: " +
-				strconv.Itoa(right.TypeLen) +
-				". in case of call expression, it must return a single value",
-		)
-	}
-
 	if stmt.Value == nil {
 		switch stmt.Type.Kind {
 		case ktype.TypeArray:
@@ -47,6 +36,16 @@ func typeCheckVarAndConst(stmt *ast.VarAndConst, env *environment.Environment) e
 						"` must be initialized while declaring")
 			}
 		}
+	}
+
+	right := stmt.Value.GetType()
+	if right.TypeLen != 1 {
+		return errors.New(
+			"variable (`var`) and constant (`const`) declarations " +
+				"must be assigned a single value, got: " +
+				strconv.Itoa(right.TypeLen) +
+				". in case of call expression, it must return a single value",
+		)
 	}
 
 	return typeCheckVarAndConstWithRightType(stmt, right.Types[0], env)
@@ -73,7 +72,7 @@ func typeCheckVarAndConstWithRightType(stmt *ast.VarAndConst,
 
 	if !stmt.Type.Equals(right) {
 		return errors.New(
-			"type mismatch in variable/constant declaration: expected " +
+			"type mismatch in variable/constant declaration, expected: " +
 				stmt.Type.String() + ", got: " + right.String(),
 		)
 	}

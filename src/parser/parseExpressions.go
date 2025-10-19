@@ -116,12 +116,14 @@ func (p *Parser) parseExpression(precedence int) (ast.Expression, error) {
 // ------------------------------------------------------------------------------------------------------------------
 func (p *Parser) parseIdentifier() (ast.Expression, error) {
 	exp := &ast.Identifier{Token: p.currToken, Value: p.currToken.Value}
-	// TODO: investigate this
-	// t, err := typeCheckIdent(exp, p.stack.Top())
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// exp.Type = t.Types[0]
+	if p.peekTokenIsOk(lexer.OPEN_BRACKET) {
+		return exp, nil
+	}
+	t, err := typeCheckIdent(exp, p.stack.Top())
+	if err != nil {
+		return nil, err
+	}
+	exp.Type = t.Types[0]
 	return exp, nil
 }
 
@@ -342,7 +344,7 @@ func (p *Parser) parseArray() (ast.Expression, error) {
 	if err != nil {
 		return nil, err
 	}
-	exp.Type = t.Types[0]
+	exp.Type = t.Types[0].ElementType
 	return exp, nil
 }
 
