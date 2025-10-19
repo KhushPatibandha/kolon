@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -49,6 +48,9 @@ func Test23(t *testing.T) {
 
 		"var a: int[float] = {1: 1.1};":   true,
 		"var a: int[float] = {1.1: 1.1};": false,
+
+		"fun: add(a: int, b: int): (int);fun: main() {add(1, 2);}": false,
+		"fun: add(a: int, b: int);fun: main() {add(1, 2);}":        false,
 	}
 	helper(t, []map[string]bool{input})
 }
@@ -95,8 +97,6 @@ func Test25(t *testing.T) {
 		"var l: bool = 3 < 5 == true;": "var l: bool = ((3 < 5) == true);",
 
 		"var a: int;var b: int;var l: int = -a * b;": "var a: int = 0;var b: int = 0;var l: int = ((-a) * b);",
-
-		// "var l: bool = !-a;": "var l: bool = (!(-a));",
 
 		"var a: int;var b: int;var c: int;var l: int = a + b + c;": "var a: int = 0;var b: int = 0;var c: int = 0;var l: int = ((a + b) + c);",
 
@@ -151,6 +151,14 @@ func Test26(t *testing.T) {
 	helper(t, []map[string]bool{input})
 }
 
+func Test27(t *testing.T) {
+	input := map[string]string{
+		"fun: add(a: int, b: int): (int);fun: main() {add(1, 2);}fun: add(a: int, b: int): (int) {return: (a + b);}": "fun: add(a: int, b: int): (int) {return: (a + b);}fun: main() {add(1, 2);}",
+		"fun: add(a: int, b: int);fun: main() {add(1, 2);}fun: add(a: int, b: int) {}":                               "fun: add(a: int, b: int) {}fun: main() {add(1, 2);}",
+	}
+	helper1(t, []map[string]string{input})
+}
+
 func helper(t *testing.T, input []map[string]bool) {
 	for _, test := range input {
 		for key, val := range test {
@@ -176,7 +184,6 @@ func helper1(t *testing.T, test []map[string]string) {
 			parser := parser.New(tokens, true)
 			program, err := parser.ParseProgram()
 			if err != nil {
-				fmt.Println(input)
 				t.Fatalf("ParseProgram() returned error: %s", err)
 			}
 			assert.Equal(t, expected, program.String())

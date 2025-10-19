@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"errors"
+
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/environment"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
@@ -94,8 +96,21 @@ func (p *Parser) ParseProgram() (*ast.Program, error) {
 		if err != nil {
 			return nil, err
 		}
-		program.Statements = append(program.Statements, stmt)
+		if stmt != nil {
+			program.Statements = append(program.Statements, stmt)
+		}
 		p.nextToken()
 	}
+
+	for _, v := range p.env.FuncNameSpace {
+		if !v.Func.Builtin && v.Func.Function.Body == nil {
+			return nil,
+				errors.New(
+					"function `" + v.Func.Function.Name.Value + "` is declared but not initilized." +
+						" make sure to write the body for all the declared functions.",
+				)
+		}
+	}
+
 	return program, nil
 }

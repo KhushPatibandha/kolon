@@ -20,7 +20,14 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 	case lexer.RETURN:
 		return p.parseReturn()
 	case lexer.FUN:
-		return p.parseFunction()
+		stmt, err := p.parseFunction()
+		if err != nil {
+			return nil, err
+		}
+		if stmt == nil {
+			return nil, nil
+		}
+		return stmt, nil
 	case lexer.IF:
 		return p.parseIf()
 	case lexer.FOR:
@@ -471,7 +478,9 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 			return nil, err
 		}
 		stmt.ReturnTypes = ret
-	} else if p.peekTokenIsOk(lexer.SEMI_COLON) {
+	}
+
+	if p.peekTokenIsOk(lexer.SEMI_COLON) {
 		p.nextToken()
 		if _, ok := p.env.GetFunc(stmt.Name.Value); ok {
 			return nil,
@@ -542,6 +551,10 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 	p.currFunction = nil
 
 	f.Func.Function.Body = funBody
+
+	if ok {
+		return nil, nil
+	}
 
 	return f.Func.Function, nil
 }
