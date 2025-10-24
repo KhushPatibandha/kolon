@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	ktype "github.com/KhushPatibandha/Kolon/src/kType"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 	"github.com/KhushPatibandha/Kolon/src/parser"
 )
@@ -43,12 +44,14 @@ func Test23(t *testing.T) {
 
 		"var a: int[string] = {};": true,
 
-		"var a: int[] = [1];":   true,
-		"var a: int[] = [1.1];": false,
+		"var a: int[] = [1];":        true,
+		"var a: int[] = [];a = [1];": true,
 
-		"var a: int[float] = {1: 1.1};":   true,
-		"var a: int[float] = {1.1: 1.1};": false,
+		"var a: int[float] = {1: 1.1};":        true,
+		"var a: int[float] = {};a = {1: 1.1};": true,
 
+		"var a: int[] = [1.1];":                                    false,
+		"var a: int[float] = {1.1: 1.1};":                          false,
 		"fun: add(a: int, b: int): (int);fun: main() {add(1, 2);}": false,
 		"fun: add(a: int, b: int);fun: main() {add(1, 2);}":        false,
 	}
@@ -173,6 +176,7 @@ func helper(t *testing.T, input []map[string]bool) {
 			} else {
 				assert.Error(t, err)
 			}
+			ktype.ResetTypePool()
 		}
 	}
 }

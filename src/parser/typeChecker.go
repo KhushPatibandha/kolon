@@ -5,7 +5,7 @@ import (
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/environment"
-	"github.com/KhushPatibandha/Kolon/src/kType"
+	ktype "github.com/KhushPatibandha/Kolon/src/kType"
 )
 
 // ------------------------------------------------------------------------------------------------------------------

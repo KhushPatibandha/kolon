@@ -7,8 +7,7 @@ import (
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/environment"
-	"github.com/KhushPatibandha/Kolon/src/kType"
-	"github.com/KhushPatibandha/Kolon/src/lexer"
+	ktype "github.com/KhushPatibandha/Kolon/src/kType"
 )
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -22,7 +21,8 @@ func typeCheckIdent(ident *ast.Identifier,
 	env *environment.Environment,
 ) (*ktype.TypeCheckResult, error) {
 	if sym, ok := env.GetVar(ident.Value); ok {
-		return &ktype.TypeCheckResult{Types: []*ktype.Type{sym.Type}, TypeLen: 1}, nil
+		t := ktype.InternType(sym.Type)
+		return &ktype.TypeCheckResult{Types: []*ktype.Type{t}, TypeLen: 1}, nil
 	}
 	if _, ok := env.GetFunc(ident.Value); ok {
 		return nil,
@@ -38,17 +38,9 @@ func typeCheckIdent(ident *ast.Identifier,
 // Integer
 // ------------------------------------------------------------------------------------------------------------------
 func typeCheckInteger() (*ktype.TypeCheckResult, error) {
+	it := ktype.NewBaseType("int")
 	return &ktype.TypeCheckResult{
-		Types: []*ktype.Type{
-			{
-				Kind:        ktype.TypeBase,
-				Token:       lexer.Token{Kind: lexer.INT, Value: "int"},
-				Name:        "int",
-				ElementType: nil,
-				KeyType:     nil,
-				ValueType:   nil,
-			},
-		},
+		Types:   []*ktype.Type{it},
 		TypeLen: 1,
 	}, nil
 }
@@ -57,17 +49,9 @@ func typeCheckInteger() (*ktype.TypeCheckResult, error) {
 // Float
 // ------------------------------------------------------------------------------------------------------------------
 func typeCheckFloat() (*ktype.TypeCheckResult, error) {
+	ft := ktype.NewBaseType("float")
 	return &ktype.TypeCheckResult{
-		Types: []*ktype.Type{
-			{
-				Kind:        ktype.TypeBase,
-				Token:       lexer.Token{Kind: lexer.FLOAT, Value: "float"},
-				Name:        "float",
-				ElementType: nil,
-				KeyType:     nil,
-				ValueType:   nil,
-			},
-		},
+		Types:   []*ktype.Type{ft},
 		TypeLen: 1,
 	}, nil
 }
@@ -76,17 +60,9 @@ func typeCheckFloat() (*ktype.TypeCheckResult, error) {
 // Bool
 // ------------------------------------------------------------------------------------------------------------------
 func typeCheckBool() (*ktype.TypeCheckResult, error) {
+	bt := ktype.NewBaseType("bool")
 	return &ktype.TypeCheckResult{
-		Types: []*ktype.Type{
-			{
-				Kind:        ktype.TypeBase,
-				Token:       lexer.Token{Kind: lexer.BOOL, Value: "bool"},
-				Name:        "bool",
-				ElementType: nil,
-				KeyType:     nil,
-				ValueType:   nil,
-			},
-		},
+		Types:   []*ktype.Type{bt},
 		TypeLen: 1,
 	}, nil
 }
@@ -95,17 +71,9 @@ func typeCheckBool() (*ktype.TypeCheckResult, error) {
 // String
 // ------------------------------------------------------------------------------------------------------------------
 func typeCheckString() (*ktype.TypeCheckResult, error) {
+	st := ktype.NewBaseType("string")
 	return &ktype.TypeCheckResult{
-		Types: []*ktype.Type{
-			{
-				Kind:        ktype.TypeBase,
-				Token:       lexer.Token{Kind: lexer.STRING, Value: "string"},
-				Name:        "string",
-				ElementType: nil,
-				KeyType:     nil,
-				ValueType:   nil,
-			},
-		},
+		Types:   []*ktype.Type{st},
 		TypeLen: 1,
 	}, nil
 }
@@ -114,17 +82,9 @@ func typeCheckString() (*ktype.TypeCheckResult, error) {
 // Char
 // ------------------------------------------------------------------------------------------------------------------
 func typeCheckChar() (*ktype.TypeCheckResult, error) {
+	ct := ktype.NewBaseType("char")
 	return &ktype.TypeCheckResult{
-		Types: []*ktype.Type{
-			{
-				Kind:        ktype.TypeBase,
-				Token:       lexer.Token{Kind: lexer.CHAR, Value: "char"},
-				Name:        "char",
-				ElementType: nil,
-				KeyType:     nil,
-				ValueType:   nil,
-			},
-		},
+		Types:   []*ktype.Type{ct},
 		TypeLen: 1,
 	}, nil
 }
@@ -137,13 +97,7 @@ func typeCheckHashMap(exp *ast.HashMap,
 ) (*ktype.TypeCheckResult, error) {
 	if len(exp.Pairs) == 0 {
 		return &ktype.TypeCheckResult{
-			Types: []*ktype.Type{
-				{
-					Kind:      ktype.TypeHashMap,
-					KeyType:   nil,
-					ValueType: nil,
-				},
-			},
+			Types:   []*ktype.Type{ktype.NewHashMapType(nil, nil)},
 			TypeLen: 1,
 		}, nil
 	}
@@ -206,13 +160,7 @@ func typeCheckHashMap(exp *ast.HashMap,
 	}
 
 	return &ktype.TypeCheckResult{
-		Types: []*ktype.Type{
-			{
-				Kind:      ktype.TypeHashMap,
-				KeyType:   keyType,
-				ValueType: valueType,
-			},
-		},
+		Types:   []*ktype.Type{ktype.NewHashMapType(keyType, valueType)},
 		TypeLen: 1,
 	}, nil
 }
@@ -225,12 +173,7 @@ func typeCheckArray(exp *ast.Array,
 ) (*ktype.TypeCheckResult, error) {
 	if len(exp.Values) == 0 {
 		return &ktype.TypeCheckResult{
-			Types: []*ktype.Type{
-				{
-					Kind:        ktype.TypeArray,
-					ElementType: nil,
-				},
-			},
+			Types:   []*ktype.Type{ktype.NewArrayType(nil)},
 			TypeLen: 1,
 		}, nil
 	}
@@ -264,12 +207,7 @@ func typeCheckArray(exp *ast.Array,
 	}
 
 	return &ktype.TypeCheckResult{
-		Types: []*ktype.Type{
-			{
-				Kind:        ktype.TypeArray,
-				ElementType: arrayType,
-			},
-		},
+		Types:   []*ktype.Type{ktype.NewArrayType(arrayType)},
 		TypeLen: 1,
 	}, nil
 }
@@ -380,22 +318,12 @@ func typeCheckInfixWithRightType(exp *ast.Infix,
 		switch exp.Operator {
 		case "+":
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind:        ktype.TypeArray,
-						ElementType: left.Types[0].ElementType,
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewArrayType(left.Types[0].ElementType)},
 				TypeLen: 1,
 			}, nil
 		case "==", "!=":
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind: ktype.TypeBase,
-						Name: "bool",
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewBaseType("bool")},
 				TypeLen: 1,
 			}, nil
 		default:
@@ -409,22 +337,12 @@ func typeCheckInfixWithRightType(exp *ast.Infix,
 		switch exp.Operator {
 		case "+", "-", "*", "/", "%", "|", "&":
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind: ktype.TypeBase,
-						Name: "int",
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewBaseType("int")},
 				TypeLen: 1,
 			}, nil
 		case ">", "<", "<=", ">=", "==", "!=":
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind: ktype.TypeBase,
-						Name: "bool",
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewBaseType("bool")},
 				TypeLen: 1,
 			}, nil
 		default:
@@ -442,22 +360,12 @@ func typeCheckInfixWithRightType(exp *ast.Infix,
 		switch exp.Operator {
 		case "+", "-", "*", "/":
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind: ktype.TypeBase,
-						Name: "float",
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewBaseType("float")},
 				TypeLen: 1,
 			}, nil
 		case ">", "<", "<=", ">=", "==", "!=":
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind: ktype.TypeBase,
-						Name: "bool",
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewBaseType("bool")},
 				TypeLen: 1,
 			}, nil
 		default:
@@ -472,22 +380,12 @@ func typeCheckInfixWithRightType(exp *ast.Infix,
 		switch exp.Operator {
 		case "+":
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind: ktype.TypeBase,
-						Name: "string",
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewBaseType("string")},
 				TypeLen: 1,
 			}, nil
 		case "==", "!=":
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind: ktype.TypeBase,
-						Name: "bool",
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewBaseType("bool")},
 				TypeLen: 1,
 			}, nil
 		default:
@@ -501,22 +399,12 @@ func typeCheckInfixWithRightType(exp *ast.Infix,
 		switch exp.Operator {
 		case "+":
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind: ktype.TypeBase,
-						Name: "string",
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewBaseType("string")},
 				TypeLen: 1,
 			}, nil
 		case "==", "!=":
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind: ktype.TypeBase,
-						Name: "bool",
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewBaseType("bool")},
 				TypeLen: 1,
 			}, nil
 		default:
@@ -530,12 +418,7 @@ func typeCheckInfixWithRightType(exp *ast.Infix,
 		switch exp.Operator {
 		case "==", "!=", "&&", "||":
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind: ktype.TypeBase,
-						Name: "bool",
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewBaseType("bool")},
 				TypeLen: 1,
 			}, nil
 		default:
@@ -754,12 +637,7 @@ func typeCheckIndexExp(exp *ast.IndexExpression,
 		if left.Types[0].Kind == ktype.TypeBase && left.Types[0].Name == "string" &&
 			index.Types[0].Kind == ktype.TypeBase && index.Types[0].Name == "int" {
 			return &ktype.TypeCheckResult{
-				Types: []*ktype.Type{
-					{
-						Kind: ktype.TypeBase,
-						Name: "char",
-					},
-				},
+				Types:   []*ktype.Type{ktype.NewBaseType("char")},
 				TypeLen: 1,
 			}, nil
 		} else {
@@ -879,7 +757,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 				)
 		}
 		return &ktype.TypeCheckResult{
-			Types:   []*ktype.Type{{Kind: ktype.TypeBase, Name: "int"}},
+			Types:   []*ktype.Type{ktype.NewBaseType("int")},
 			TypeLen: 1,
 		}, nil
 	case "toString":
@@ -891,7 +769,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 				)
 		}
 		return &ktype.TypeCheckResult{
-			Types:   []*ktype.Type{{Kind: ktype.TypeBase, Name: "string"}},
+			Types:   []*ktype.Type{ktype.NewBaseType("string")},
 			TypeLen: 1,
 		}, nil
 	case "toInt":
@@ -925,7 +803,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 			}
 		}
 		return &ktype.TypeCheckResult{
-			Types:   []*ktype.Type{{Kind: ktype.TypeBase, Name: "int"}},
+			Types:   []*ktype.Type{ktype.NewBaseType("int")},
 			TypeLen: 1,
 		}, nil
 	case "toFloat":
@@ -959,7 +837,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 			}
 		}
 		return &ktype.TypeCheckResult{
-			Types:   []*ktype.Type{{Kind: ktype.TypeBase, Name: "float"}},
+			Types:   []*ktype.Type{ktype.NewBaseType("float")},
 			TypeLen: 1,
 		}, nil
 	case "print":
@@ -1011,7 +889,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 			}
 		}
 		return &ktype.TypeCheckResult{
-			Types:   []*ktype.Type{{Kind: ktype.TypeBase, Name: "string"}},
+			Types:   []*ktype.Type{ktype.NewBaseType("string")},
 			TypeLen: 1,
 		}, nil
 	case "push":
@@ -1198,7 +1076,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 				)
 		}
 		return &ktype.TypeCheckResult{
-			Types:   []*ktype.Type{{Kind: ktype.TypeBase, Name: "int"}},
+			Types:   []*ktype.Type{ktype.NewBaseType("int")},
 			TypeLen: 1,
 		}, nil
 	case "keys":
@@ -1217,12 +1095,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 				)
 		}
 		return &ktype.TypeCheckResult{
-			Types: []*ktype.Type{
-				{
-					Kind:        ktype.TypeArray,
-					ElementType: argTypes[0].KeyType,
-				},
-			},
+			Types:   []*ktype.Type{ktype.NewArrayType(argTypes[0].KeyType)},
 			TypeLen: 1,
 		}, nil
 	case "values":
@@ -1241,12 +1114,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 				)
 		}
 		return &ktype.TypeCheckResult{
-			Types: []*ktype.Type{
-				{
-					Kind:        ktype.TypeArray,
-					ElementType: argTypes[0].ValueType,
-				},
-			},
+			Types:   []*ktype.Type{ktype.NewArrayType(argTypes[0].ValueType)},
 			TypeLen: 1,
 		}, nil
 	case "containsKey":
@@ -1273,7 +1141,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 				)
 		}
 		return &ktype.TypeCheckResult{
-			Types:   []*ktype.Type{{Kind: ktype.TypeBase, Name: "bool"}},
+			Types:   []*ktype.Type{ktype.NewBaseType("bool")},
 			TypeLen: 1,
 		}, nil
 	case "typeOf":
@@ -1285,7 +1153,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 				)
 		}
 		return &ktype.TypeCheckResult{
-			Types:   []*ktype.Type{{Kind: ktype.TypeBase, Name: "string"}},
+			Types:   []*ktype.Type{ktype.NewBaseType("string")},
 			TypeLen: 1,
 		}, nil
 	case "slice":

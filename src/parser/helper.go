@@ -10,6 +10,34 @@ import (
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
 
+var (
+	defaultInt = &ast.Integer{
+		Token: lexer.Token{Kind: lexer.INT, Value: "0"},
+		Value: 0,
+		Type:  ktype.NewBaseType("int"),
+	}
+	defaultFloat = &ast.Float{
+		Token: lexer.Token{Kind: lexer.FLOAT, Value: "0.0"},
+		Value: 0.0,
+		Type:  ktype.NewBaseType("float"),
+	}
+	defaultBool = &ast.Bool{
+		Token: lexer.Token{Kind: lexer.BOOL, Value: "false"},
+		Value: false,
+		Type:  ktype.NewBaseType("bool"),
+	}
+	defaultString = &ast.String{
+		Token: lexer.Token{Kind: lexer.STRING, Value: "\"\""},
+		Value: "\"\"",
+		Type:  ktype.NewBaseType("string"),
+	}
+	defaultChar = &ast.Char{
+		Token: lexer.Token{Kind: lexer.CHAR, Value: "''"},
+		Value: "''",
+		Type:  ktype.NewBaseType("char"),
+	}
+)
+
 // ------------------------------------------------------------------------------------------------------------------
 // Helper Methods
 // ------------------------------------------------------------------------------------------------------------------
@@ -94,50 +122,15 @@ func (p *Parser) assignDefaultValue(t *ktype.Type) ast.Expression {
 	case ktype.TypeBase:
 		switch t.Name {
 		case "int":
-			return &ast.Integer{
-				Token: lexer.Token{Kind: lexer.INT, Value: "0"},
-				Value: 0,
-				Type: &ktype.Type{
-					Kind: ktype.TypeBase,
-					Name: "int",
-				},
-			}
+			return defaultInt
 		case "float":
-			return &ast.Float{
-				Token: lexer.Token{Kind: lexer.FLOAT, Value: "0.0"},
-				Value: 0.0,
-				Type: &ktype.Type{
-					Kind: ktype.TypeBase,
-					Name: "float",
-				},
-			}
+			return defaultFloat
 		case "bool":
-			return &ast.Bool{
-				Token: lexer.Token{Kind: lexer.BOOL, Value: "false"},
-				Value: false,
-				Type: &ktype.Type{
-					Kind: ktype.TypeBase,
-					Name: "bool",
-				},
-			}
+			return defaultBool
 		case "string":
-			return &ast.String{
-				Token: lexer.Token{Kind: lexer.STRING, Value: "\"\""},
-				Value: "\"\"",
-				Type: &ktype.Type{
-					Kind: ktype.TypeBase,
-					Name: "string",
-				},
-			}
+			return defaultString
 		case "char":
-			return &ast.Char{
-				Token: lexer.Token{Kind: lexer.CHAR, Value: "''"},
-				Value: "''",
-				Type: &ktype.Type{
-					Kind: ktype.TypeBase,
-					Name: "string",
-				},
-			}
+			return defaultChar
 		default:
 			return nil
 		}

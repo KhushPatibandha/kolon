@@ -2,7 +2,7 @@ package environment
 
 import (
 	"github.com/KhushPatibandha/Kolon/src/ast"
-	"github.com/KhushPatibandha/Kolon/src/kType"
+	ktype "github.com/KhushPatibandha/Kolon/src/kType"
 )
 
 type IdentType int
@@ -69,6 +69,7 @@ func (e *Environment) GetFunc(name string) (*Symbol, bool) {
 }
 
 func (e *Environment) Set(sym *Symbol) {
+	sym.Type = ktype.InternType(sym.Type)
 	switch sym.IdentType {
 	case VAR, CONST:
 		e.VariableNameSpace[sym.Ident.Value] = sym

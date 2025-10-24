@@ -25,7 +25,7 @@ type Identifier struct {
 func (i *Identifier) expressionNode() {}
 func (i *Identifier) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
-		Types:   []*ktype.Type{i.Type},
+		Types:   []*ktype.Type{ktype.InternType(i.Type)},
 		TypeLen: 1,
 	}
 }
@@ -47,7 +47,7 @@ type Integer struct {
 func (i *Integer) expressionNode() {}
 func (i *Integer) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
-		Types:   []*ktype.Type{i.Type},
+		Types:   []*ktype.Type{ktype.InternType(i.Type)},
 		TypeLen: 1,
 	}
 }
@@ -67,7 +67,7 @@ type Float struct {
 func (f *Float) expressionNode() {}
 func (f *Float) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
-		Types:   []*ktype.Type{f.Type},
+		Types:   []*ktype.Type{ktype.InternType(f.Type)},
 		TypeLen: 1,
 	}
 }
@@ -87,7 +87,7 @@ type Bool struct {
 func (b *Bool) expressionNode() {}
 func (b *Bool) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
-		Types:   []*ktype.Type{b.Type},
+		Types:   []*ktype.Type{ktype.InternType(b.Type)},
 		TypeLen: 1,
 	}
 }
@@ -107,7 +107,7 @@ type String struct {
 func (s *String) expressionNode() {}
 func (s *String) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
-		Types:   []*ktype.Type{s.Type},
+		Types:   []*ktype.Type{ktype.InternType(s.Type)},
 		TypeLen: 1,
 	}
 }
@@ -127,7 +127,7 @@ type Char struct {
 func (c *Char) expressionNode() {}
 func (c *Char) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
-		Types:   []*ktype.Type{c.Type},
+		Types:   []*ktype.Type{ktype.InternType(c.Type)},
 		TypeLen: 1,
 	}
 }
@@ -149,11 +149,11 @@ func (hm *HashMap) expressionNode() {}
 func (hm *HashMap) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
 		Types: []*ktype.Type{
-			{
+			ktype.InternType(&ktype.Type{
 				Kind:      ktype.TypeHashMap,
 				KeyType:   hm.KeyType,
 				ValueType: hm.ValueType,
-			},
+			}),
 		},
 		TypeLen: 1,
 	}
@@ -184,10 +184,10 @@ func (a *Array) expressionNode() {}
 func (a *Array) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
 		Types: []*ktype.Type{
-			{
+			ktype.InternType(&ktype.Type{
 				Kind:        ktype.TypeArray,
 				ElementType: a.Type,
-			},
+			}),
 		},
 		TypeLen: 1,
 	}
@@ -218,7 +218,7 @@ type Prefix struct {
 func (p *Prefix) expressionNode() {}
 func (p *Prefix) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
-		Types:   []*ktype.Type{p.Type},
+		Types:   []*ktype.Type{ktype.InternType(p.Type)},
 		TypeLen: 1,
 	}
 }
@@ -246,7 +246,7 @@ type Infix struct {
 func (i *Infix) expressionNode() {}
 func (i *Infix) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
-		Types:   []*ktype.Type{i.Type},
+		Types:   []*ktype.Type{ktype.InternType(i.Type)},
 		TypeLen: 1,
 	}
 }
@@ -275,7 +275,7 @@ func (p *Postfix) canBeStatement() {}
 func (p *Postfix) expressionNode() {}
 func (p *Postfix) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
-		Types:   []*ktype.Type{p.Type},
+		Types:   []*ktype.Type{ktype.InternType(p.Type)},
 		TypeLen: 1,
 	}
 }
@@ -304,7 +304,7 @@ func (a *Assignment) canBeStatement() {}
 func (a *Assignment) expressionNode() {}
 func (a *Assignment) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
-		Types:   []*ktype.Type{a.Type},
+		Types:   []*ktype.Type{ktype.InternType(a.Type)},
 		TypeLen: 1,
 	}
 }
@@ -362,7 +362,7 @@ type IndexExpression struct {
 func (ie *IndexExpression) expressionNode() {}
 func (ie *IndexExpression) GetType() *ktype.TypeCheckResult {
 	return &ktype.TypeCheckResult{
-		Types:   []*ktype.Type{ie.Type},
+		Types:   []*ktype.Type{ktype.InternType(ie.Type)},
 		TypeLen: 1,
 	}
 }

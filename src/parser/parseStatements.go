@@ -6,7 +6,7 @@ import (
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/environment"
-	"github.com/KhushPatibandha/Kolon/src/kType"
+	ktype "github.com/KhushPatibandha/Kolon/src/kType"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
 
@@ -70,27 +70,13 @@ func (p *Parser) parseType() (*ktype.Type, error) {
 				"expected a type, got: " + lexer.TokenKindString(p.peekToken.Kind),
 			)
 	}
-	stmt := &ktype.Type{
-		Kind:        ktype.TypeBase,
-		Token:       p.currToken,
-		Name:        p.currToken.Value,
-		ElementType: nil,
-		KeyType:     nil,
-		ValueType:   nil,
-	}
+	stmt := ktype.NewBaseType(p.currToken.Value)
 
 	for p.peekTokenIsOk(lexer.OPEN_SQUARE_BRACKET) {
 		p.nextToken()
 
 		if p.peekTokenIsOk(lexer.CLOSE_SQUARE_BRACKET) {
-			stmt = &ktype.Type{
-				Kind:        ktype.TypeArray,
-				Token:       stmt.Token,
-				ElementType: stmt,
-				Name:        "",
-				KeyType:     nil,
-				ValueType:   nil,
-			}
+			stmt = ktype.NewArrayType(stmt)
 			p.nextToken()
 			continue
 		} else if !p.peekTokenIsOk(lexer.TYPE) {
@@ -112,14 +98,7 @@ func (p *Parser) parseType() (*ktype.Type, error) {
 						lexer.TokenKindString(p.peekToken.Kind),
 				)
 		}
-		stmt = &ktype.Type{
-			Kind:        ktype.TypeHashMap,
-			Token:       stmt.Token,
-			KeyType:     stmt,
-			ValueType:   val,
-			Name:        "",
-			ElementType: nil,
-		}
+		stmt = ktype.NewHashMapType(stmt, val)
 	}
 	return stmt, nil
 }
