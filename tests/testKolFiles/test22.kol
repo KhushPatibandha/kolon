@@ -1,0 +1,11 @@
+fun: callMe(): (bool) {
+    println(1);
+}
+
+fun: main() {
+    if: (callMe()): {
+        println(true);
+    } else: {
+        println(false);
+    }
+}

@@ -1,0 +1,5 @@
+fun: main() {
+    const b: int = 10;
+    var b: int = 100;
+    println(b);
+}

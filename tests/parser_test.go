@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,7 +57,7 @@ func Test23(t *testing.T) {
 		"fun: add(a: int, b: int): (int);fun: main() {add(1, 2);}": false,
 		"fun: add(a: int, b: int);fun: main() {add(1, 2);}":        false,
 	}
-	helper(t, []map[string]bool{input})
+	helper(t, []map[string]bool{input}, true)
 }
 
 func Test24(t *testing.T) {
@@ -67,7 +69,7 @@ func Test24(t *testing.T) {
 
 		"var t: int = 1;t = 5--;": "var t: int = 1;t = (5--);",
 	}
-	helper1(t, []map[string]string{test})
+	helper1(t, []map[string]string{test}, true)
 }
 
 func Test25(t *testing.T) {
@@ -126,7 +128,7 @@ func Test25(t *testing.T) {
 
 		"var l: bool = 1 == 1 && 2 == 2 && 3 == 3;": "var l: bool = (((1 == 1) && (2 == 2)) && (3 == 3));",
 	}
-	helper1(t, []map[string]string{test})
+	helper1(t, []map[string]string{test}, true)
 }
 
 func Test26(t *testing.T) {
@@ -151,7 +153,7 @@ func Test26(t *testing.T) {
 		"var r: bool = (true && false);":  true,
 		"var s: bool = (true || false);":  true,
 	}
-	helper(t, []map[string]bool{input})
+	helper(t, []map[string]bool{input}, true)
 }
 
 func Test27(t *testing.T) {
@@ -159,14 +161,76 @@ func Test27(t *testing.T) {
 		"fun: add(a: int, b: int): (int);fun: main() {add(1, 2);}fun: add(a: int, b: int): (int) {return: (a + b);}": "fun: add(a: int, b: int): (int) {return: (a + b);}fun: main() {add(1, 2);}",
 		"fun: add(a: int, b: int);fun: main() {add(1, 2);}fun: add(a: int, b: int) {}":                               "fun: add(a: int, b: int) {}fun: main() {add(1, 2);}",
 	}
-	helper1(t, []map[string]string{input})
+	helper1(t, []map[string]string{input}, true)
 }
 
-func helper(t *testing.T, input []map[string]bool) {
+func Test28(t *testing.T) {
+	input := map[string]bool{
+		fileToString(t, "./testKolFiles/fibo.kol"):    true,
+		fileToString(t, "./testKolFiles/fiboRec.kol"): true,
+		fileToString(t, "./testKolFiles/test.kol"):    true,
+		fileToString(t, "./testKolFiles/test6.kol"):   true,
+		// fileToString(t, "./testKolFiles/test7.kol"):   true,
+		fileToString(t, "./testKolFiles/test8.kol"):  true,
+		fileToString(t, "./testKolFiles/test11.kol"): true,
+		fileToString(t, "./testKolFiles/test12.kol"): true,
+		fileToString(t, "./testKolFiles/test13.kol"): true,
+		fileToString(t, "./testKolFiles/test14.kol"): true,
+		fileToString(t, "./testKolFiles/test15.kol"): true,
+		fileToString(t, "./testKolFiles/test16.kol"): true,
+		// fileToString(t, "./testKolFiles/test17.kol"): true,
+		fileToString(t, "./testKolFiles/test18.kol"): true,
+		fileToString(t, "./testKolFiles/test19.kol"): true,
+		fileToString(t, "./testKolFiles/test20.kol"): true,
+		fileToString(t, "./testKolFiles/test25.kol"): true,
+		fileToString(t, "./testKolFiles/test26.kol"): true,
+		fileToString(t, "./testKolFiles/test28.kol"): true,
+		fileToString(t, "./testKolFiles/test29.kol"): true,
+		fileToString(t, "./testKolFiles/test31.kol"): true,
+		fileToString(t, "./testKolFiles/test32.kol"): true,
+		fileToString(t, "./testKolFiles/test33.kol"): true,
+		fileToString(t, "./testKolFiles/test34.kol"): true,
+		fileToString(t, "./testKolFiles/test35.kol"): true,
+		fileToString(t, "./testKolFiles/test36.kol"): true,
+		fileToString(t, "./testKolFiles/test37.kol"): true,
+		fileToString(t, "./testKolFiles/test38.kol"): true,
+
+		fileToString(t, "./testKolFiles/test21.kol"): false,
+		fileToString(t, "./testKolFiles/test22.kol"): false,
+		fileToString(t, "./testKolFiles/test23.kol"): false,
+		fileToString(t, "./testKolFiles/test24.kol"): false,
+		fileToString(t, "./testKolFiles/test27.kol"): false,
+		fileToString(t, "./testKolFiles/test1.kol"):  false,
+	}
+	helper(t, []map[string]bool{input}, false)
+}
+
+func Test29(t *testing.T) {
+	input := map[string]string{
+		fileToString(t, "./testKolFiles/fac.kol"): "fun: fac(n: int): (int) {if: (((n == 0) || (n == 1))): {return: 1;}return: (n * fac((n - 1)));}fun: main() {var n: int = 5;var ans: int = fac(n);println(ans);}",
+
+		fileToString(t, "./testKolFiles/test2.kol"): "fun: res(): (int, int, int, bool) {return: (1, 2, 3, true);}fun: main() {var a: int = 0;var b: bool = false;var c: int = res();a = res();var d: int = res();b = res();if: (((((c == 1) && (a == 2)) && (d == 3)) && (b == true))): {println(\"true\");return;}println(\"false\");}",
+
+		fileToString(t, "./testKolFiles/test3.kol"): "fun: res(): (int, int, int, bool) {return: (1, 2, 3, true);}fun: main() {var a: int = 0;var b: bool = false;a = res();var c: int = res();var d: int = res();b = res();if: (((((a == 1) && (b == true)) && (c == 2)) && (d == 3))): {println(true);return;}println(\"false\");}",
+
+		fileToString(t, "./testKolFiles/test4.kol"): "fun: some(b: bool, a: string[]): (string[], bool) {return: (a, true);}fun: main() {var a: string[] = [\"khush\", \"hehe\"];var b: string[] = some(false, a);var c: bool = some(false, a);println(c);println(b);}",
+
+		fileToString(t, "./testKolFiles/test5.kol"): "fun: main() {var a: int[] = [1, 2, 3];var b: int = 4;var c: int[] = [5, 6, 7];println(a);println(b);println(c);push(a, 10);println(a);pop(a);println(a);pop(a, 0);println(a);insert(a, 1, 10);println(a);remove(a, 10);println(a);}",
+
+		fileToString(t, "./testKolFiles/test9.kol"): "fun: give(a: string[]): (string[], bool, int) {return: ([\"hello\", \"yo\"], true, 10);}fun: main() {var a: string[] = [\"khush\", \"heeh\"];println(a);var b: string[] = [];b = give(a);var bo: bool = give(a);var i: int = give(a);println(b);println(i);println(bo);}",
+
+		// fileToString(t, "./testKolFiles/test10.kol"): "fun: main() {var a: string[int] = {\"khush\": 1, \"heeh\": 2};println(a);var b: int = a[\"khush\"];println(b);}",
+
+		fileToString(t, "./testKolFiles/test30.kol"): "fun: callMe(): (int, bool, string, char, float) {println(\"hello!!\");if: ((10 > 1)): {if: ((10 > 1)): {return: (10, true, \"Hello\", 'w', 1.1);}}return: (1, false, \"World\", 'h', 10.1);}fun: main() {var a: int = callMe();var b: bool = callMe();var c: string = callMe();var d: char = callMe();var e: float = callMe();println(a);println(b);println(c);println(d);println(e);callMe();}",
+	}
+	helper1(t, []map[string]string{input}, false)
+}
+
+func helper(t *testing.T, input []map[string]bool, inTesting bool) {
 	for _, test := range input {
 		for key, val := range test {
 			tokens := lexer.Tokenizer(key)
-			parser := parser.New(tokens, true)
+			parser := parser.New(tokens, inTesting)
 			program, err := parser.ParseProgram()
 			if val {
 				if err != nil {
@@ -181,11 +245,11 @@ func helper(t *testing.T, input []map[string]bool) {
 	}
 }
 
-func helper1(t *testing.T, test []map[string]string) {
+func helper1(t *testing.T, test []map[string]string, inTesting bool) {
 	for _, pair := range test {
 		for input, expected := range pair {
 			tokens := lexer.Tokenizer(input)
-			parser := parser.New(tokens, true)
+			parser := parser.New(tokens, inTesting)
 			program, err := parser.ParseProgram()
 			if err != nil {
 				t.Fatalf("ParseProgram() returned error: %s", err)
@@ -193,4 +257,12 @@ func helper1(t *testing.T, test []map[string]string) {
 			assert.Equal(t, expected, program.String())
 		}
 	}
+}
+
+func fileToString(t *testing.T, filePath string) string {
+	rawString, err := os.ReadFile(filePath)
+	if err != nil {
+		t.Fatalf("Failed to read file: %s", err)
+	}
+	return strings.TrimSuffix(string(rawString), "\n")
 }

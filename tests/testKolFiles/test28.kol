@@ -1,0 +1,1 @@
+fun: callMe(): (int) {println("hello");return: 10;}fun: main() {var a: int = 100;a += 2;println(a);var b: int = callMe();callMe();println(123);println(b);}

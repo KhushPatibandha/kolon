@@ -429,7 +429,7 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Value}
 
 	if existing, ok := p.env.GetFunc(stmt.Name.Value); ok &&
-		existing.Func.Function.Body != nil && !p.inTesting {
+		(existing.Func.Builtin || existing.Func.Function.Body != nil) && !p.inTesting {
 		return nil,
 			errors.New(
 				"can't declare a function twice, function with the same name `" +
@@ -530,6 +530,13 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 	p.currFunction = nil
 
 	f.Func.Function.Body = funBody
+
+	if f.Func.Function.ReturnTypes != nil && !p.inTesting {
+		err = checkReturnAtTheEnd(f.Func.Function.Body.Statements)
+		if err != nil {
+			return nil, errors.New("function `" + f.Func.Function.Name.Value + err.Error())
+		}
+	}
 
 	if ok {
 		return nil, nil

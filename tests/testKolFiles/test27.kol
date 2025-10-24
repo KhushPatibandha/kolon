@@ -1,0 +1,12 @@
+fun: callMe() {
+    println("hello");
+}
+fun: main() {
+    var a: int = 100;
+    a += 2;
+    println(a);
+    var b: int = callMe();
+    callMe();
+    println(123);
+    println(b);
+}

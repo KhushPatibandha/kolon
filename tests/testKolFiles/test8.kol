@@ -1,0 +1,1 @@
+fun: give(a: string[]): (string[]) {return: ["hello", "yo"];}fun: main() {var a: string[] = ["khush", "heeh"];println(a);var b: string[] = give(a);println(b);}

@@ -1,0 +1,1 @@
+fun: name(): (int) {return: 1;}fun: main() {var a: int = ((-name())++);var b: int = (-(name()++));println(a);println(b);}

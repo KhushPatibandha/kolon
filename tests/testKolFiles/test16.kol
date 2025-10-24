@@ -1,0 +1,1 @@
+fun: name(): (int[]) {return: [1, 2, 3, 4];}fun: idx(): (int) {return: 0;}fun: main() {var a: int = name()[idx()];println(a);}

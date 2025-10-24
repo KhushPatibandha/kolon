@@ -194,3 +194,34 @@ func typeCheckBoolCon(exp ast.Expression, keyword string) error {
 	}
 	return nil
 }
+
+func checkReturnAtTheEnd(stmt []ast.Statement) error {
+	lastStmt := stmt[len(stmt)-1]
+	switch n := lastStmt.(type) {
+	case *ast.Return:
+		return nil
+	case *ast.If:
+		if n.Alternate == nil {
+			return errors.New("` must have a `return` statement at the end of all branches")
+		}
+		err := checkReturnAtTheEnd(n.Body.Statements)
+		if err != nil {
+			return err
+		}
+		if n.MultiConditionals != nil {
+			for _, mc := range n.MultiConditionals {
+				err = checkReturnAtTheEnd(mc.Body.Statements)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		err = checkReturnAtTheEnd(n.Alternate.Body.Statements)
+		if err != nil {
+			return err
+		}
+		return nil
+	default:
+		return errors.New("` must have a `return` statement at the end of all branches")
+	}
+}

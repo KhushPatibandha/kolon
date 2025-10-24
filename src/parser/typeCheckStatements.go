@@ -103,15 +103,14 @@ func typeCheckVarAndConstWithRightType(stmt *ast.VarAndConst,
 // ------------------------------------------------------------------------------------------------------------------
 func typeCheckMultiAssign(stmt *ast.MultiAssignment, env *environment.Environment) error {
 	if stmt.SingleFunctionCall {
-		var call *ast.CallExpression
 		var isCall bool
+		var call *ast.CallExpression
 
-		varConst, ok := stmt.Objects[0].(*ast.VarAndConst)
-		if ok {
-			call, isCall = varConst.Value.(*ast.CallExpression)
-		} else {
-			call, isCall = stmt.Objects[0].(*ast.ExpressionStatement).
-				Expression.(*ast.CallExpression)
+		switch v := stmt.Objects[0].(type) {
+		case *ast.VarAndConst:
+			call, isCall = v.Value.(*ast.CallExpression)
+		case *ast.ExpressionStatement:
+			call, isCall = v.Expression.(*ast.Assignment).Right.(*ast.CallExpression)
 		}
 
 		if !isCall {

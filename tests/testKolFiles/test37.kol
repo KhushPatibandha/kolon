@@ -1,0 +1,1 @@
+fun: main() {var a: int = 10;println(10.00);println((toFloat(a) + 0.1111));println(typeOf(toFloat(a)));}

@@ -1,0 +1,1 @@
+fun: give(a: string[]): (string[], bool, int) {return: (["hello", "yo"], true, 10);}fun: main() {var a: string[] = ["khush", "heeh"];println(a);var b: string[] = [];b, var bo: bool, var i: int = give(a);println(b);println(i);println(bo);}

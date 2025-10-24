@@ -1,0 +1,1 @@
+fun: main() {println(1);println(("hello!! " + toString(1)));println(2);print((("hello!! " + toString(1.1)) + " "));println(("hehe!! " + toString(true)));println(1);println(1.1);println(true);println('c');}

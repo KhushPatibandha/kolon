@@ -1,0 +1,1 @@
+fun: main() {var list: int[] = [];for: (var i: int = 0; (i <= 10); i += 2): {push(list, i);}var i: int = 0;for: (i = 0; (i <= 10); i += 2): {push(list, i);}i = 0;while: ((i <= 10)): {push(list, i);i += 2;}println(list);}

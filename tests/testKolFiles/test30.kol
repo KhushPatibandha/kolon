@@ -1,0 +1,1 @@
+fun: callMe(): (int, bool, string, char, float) {println("hello!!");if: ((10 > 1)): {if: ((10 > 1)): {return: (10, true, "Hello", 'w', 1.1);}}return: (1, false, "World", 'h', 10.1);}fun: main() {var a: int, var b: bool, var c: string, var d: char, var e: float = callMe();println(a);println(b);println(c);println(d);println(e);callMe();}
