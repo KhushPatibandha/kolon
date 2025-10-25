@@ -6,6 +6,7 @@ import (
 
 	"github.com/sanity-io/litter"
 
+	"github.com/KhushPatibandha/Kolon/src/interpreter/evaluator"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 	"github.com/KhushPatibandha/Kolon/src/parser"
 )
@@ -53,7 +54,12 @@ func main() {
 			fmt.Println("Error parsing program:", err)
 			return
 		}
-		fmt.Println(program.String())
+		e := evaluator.New(false)
+		_, err = e.Evaluate(program)
+		if err != nil {
+			fmt.Println("Error evaluating program:", err)
+			return
+		}
 		return
 	} else if len(os.Args) == 4 && os.Args[1] == "debug:" && (os.Args[3] == "--tokens" || os.Args[3] == "--ast") {
 		filePath := os.Args[2]

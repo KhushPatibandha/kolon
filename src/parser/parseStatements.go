@@ -469,7 +469,7 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 				)
 		}
 
-		funcLocalEnv := p.BootstrapFuncEnv(stmt)
+		funcLocalEnv := environment.BootstrapFuncEnv(stmt, p.env)
 		p.env.Set(&environment.Symbol{
 			IdentType: environment.FUNCTION,
 			Ident:     stmt.Name,
@@ -505,7 +505,7 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 	}
 
 	if !ok {
-		funcLocalEnv := p.BootstrapFuncEnv(stmt)
+		funcLocalEnv := environment.BootstrapFuncEnv(stmt, p.env)
 		p.env.Set(&environment.Symbol{
 			IdentType: environment.FUNCTION,
 			Ident:     stmt.Name,

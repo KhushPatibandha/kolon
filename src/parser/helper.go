@@ -5,7 +5,6 @@ import (
 	"strconv"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
-	"github.com/KhushPatibandha/Kolon/src/environment"
 	ktype "github.com/KhushPatibandha/Kolon/src/kType"
 	"github.com/KhushPatibandha/Kolon/src/lexer"
 )
@@ -137,43 +136,6 @@ func (p *Parser) assignDefaultValue(t *ktype.Type) ast.Expression {
 	default:
 		return nil
 	}
-}
-
-func (p *Parser) loadBuiltins() {
-	builtins := []string{
-		"print", "println", "scan", "scanln", "len", "toString", "toFloat", "toInt",
-		"push", "pop", "insert", "remove", "getIndex", "keys", "values", "containsKey",
-		"typeOf", "slice",
-	}
-	for _, name := range builtins {
-		p.env.FuncNameSpace[name] = &environment.Symbol{
-			IdentType: environment.FUNCTION,
-			Ident: &ast.Identifier{
-				Token: lexer.Token{Kind: lexer.IDENTIFIER, Value: name},
-				Value: name,
-			},
-			Func: &environment.FuncInfo{
-				Builtin:  true,
-				Function: nil,
-			},
-			Type: nil,
-			Env:  nil,
-		}
-	}
-}
-
-func (p *Parser) BootstrapFuncEnv(stmt *ast.Function) *environment.Environment {
-	funcLocalEnv := environment.NewEnclosedEnvironment(p.env)
-	for _, param := range stmt.Parameters {
-		funcLocalEnv.Set(&environment.Symbol{
-			IdentType: environment.VAR,
-			Ident:     param.ParameterName,
-			Type:      param.ParameterType,
-			Func:      nil,
-			Env:       nil,
-		})
-	}
-	return funcLocalEnv
 }
 
 func typeCheckBoolCon(exp ast.Expression, keyword string) error {

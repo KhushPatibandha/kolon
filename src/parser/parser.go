@@ -44,7 +44,7 @@ func New(tokens []lexer.Token, inTesting bool) *Parser {
 	}
 	p.nextToken()
 	p.stack.Push(p.env)
-	p.loadBuiltins()
+	environment.LoadBuiltins(p.env)
 
 	p.addPrefix(lexer.IDENTIFIER, p.parseIdentifier)
 	p.addPrefix(lexer.INT, p.parseInteger)
