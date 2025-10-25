@@ -3,6 +3,7 @@ package environment
 import (
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	ktype "github.com/KhushPatibandha/Kolon/src/kType"
+	"github.com/KhushPatibandha/Kolon/src/object"
 )
 
 type IdentType int
@@ -14,11 +15,12 @@ const (
 )
 
 type Symbol struct {
-	IdentType IdentType
-	Ident     *ast.Identifier
-	Type      *ktype.Type
-	Func      *FuncInfo
-	Env       *Environment
+	IdentType   IdentType
+	Ident       *ast.Identifier
+	Type        *ktype.Type
+	Func        *FuncInfo
+	Env         *Environment
+	ValueObject object.Object
 }
 
 type FuncInfo struct {
@@ -75,5 +77,16 @@ func (e *Environment) Set(sym *Symbol) {
 		e.VariableNameSpace[sym.Ident.Value] = sym
 	case FUNCTION:
 		e.FuncNameSpace[sym.Ident.Value] = sym
+	}
+}
+
+func (e *Environment) SetValue(name string, v object.Object) {
+	sym, ok := e.VariableNameSpace[name]
+	if !ok && e.Outer != nil {
+		e.Outer.SetValue(name, v)
+		return
+	}
+	if ok {
+		sym.ValueObject = v
 	}
 }

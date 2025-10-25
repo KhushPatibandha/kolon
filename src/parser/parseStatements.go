@@ -49,7 +49,7 @@ func (p *Parser) parseStatement() (ast.Statement, error) {
 func (p *Parser) parseBody() (*ast.Body, error) {
 	body := &ast.Body{Token: p.currToken, Statements: []ast.Statement{}}
 	p.nextToken()
-	for !p.currTokenIsOk(lexer.CLOSE_CURLY_BRACKET) && !p.currTokenIsOk(lexer.EOF) {
+	for !p.currTokenIsOk(lexer.CLOSE_CURLY_BRACKET) {
 		stmt, err := p.parseStatement()
 		if err != nil {
 			return nil, err
@@ -531,10 +531,10 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 
 	f.Func.Function.Body = funBody
 
-	if f.Func.Function.ReturnTypes != nil && !p.inTesting {
-		err = checkReturnAtTheEnd(f.Func.Function.Body.Statements)
+	if !p.inTesting {
+		err = typeCheckFunction(f.Func.Function)
 		if err != nil {
-			return nil, errors.New("function `" + f.Func.Function.Name.Value + err.Error())
+			return nil, err
 		}
 	}
 

@@ -57,6 +57,7 @@ func New(tokens []lexer.Token, inTesting bool) *Parser {
 	p.addPrefix(lexer.OPEN_BRACKET, p.parseGroupedExp)
 	p.addPrefix(lexer.OPEN_SQUARE_BRACKET, p.parseArray)
 	p.addPrefix(lexer.OPEN_CURLY_BRACKET, p.parseHashMap)
+	p.addPrefix(lexer.EOF, p.handleEOF)
 
 	p.addInfix(lexer.PLUS, p.parseInfix)
 	p.addInfix(lexer.DASH, p.parseInfix)

@@ -225,3 +225,7 @@ func checkReturnAtTheEnd(stmt []ast.Statement) error {
 		return errors.New("` must have a `return` statement at the end of all branches")
 	}
 }
+
+func (p *Parser) handleEOF() (ast.Expression, error) {
+	return nil, errors.New("unexpected end of file")
+}

@@ -192,6 +192,7 @@ func Test28(t *testing.T) {
 		fileToString(t, "./testKolFiles/test36.kol"):  true,
 		fileToString(t, "./testKolFiles/test37.kol"):  true,
 		fileToString(t, "./testKolFiles/test38.kol"):  true,
+		fileToString(t, "./testKolFiles/test42.kol"):  true,
 
 		// fileToString(t, "./testKolFiles/test17.kol"): true,
 		// fileToString(t, "./testKolFiles/test7.kol"):   true,
@@ -202,6 +203,7 @@ func Test28(t *testing.T) {
 		fileToString(t, "./testKolFiles/test24.kol"): false,
 		fileToString(t, "./testKolFiles/test27.kol"): false,
 		fileToString(t, "./testKolFiles/test1.kol"):  false,
+		fileToString(t, "./testKolFiles/test41.kol"): false,
 	}
 	helper(t, []map[string]bool{input}, false)
 }

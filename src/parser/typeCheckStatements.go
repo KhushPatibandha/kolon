@@ -16,6 +16,25 @@ import (
 // ------------------------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------------------------
+// Function
+// ------------------------------------------------------------------------------------------------------------------
+func typeCheckFunction(f *ast.Function) error {
+	if f.Name.Value == "main" && f.Parameters != nil && f.ReturnTypes != nil {
+		return errors.New("`main` function must not take in any parameters and " +
+			"must not return anything, since it is the starting point of the program")
+	}
+
+	if f.ReturnTypes != nil {
+		err := checkReturnAtTheEnd(f.Body.Statements)
+		if err != nil {
+			return errors.New("function `" + f.Name.Value + err.Error())
+		}
+	}
+
+	return nil
+}
+
+// ------------------------------------------------------------------------------------------------------------------
 // VarAndConst
 // ------------------------------------------------------------------------------------------------------------------
 func typeCheckVarAndConst(stmt *ast.VarAndConst, env *environment.Environment) error {
