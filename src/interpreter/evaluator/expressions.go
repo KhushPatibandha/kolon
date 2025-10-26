@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
 	"github.com/KhushPatibandha/Kolon/src/object"
@@ -164,7 +165,291 @@ func (e *Evaluator) evalPrefixMinus(right object.Object) (*object.EvalResult, er
 // Infix
 // ------------------------------------------------------------------------------------------------------------------
 func (e *Evaluator) evalInfix(i *ast.Infix) (*object.EvalResult, error) {
-	return nil, nil
+	left, err := e.Evaluate(i.Left)
+	if err != nil {
+		return nil, err
+	}
+	right, err := e.Evaluate(i.Right)
+	if err != nil {
+		return nil, err
+	}
+	switch {
+	case left.Value.Type() == object.INTEGER_OBJ && right.Value.Type() == object.INTEGER_OBJ:
+		return e.evalInfixInteger(i.Operator, left.Value, right.Value)
+	case left.Value.Type() == object.FLOAT_OBJ && right.Value.Type() == object.FLOAT_OBJ:
+		return e.evalInfixFloat(i.Operator, left.Value, right.Value)
+	case left.Value.Type() == object.BOOLEAN_OBJ && right.Value.Type() == object.BOOLEAN_OBJ:
+		return e.evalInfixBool(i.Operator, left.Value, right.Value)
+	case left.Value.Type() == object.STRING_OBJ && right.Value.Type() == object.STRING_OBJ:
+		return e.evalInfixString(i.Operator, left.Value, right.Value)
+	case left.Value.Type() == object.CHAR_OBJ && right.Value.Type() == object.CHAR_OBJ:
+		return e.evalInfixChar(i.Operator, left.Value, right.Value)
+	case (left.Value.Type() == object.INTEGER_OBJ && right.Value.Type() == object.FLOAT_OBJ) ||
+		(left.Value.Type() == object.FLOAT_OBJ && right.Value.Type() == object.INTEGER_OBJ):
+		l := 0.0
+		r := 0.0
+
+		if left.Value.Type() == object.INTEGER_OBJ {
+			l = float64(left.Value.(*object.Integer).Value)
+			r = right.Value.(*object.Float).Value
+		} else {
+			l = left.Value.(*object.Float).Value
+			r = float64(right.Value.(*object.Integer).Value)
+		}
+
+		return e.evalInfixFloat(i.Operator, &object.Float{Value: l}, &object.Float{Value: r})
+	default:
+		return e.evalInfixArray(i.Operator, left.Value, right.Value)
+	}
+}
+
+func (e *Evaluator) evalInfixChar(operator string,
+	left, right object.Object,
+) (*object.EvalResult, error) {
+	l := left.(*object.Char).Value
+	r := right.(*object.Char).Value
+	l = l[1 : len(l)-1]
+	r = r[1 : len(r)-1]
+	switch operator {
+	case "+":
+		return &object.EvalResult{
+			Value:  &object.String{Value: "\"" + l + r + "\""},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "==":
+		if l == r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	default:
+		if l != r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	}
+}
+
+func (e *Evaluator) evalInfixString(operator string,
+	left, right object.Object,
+) (*object.EvalResult, error) {
+	l := left.(*object.String).Value
+	r := right.(*object.String).Value
+	l = l[1 : len(l)-1]
+	r = r[1 : len(r)-1]
+	switch operator {
+	case "+":
+		return &object.EvalResult{
+			Value:  &object.String{Value: "\"" + l + r + "\""},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "==":
+		if l == r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	default:
+		if l != r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	}
+}
+
+func (e *Evaluator) evalInfixBool(operator string,
+	left, right object.Object,
+) (*object.EvalResult, error) {
+	l := left.(*object.Bool).Value
+	r := right.(*object.Bool).Value
+	switch operator {
+	case "&&":
+		if l && r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	case "||":
+		if l || r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	case "==":
+		if l == r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	default:
+		if l != r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	}
+}
+
+func (e *Evaluator) evalInfixFloat(operator string,
+	left, right object.Object,
+) (*object.EvalResult, error) {
+	l := left.(*object.Float).Value
+	r := right.(*object.Float).Value
+	switch operator {
+	case "+":
+		return &object.EvalResult{
+			Value:  &object.Float{Value: l + r},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "-":
+		return &object.EvalResult{
+			Value:  &object.Float{Value: l - r},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "*":
+		return &object.EvalResult{
+			Value:  &object.Float{Value: l * r},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "/":
+		if r == 0.0 {
+			return nil, errors.New("float division by zero")
+		}
+		return &object.EvalResult{
+			Value:  &object.Float{Value: l / r},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case ">":
+		if l > r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	case "<":
+		if l < r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	case "<=":
+		if l <= r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	case ">=":
+		if l >= r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	case "==":
+		if l == r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	default:
+		if l != r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	}
+}
+
+func (e *Evaluator) evalInfixInteger(operator string,
+	left, right object.Object,
+) (*object.EvalResult, error) {
+	l := left.(*object.Integer).Value
+	r := right.(*object.Integer).Value
+	switch operator {
+	case "+":
+		return &object.EvalResult{
+			Value:  &object.Integer{Value: l + r},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "-":
+		return &object.EvalResult{
+			Value:  &object.Integer{Value: l - r},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "*":
+		return &object.EvalResult{
+			Value:  &object.Integer{Value: l * r},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "/":
+		if r == 0 {
+			return nil, errors.New("integer division by zero")
+		}
+		return &object.EvalResult{
+			Value:  &object.Integer{Value: l / r},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "%":
+		if r == 0 {
+			return nil, errors.New("modulo by zero")
+		}
+		return &object.EvalResult{
+			Value:  &object.Integer{Value: l % r},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "&":
+		return &object.EvalResult{
+			Value:  &object.Integer{Value: l & r},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "|":
+		return &object.EvalResult{
+			Value:  &object.Integer{Value: l | r},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case ">":
+		if l > r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	case "<":
+		if l < r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	case "<=":
+		if l <= r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	case ">=":
+		if l >= r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	case "==":
+		if l == r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	default:
+		if l != r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	}
+}
+
+func (e *Evaluator) evalInfixArray(operator string,
+	left, right object.Object,
+) (*object.EvalResult, error) {
+	l := left.(*object.Array)
+	r := right.(*object.Array)
+	switch operator {
+	case "+":
+		a := append(append([]object.Object{}, l.Elements...), r.Elements...)
+		return &object.EvalResult{
+			Value:  &object.Array{Elements: a},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "==":
+		// TODO: write test for this
+		if l == r {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	default:
+		if l == r {
+			return FALSE, nil
+		}
+		return TRUE, nil
+	}
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -217,14 +502,83 @@ func (e *Evaluator) evalAssignment(a *ast.Assignment,
 	injectValue bool,
 	val object.Object,
 ) (*object.EvalResult, error) {
-	return nil, nil
+	switch a.Operator {
+	case "=":
+		return e.evalAssignmentEqual(a, injectValue, val)
+	default:
+		return e.evalAssignmentSymbol(a)
+	}
+}
+
+func (e *Evaluator) evalAssignmentSymbol(a *ast.Assignment) (*object.EvalResult, error) {
+	in := &ast.Infix{
+		Left:     a.Left,
+		Operator: strings.TrimSuffix(a.Operator, "="),
+		Right:    a.Right,
+	}
+	right, err := e.evalInfix(in)
+	if err != nil {
+		return nil, err
+	}
+	return e.evalAssignmentEqual(a, true, right.Value)
+}
+
+func (e *Evaluator) evalAssignmentEqual(a *ast.Assignment,
+	injectValue bool,
+	right object.Object,
+) (*object.EvalResult, error) {
+	var r object.Object
+
+	if injectValue {
+		r = right
+	} else {
+		res, err := e.Evaluate(a.Right)
+		if err != nil {
+			return nil, err
+		}
+		r = res.Value
+	}
+
+	e.stack.Top().SetValue(a.Left.Value, r)
+	return &object.EvalResult{
+		Value:  r,
+		Signal: object.SIGNAL_NONE,
+	}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
 // CallExpression
 // ------------------------------------------------------------------------------------------------------------------
 func (e *Evaluator) evalCall(c *ast.CallExpression) (*object.EvalResult, error) {
-	return nil, nil
+	args, err := e.evalCallArgs(c)
+	if err != nil {
+		return nil, err
+	}
+
+	sym, _ := e.env.GetFunc(c.Name.Value)
+	if sym.Func.Builtin {
+		return e.evalBuiltin(c.Name.Value, args)
+	}
+
+	localEnv := sym.Env
+	e.stack.Push(localEnv)
+	r, err := e.evalStmts(sym.Func.Function.Body.Statements)
+
+	return r, err
+}
+
+func (e *Evaluator) evalCallArgs(c *ast.CallExpression) ([]object.Object, error) {
+	var res []object.Object
+	if c.Args != nil {
+		for _, ex := range c.Args {
+			r, err := e.Evaluate(ex)
+			if err != nil {
+				return nil, err
+			}
+			res = append(res, r.Value)
+		}
+	}
+	return res, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -301,3 +655,12 @@ func (e *Evaluator) evalIndexHashMap(left, index object.Object) (*object.EvalRes
 		Signal: object.SIGNAL_NONE,
 	}, nil
 }
+
+// ------------------------------------------------------------------------------------------------------------------
+// Builtin
+// ------------------------------------------------------------------------------------------------------------------
+func (e *Evaluator) evalBuiltin(name string, args []object.Object) (*object.EvalResult, error) {
+	return nil, nil
+}
+
+// TODO: add equals() builtin function
