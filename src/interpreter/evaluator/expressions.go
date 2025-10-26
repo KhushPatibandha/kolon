@@ -1,8 +1,10 @@
 package evaluator
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 
@@ -557,7 +559,7 @@ func (e *Evaluator) evalCall(c *ast.CallExpression) (*object.EvalResult, error) 
 
 	sym, _ := e.env.GetFunc(c.Name.Value)
 	if sym.Func.Builtin {
-		return e.evalBuiltin(c.Name.Value, args)
+		return e.evalBuiltin(c, args)
 	}
 
 	localEnv := sym.Env
@@ -659,8 +661,533 @@ func (e *Evaluator) evalIndexHashMap(left, index object.Object) (*object.EvalRes
 // ------------------------------------------------------------------------------------------------------------------
 // Builtin
 // ------------------------------------------------------------------------------------------------------------------
-func (e *Evaluator) evalBuiltin(name string, args []object.Object) (*object.EvalResult, error) {
-	return nil, nil
-}
+func (e *Evaluator) evalBuiltin(c *ast.CallExpression, args []object.Object) (*object.EvalResult, error) {
+	name := c.Name.Value
+	switch name {
+	case "len":
+		var r object.Object
+		switch arg := args[0].(type) {
+		case *object.String:
+			r = &object.Integer{Value: int64(len(arg.Value) - 2)}
+		case *object.Array:
+			r = &object.Integer{Value: int64(len(arg.Elements))}
+		case *object.HashMap:
+			r = &object.Integer{Value: int64(len(arg.Pairs))}
+		}
+		return &object.EvalResult{
+			Value:  r,
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "toString":
+		var r object.Object
+		switch arg := args[0].(type) {
+		case *object.Integer:
+			s := strconv.FormatInt(arg.Value, 10)
+			s = "\"" + s + "\""
+			r = &object.String{Value: s}
+		case *object.Float:
+			s := strconv.FormatFloat(arg.Value, 'f', -1, 64)
+			s = "\"" + s + "\""
+			r = &object.String{Value: s}
+		case *object.Bool:
+			s := strconv.FormatBool(arg.Value)
+			s = "\"" + s + "\""
+			r = &object.String{Value: s}
+		case *object.Char:
+			s := arg.Value[1 : len(arg.Value)-1]
+			s = "\"" + s + "\""
+			r = &object.String{Value: s}
+		case *object.String:
+			r = arg
+		case *object.Array:
+			r = &object.String{Value: "\"" + arg.Inspect() + "\""}
+		case *object.HashMap:
+			r = &object.String{Value: "\"" + arg.Inspect() + "\""}
+		}
+		return &object.EvalResult{
+			Value:  r,
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "toInt":
+		var r object.Object
+		switch arg := args[0].(type) {
+		case *object.Integer:
+			r = arg
+		case *object.Float:
+			r = &object.Integer{Value: int64(arg.Value)}
+		case *object.Char:
+			s := arg.Value[1 : len(arg.Value)-1]
+			r = &object.Integer{Value: int64(s[0])}
+		case *object.String:
+			s := arg.Value[1 : len(arg.Value)-1]
+			i, err := strconv.ParseInt(s, 10, 64)
+			if err != nil {
+				return nil, errors.New("Error converting string to int, can't convert: " + s)
+			}
+			r = &object.Integer{Value: i}
+		}
+		return &object.EvalResult{
+			Value:  r,
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "toFloat":
+		var r object.Object
+		switch arg := args[0].(type) {
+		case *object.Integer:
+			r = &object.Float{Value: float64(arg.Value)}
+		case *object.Float:
+			r = arg
+		case *object.String:
+			s := arg.Value[1 : len(arg.Value)-1]
+			f, err := strconv.ParseFloat(s, 64)
+			if err != nil {
+				return nil, errors.New("Error converting string to float, can't convert: " + s)
+			}
+			r = &object.Float{Value: f}
+		}
+		return &object.EvalResult{
+			Value:  r,
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "print":
+		switch arg := args[0].(type) {
+		case *object.String:
+			fmt.Print(arg.Value[1 : len(arg.Value)-1])
+		case *object.Char:
+			fmt.Print(arg.Value[1 : len(arg.Value)-1])
+		case *object.Integer:
+			fmt.Print(strconv.FormatInt(arg.Value, 10))
+		case *object.Float:
+			fmt.Print(strconv.FormatFloat(arg.Value, 'f', -1, 64))
+		case *object.Bool:
+			fmt.Print(strconv.FormatBool(arg.Value))
+		default:
+			fmt.Print(arg.Inspect())
+		}
+		return &object.EvalResult{
+			Value:  nil,
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "println":
+		if len(args) == 0 {
+			fmt.Println()
+			return nil, nil
+		}
+		switch arg := args[0].(type) {
+		case *object.String:
+			fmt.Println(arg.Value[1 : len(arg.Value)-1])
+		case *object.Char:
+			fmt.Println(arg.Value[1 : len(arg.Value)-1])
+		case *object.Integer:
+			fmt.Println(strconv.FormatInt(arg.Value, 10))
+		case *object.Float:
+			fmt.Println(strconv.FormatFloat(arg.Value, 'f', -1, 64))
+		case *object.Bool:
+			fmt.Println(strconv.FormatBool(arg.Value))
+		default:
+			fmt.Println(arg.Inspect())
+		}
+		return &object.EvalResult{
+			Value:  nil,
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "scan":
+		if len(args) != 0 {
+			strToPrint := args[0].(*object.String).
+				Value[1 : len(args[0].(*object.String).Value)-1]
+			if len(args) == 2 && args[1].Inspect() == "true" {
+				fmt.Println(strToPrint)
+			} else {
+				fmt.Print(strToPrint)
+			}
+		}
+		reader := bufio.NewReader(os.Stdin)
+		var input []string
+		for {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				return nil, errors.New("error reading input: " + err.Error())
+			}
+			line = strings.TrimSpace(line)
+			line = strings.TrimSuffix(line, "\n")
+			if line == "" {
+				break
+			}
+			input = append(input, line)
+		}
+		res := strings.Join(input, " ")
+		return &object.EvalResult{
+			Value:  &object.String{Value: "\"" + res + "\""},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "scanln":
+		if len(args) != 0 {
+			strToPrint := args[0].(*object.String).
+				Value[1 : len(args[0].(*object.String).Value)-1]
+			if len(args) == 2 && args[1].Inspect() == "true" {
+				fmt.Println(strToPrint)
+			} else {
+				fmt.Print(strToPrint)
+			}
+		}
+		reader := bufio.NewReader(os.Stdin)
+		var input string
+		input, err := reader.ReadString('\n')
+		if err != nil {
+			return nil, errors.New("error reading input: " + err.Error())
+		}
+		input = strings.TrimSpace(input)
+		input = strings.TrimSuffix(input, "\n")
+		return &object.EvalResult{
+			Value:  &object.String{Value: "\"" + input + "\""},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "getIndex":
+		switch arg := args[0].(type) {
+		case *object.Array:
+			t := args[1].Inspect()
+			for i, ele := range arg.Elements {
+				if ele.Inspect() == t {
+					return &object.EvalResult{
+						Value:  &object.Integer{Value: int64(i)},
+						Signal: object.SIGNAL_NONE,
+					}, nil
+				}
+			}
+		}
+		return &object.EvalResult{
+			Value:  &object.Integer{Value: -1},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "keys":
+		var keys []object.Object
+		for _, pair := range args[0].(*object.HashMap).Pairs {
+			keys = append(keys, pair.Key)
+		}
+		return &object.EvalResult{
+			Value:  &object.Array{Elements: keys},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "values":
+		var values []object.Object
+		for _, pair := range args[0].(*object.HashMap).Pairs {
+			values = append(values, pair.Value)
+		}
+		return &object.EvalResult{
+			Value:  &object.Array{Elements: values},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "containsKey":
+		h := args[0].(*object.HashMap)
+		k, ok := args[1].(object.Hashable)
+		if !ok {
+			return nil, errors.New("unusable as hash key: " + string(args[1].Type()))
+		}
+		_, ok = h.Pairs[k.HashKey()]
+		if ok {
+			return TRUE, nil
+		}
+		return FALSE, nil
+	case "typeOf":
+		switch args[0].(type) {
+		case *object.Integer:
+			return &object.EvalResult{
+				Value:  &object.String{Value: "\"int\""},
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		case *object.Float:
+			return &object.EvalResult{
+				Value:  &object.String{Value: "\"float\""},
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		case *object.Bool:
+			return &object.EvalResult{
+				Value:  &object.String{Value: "\"bool\""},
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		case *object.String:
+			return &object.EvalResult{
+				Value:  &object.String{Value: "\"string\""},
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		case *object.Char:
+			return &object.EvalResult{
+				Value:  &object.String{Value: "\"char\""},
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		case *object.Array:
+			return &object.EvalResult{
+				Value: &object.String{Value: "\"" +
+					c.Args[0].(*ast.Array).Type.String() + "\""},
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		default:
+			return &object.EvalResult{
+				Value: &object.String{Value: "\"" +
+					c.Args[0].(*ast.HashMap).KeyType.String() + "[" +
+					c.Args[0].(*ast.HashMap).ValueType.String() +
+					"]" + "\""},
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		}
+	case "push":
+		switch arg := args[0].(type) {
+		case *object.Array:
+			arg.Elements = append(arg.Elements, args[1])
+			return &object.EvalResult{
+				Value:  arg,
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		default:
+			hashKey, ok := args[1].(object.Hashable)
+			if !ok {
+				return nil, errors.New("unusable as hash key: " + string(args[1].Type()))
+			}
+			arg.(*object.HashMap).Pairs[hashKey.HashKey()] = object.HashPair{
+				Key:   args[1],
+				Value: args[2],
+			}
+			return &object.EvalResult{
+				Value:  arg,
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		}
+	case "pop":
+		a := args[0].(*object.Array)
+		var popped object.Object
+		if len(args) == 1 {
+			if len(a.Elements) == 0 {
+				return nil, errors.New("array is empty, can't pop any elements")
+			}
+			popped = a.Elements[len(a.Elements)-1]
+			a.Elements = a.Elements[:len(a.Elements)-1]
+		} else {
+			idx := args[1].(*object.Integer).Value
+			if idx < 0 || idx >= int64(len(a.Elements)) {
+				return nil,
+					errors.New("index out of range, can't pop element at index: " +
+						strconv.FormatInt(idx, 10),
+					)
+			}
+			popped = a.Elements[idx]
+			a.Elements = append(a.Elements[:idx], a.Elements[idx+1:]...)
+		}
+		return &object.EvalResult{
+			Value:  popped,
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "insert":
+		a := args[0].(*object.Array)
+		idx := args[1].(*object.Integer).Value
+		if idx < 0 || idx > int64(len(a.Elements)) {
+			return nil,
+				errors.New("index out of range, can't insert element at index: " +
+					strconv.FormatInt(idx, 10),
+				)
+		}
+		value := args[2]
+		a.Elements = append(a.Elements[:idx], append([]object.Object{value}, a.Elements[idx:]...)...)
+		return &object.EvalResult{
+			Value:  a,
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "remove":
+		switch arg := args[0].(type) {
+		case *object.Array:
+			eleToRemove := args[1].Inspect()
+			for i, ele := range arg.Elements {
+				if ele.Inspect() == eleToRemove {
+					arg.Elements = append(arg.Elements[:i], arg.Elements[i+1:]...)
+					break
+				}
+			}
+			return &object.EvalResult{
+				Value:  arg,
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		default:
+			hashKey, ok := args[1].(object.Hashable)
+			if !ok {
+				return nil, errors.New("unusable as hash key: " + string(args[1].Type()))
+			}
+			delete(arg.(*object.HashMap).Pairs, hashKey.HashKey())
+			return &object.EvalResult{
+				Value:  arg,
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		}
+	case "delete":
+		switch arg := args[0].(type) {
+		case *object.Array:
+			eleToDelete := args[1].Inspect()
+			for i, ele := range arg.Elements {
+				if ele.Inspect() == eleToDelete {
+					arg.Elements = append(arg.Elements[:i], arg.Elements[i+1:]...)
+					return &object.EvalResult{
+						Value:  args[1],
+						Signal: object.SIGNAL_NONE,
+					}, nil
+				}
+			}
+			return &object.EvalResult{
+				Value:  nil,
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		default:
+			hashKey, ok := args[1].(object.Hashable)
+			if !ok {
+				return nil, errors.New("unusable as hash key: " + string(args[1].Type()))
+			}
+			hMap := arg.(*object.HashMap)
+			pair, ok := hMap.Pairs[hashKey.HashKey()]
+			if !ok {
+				return &object.EvalResult{
+					Value:  nil,
+					Signal: object.SIGNAL_NONE,
+				}, nil
+			}
+			delete(hMap.Pairs, hashKey.HashKey())
+			return &object.EvalResult{
+				Value:  pair.Value,
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		}
+	case "slice":
+		start := args[1].(*object.Integer).Value
+		end := args[2].(*object.Integer).Value
+		switch arg := args[0].(type) {
+		case *object.Array:
+			if start < 0 || start >= int64(len(arg.Elements)) ||
+				end < 0 || end > int64(len(arg.Elements)) || start > end {
+				return nil,
+					errors.New("index out of range, can't slice array from " +
+						strconv.FormatInt(start, 10) + " to " +
+						strconv.FormatInt(end, 10),
+					)
+			}
+			newArr := &object.Array{}
 
-// TODO: add equals() builtin function
+			if len(args) == 3 {
+				sliced := arg.Elements[start:end]
+				newArr.Elements = sliced
+			} else {
+				step := args[3].(*object.Integer).Value
+				if step <= 0 {
+					return nil,
+						errors.New("step must be a positive integer, got: " +
+							strconv.FormatInt(step, 10),
+						)
+				}
+				var sliced []object.Object
+				for i := start; i < end; i += step {
+					sliced = append(sliced, arg.Elements[i])
+				}
+				newArr.Elements = sliced
+			}
+
+			return &object.EvalResult{
+				Value:  newArr,
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		default:
+			s := arg.(*object.String).Value
+			s = s[1 : len(s)-1]
+			if start < 0 || start >= int64(len(s)) ||
+				end < 0 || end > int64(len(s)) || start > end {
+				return nil,
+					errors.New("index out of range, can't slice string from " +
+						strconv.FormatInt(start, 10) + " to " +
+						strconv.FormatInt(end, 10),
+					)
+			}
+			newStr := &object.String{}
+
+			if len(args) == 3 {
+				sliced := s[start:end]
+				newStr.Value = "\"" + sliced + "\""
+			} else {
+				step := args[3].(*object.Integer).Value
+				if step <= 0 {
+					return nil,
+						errors.New("step must be a positive integer, got: " +
+							strconv.FormatInt(step, 10),
+						)
+				}
+				var sliced strings.Builder
+				for i := start; i < end; i += step {
+					sliced.WriteByte(s[i])
+				}
+				newStr.Value = "\"" + sliced.String() + "\""
+			}
+
+			return &object.EvalResult{
+				Value:  newStr,
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		}
+	case "equals":
+		switch arg := args[0].(type) {
+		case *object.Integer:
+			other := args[1].(*object.Integer)
+			if arg.Value == other.Value {
+				return TRUE, nil
+			}
+			return FALSE, nil
+		case *object.Float:
+			other := args[1].(*object.Float)
+			if arg.Value == other.Value {
+				return TRUE, nil
+			}
+			return FALSE, nil
+		case *object.Bool:
+			other := args[1].(*object.Bool)
+			if arg.Value == other.Value {
+				return TRUE, nil
+			}
+			return FALSE, nil
+		case *object.String:
+			other := args[1].(*object.String)
+			if arg.Value == other.Value {
+				return TRUE, nil
+			}
+			return FALSE, nil
+		case *object.Char:
+			other := args[1].(*object.Char)
+			if arg.Value == other.Value {
+				return TRUE, nil
+			}
+			return FALSE, nil
+		case *object.Array:
+			other := args[1].(*object.Array)
+			if len(arg.Elements) != len(other.Elements) {
+				return FALSE, nil
+			}
+			for i := range arg.Elements {
+				if arg.Elements[i].Inspect() != other.Elements[i].Inspect() {
+					return FALSE, nil
+				}
+			}
+			return TRUE, nil
+		default:
+			h1 := args[0].(*object.HashMap)
+			h2 := args[1].(*object.HashMap)
+			if len(h1.Pairs) != len(h2.Pairs) {
+				return FALSE, nil
+			}
+			for k, v1 := range h1.Pairs {
+				v2, ok := h2.Pairs[k]
+				if !ok || v1.Value.Inspect() != v2.Value.Inspect() {
+					return FALSE, nil
+				}
+			}
+			return TRUE, nil
+		}
+	case "copy":
+		return &object.EvalResult{
+			Value:  deepCopy(args[0]),
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	default:
+		return nil, nil
+	}
+}

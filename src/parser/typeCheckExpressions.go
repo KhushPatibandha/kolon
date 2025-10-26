@@ -1010,11 +1010,53 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 			Types:   []*ktype.Type{argTypes[0]},
 			TypeLen: 1,
 		}, nil
+	case "delete":
+		if exp.Args == nil || len(exp.Args) != 2 {
+			return nil,
+				errors.New(
+					"wrong number of arguments for `delete`, got: " +
+						strconv.Itoa(len(exp.Args)) +
+						", want: 2. for array: `remove(array, element)`, " +
+						"for hashmap: `remove(map, key)`",
+				)
+		}
+		if argTypes[0].Kind != ktype.TypeArray && argTypes[0].Kind != ktype.TypeHashMap {
+			return nil,
+				errors.New(
+					"data structure not supported by `delete`, got: " +
+						argTypes[0].String() + ", want: array or hashmap",
+				)
+		}
+		if argTypes[0].Kind == ktype.TypeArray {
+			if !argTypes[0].ElementType.Equals(argTypes[1]) {
+				return nil,
+					errors.New(
+						"argument type mismatch for `delete`, expected element to be " +
+							argTypes[0].ElementType.String() + ", got: " + argTypes[1].String(),
+					)
+			}
+			return &ktype.TypeCheckResult{
+				Types:   []*ktype.Type{argTypes[0].ElementType},
+				TypeLen: 1,
+			}, nil
+		} else {
+			if !argTypes[0].KeyType.Equals(argTypes[1]) {
+				return nil,
+					errors.New(
+						"key type mismatch for `delete`, expected key to be " +
+							argTypes[0].KeyType.String() + ", got: " + argTypes[1].String(),
+					)
+			}
+			return &ktype.TypeCheckResult{
+				Types:   []*ktype.Type{argTypes[0].ValueType},
+				TypeLen: 1,
+			}, nil
+		}
 	case "remove":
 		if exp.Args == nil || len(exp.Args) != 2 {
 			return nil,
 				errors.New(
-					"wrong number of arguments for `remove` for array, got: " +
+					"wrong number of arguments for `remove`, got: " +
 						strconv.Itoa(len(exp.Args)) +
 						", want: 2. for array: `remove(array, element)`, " +
 						"for hashmap: `remove(map, key)`",
@@ -1035,10 +1077,6 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 							argTypes[0].ElementType.String() + ", got: " + argTypes[1].String(),
 					)
 			}
-			return &ktype.TypeCheckResult{
-				Types:   []*ktype.Type{argTypes[0]},
-				TypeLen: 1,
-			}, nil
 		} else {
 			if !argTypes[0].KeyType.Equals(argTypes[1]) {
 				return nil,
@@ -1047,11 +1085,11 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 							argTypes[0].KeyType.String() + ", got: " + argTypes[1].String(),
 					)
 			}
-			return &ktype.TypeCheckResult{
-				Types:   []*ktype.Type{argTypes[0].ValueType},
-				TypeLen: 1,
-			}, nil
 		}
+		return &ktype.TypeCheckResult{
+			Types:   []*ktype.Type{argTypes[0]},
+			TypeLen: 1,
+		}, nil
 	case "getIndex":
 		if exp.Args == nil || len(exp.Args) != 2 {
 			return nil,
@@ -1199,6 +1237,46 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 		}
 		return &ktype.TypeCheckResult{
 			Types:   []*ktype.Type{argTypes[0]},
+			TypeLen: 1,
+		}, nil
+	case "copy":
+		if exp.Args == nil || len(exp.Args) != 1 {
+			return nil,
+				errors.New(
+					"wrong number of arguments for `copy`, got: " +
+						strconv.Itoa(len(exp.Args)) + ", want: 1",
+				)
+		}
+		if argTypes[0].Kind != ktype.TypeArray &&
+			argTypes[0].Kind != ktype.TypeHashMap {
+			return nil,
+				errors.New(
+					"data structure not supported by `copy`, got: " +
+						argTypes[0].String() + ", want: array or hashmap",
+				)
+		}
+		return &ktype.TypeCheckResult{
+			Types:   []*ktype.Type{argTypes[0]},
+			TypeLen: 1,
+		}, nil
+	case "equals":
+		if exp.Args == nil || len(exp.Args) != 2 {
+			return nil,
+				errors.New(
+					"wrong number of arguments for `equals`, got: " +
+						strconv.Itoa(len(exp.Args)) + ", want: 2",
+				)
+		}
+		if !argTypes[0].Equals(argTypes[1]) {
+			return nil,
+				errors.New(
+					"type mismatch for arguments of `equals`, got: `" +
+						argTypes[0].String() + "` and `" +
+						argTypes[1].String() + "`",
+				)
+		}
+		return &ktype.TypeCheckResult{
+			Types:   []*ktype.Type{ktype.NewBaseType("bool")},
 			TypeLen: 1,
 		}, nil
 	default:

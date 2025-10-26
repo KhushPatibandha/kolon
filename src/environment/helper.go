@@ -9,7 +9,7 @@ func LoadBuiltins(env *Environment) {
 	builtins := []string{
 		"print", "println", "scan", "scanln", "len", "toString", "toFloat", "toInt",
 		"push", "pop", "insert", "remove", "getIndex", "keys", "values", "containsKey",
-		"typeOf", "slice",
+		"typeOf", "slice", "delete", "equals", "copy",
 	}
 	for _, name := range builtins {
 		env.FuncNameSpace[name] = &Symbol{
