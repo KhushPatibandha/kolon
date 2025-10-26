@@ -441,7 +441,6 @@ func (e *Evaluator) evalInfixArray(operator string,
 			Signal: object.SIGNAL_NONE,
 		}, nil
 	case "==":
-		// TODO: write test for this
 		if l == r {
 			return TRUE, nil
 		}
@@ -559,7 +558,7 @@ func (e *Evaluator) evalCall(c *ast.CallExpression) (*object.EvalResult, error) 
 
 	sym, _ := e.env.GetFunc(c.Name.Value)
 	if sym.Func.Builtin {
-		return e.evalBuiltin(c, args)
+		return e.evalBuiltin(c.Name.Value, args)
 	}
 
 	localEnv := sym.Env
@@ -661,8 +660,7 @@ func (e *Evaluator) evalIndexHashMap(left, index object.Object) (*object.EvalRes
 // ------------------------------------------------------------------------------------------------------------------
 // Builtin
 // ------------------------------------------------------------------------------------------------------------------
-func (e *Evaluator) evalBuiltin(c *ast.CallExpression, args []object.Object) (*object.EvalResult, error) {
-	name := c.Name.Value
+func (e *Evaluator) evalBuiltin(name string, args []object.Object) (*object.EvalResult, error) {
 	switch name {
 	case "len":
 		var r object.Object
@@ -889,47 +887,10 @@ func (e *Evaluator) evalBuiltin(c *ast.CallExpression, args []object.Object) (*o
 		}
 		return FALSE, nil
 	case "typeOf":
-		switch args[0].(type) {
-		case *object.Integer:
-			return &object.EvalResult{
-				Value:  &object.String{Value: "\"int\""},
-				Signal: object.SIGNAL_NONE,
-			}, nil
-		case *object.Float:
-			return &object.EvalResult{
-				Value:  &object.String{Value: "\"float\""},
-				Signal: object.SIGNAL_NONE,
-			}, nil
-		case *object.Bool:
-			return &object.EvalResult{
-				Value:  &object.String{Value: "\"bool\""},
-				Signal: object.SIGNAL_NONE,
-			}, nil
-		case *object.String:
-			return &object.EvalResult{
-				Value:  &object.String{Value: "\"string\""},
-				Signal: object.SIGNAL_NONE,
-			}, nil
-		case *object.Char:
-			return &object.EvalResult{
-				Value:  &object.String{Value: "\"char\""},
-				Signal: object.SIGNAL_NONE,
-			}, nil
-		case *object.Array:
-			return &object.EvalResult{
-				Value: &object.String{Value: "\"" +
-					c.Args[0].(*ast.Array).Type.String() + "\""},
-				Signal: object.SIGNAL_NONE,
-			}, nil
-		default:
-			return &object.EvalResult{
-				Value: &object.String{Value: "\"" +
-					c.Args[0].(*ast.HashMap).KeyType.String() + "[" +
-					c.Args[0].(*ast.HashMap).ValueType.String() +
-					"]" + "\""},
-				Signal: object.SIGNAL_NONE,
-			}, nil
-		}
+		return &object.EvalResult{
+			Value:  &object.String{Value: "\"" + getType(args[0]) + "\""},
+			Signal: object.SIGNAL_NONE,
+		}, nil
 	case "push":
 		switch arg := args[0].(type) {
 		case *object.Array:
@@ -1162,10 +1123,8 @@ func (e *Evaluator) evalBuiltin(c *ast.CallExpression, args []object.Object) (*o
 			if len(arg.Elements) != len(other.Elements) {
 				return FALSE, nil
 			}
-			for i := range arg.Elements {
-				if arg.Elements[i].Inspect() != other.Elements[i].Inspect() {
-					return FALSE, nil
-				}
+			if arg.Inspect() != other.Inspect() {
+				return FALSE, nil
 			}
 			return TRUE, nil
 		default:
@@ -1174,11 +1133,8 @@ func (e *Evaluator) evalBuiltin(c *ast.CallExpression, args []object.Object) (*o
 			if len(h1.Pairs) != len(h2.Pairs) {
 				return FALSE, nil
 			}
-			for k, v1 := range h1.Pairs {
-				v2, ok := h2.Pairs[k]
-				if !ok || v1.Value.Inspect() != v2.Value.Inspect() {
-					return FALSE, nil
-				}
+			if h1.Inspect() != h2.Inspect() {
+				return FALSE, nil
 			}
 			return TRUE, nil
 		}

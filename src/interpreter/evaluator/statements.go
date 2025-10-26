@@ -19,7 +19,10 @@ func (e *Evaluator) evalExpressionStatement(es *ast.ExpressionStatement) (*objec
 	if err != nil {
 		return nil, err
 	}
-	return nil, nil
+	return &object.EvalResult{
+		Value:  nil,
+		Signal: object.SIGNAL_NONE,
+	}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -36,7 +39,10 @@ func (e *Evaluator) evalStmts(stmts []ast.Statement) (*object.EvalResult, error)
 			return r, nil
 		}
 	}
-	return nil, nil
+	return &object.EvalResult{
+		Value:  nil,
+		Signal: object.SIGNAL_NONE,
+	}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -73,7 +79,10 @@ func (e *Evaluator) evalVarConst(vc *ast.VarAndConst,
 	}
 	e.stack.Top().Set(sym)
 
-	return nil, nil
+	return &object.EvalResult{
+		Value:  nil,
+		Signal: object.SIGNAL_NONE,
+	}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -123,7 +132,10 @@ func (e *Evaluator) evalMultiAssign(ma *ast.MultiAssignment) (*object.EvalResult
 			}
 		}
 	}
-	return nil, nil
+	return &object.EvalResult{
+		Value:  nil,
+		Signal: object.SIGNAL_NONE,
+	}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -147,7 +159,10 @@ func (e *Evaluator) evalFunc(f *ast.Function) (*object.EvalResult, error) {
 			return e.evalStmts(f.Body.Statements)
 		}
 	}
-	return nil, nil
+	return &object.EvalResult{
+		Value:  nil,
+		Signal: object.SIGNAL_NONE,
+	}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -180,7 +195,10 @@ func (e *Evaluator) evalIf(i *ast.If) (*object.EvalResult, error) {
 		return e.evalStmts(i.Alternate.Body.Statements)
 	}
 
-	return nil, nil
+	return &object.EvalResult{
+		Value:  nil,
+		Signal: object.SIGNAL_NONE,
+	}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -246,7 +264,10 @@ func (e *Evaluator) evalForLoop(f *ast.ForLoop) (*object.EvalResult, error) {
 	}
 	e.stack.Pop()
 
-	return nil, nil
+	return &object.EvalResult{
+		Value:  nil,
+		Signal: object.SIGNAL_NONE,
+	}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
@@ -281,7 +302,10 @@ func (e *Evaluator) evalWhileLoop(w *ast.WhileLoop) (*object.EvalResult, error) 
 		}
 	}
 
-	return nil, nil
+	return &object.EvalResult{
+		Value:  nil,
+		Signal: object.SIGNAL_NONE,
+	}, nil
 }
 
 // ------------------------------------------------------------------------------------------------------------------
