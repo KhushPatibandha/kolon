@@ -168,19 +168,3 @@ func (h *HashMap) Inspect() string {
 	return out.String()
 }
 func (h *HashMap) Type() ObjectType { return HASHMAP_OBJ }
-
-// ------------------------------------------------------------------------------------------------------------------
-// MultiValue
-// ------------------------------------------------------------------------------------------------------------------
-type MultiValue struct {
-	Values []Object
-}
-
-func (mv *MultiValue) Inspect() string {
-	var values []string
-	for _, v := range mv.Values {
-		values = append(values, v.Inspect())
-	}
-	return fmt.Sprintf("(%s)", strings.Join(values, ", "))
-}
-func (mv *MultiValue) Type() ObjectType { return MULTI_OBJ }

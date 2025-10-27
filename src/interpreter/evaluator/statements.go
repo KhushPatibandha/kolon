@@ -117,7 +117,7 @@ func (e *Evaluator) evalMultiAssign(ma *ast.MultiAssignment) (*object.EvalResult
 			return nil, err
 		}
 
-		rList := r.Value.(*object.MultiValue).Values
+		rList := r.Value.(*object.Array).Elements
 
 		for i, ele := range ma.Objects {
 			var err error
@@ -336,7 +336,7 @@ func (e *Evaluator) evalReturn(r *ast.Return) (*object.EvalResult, error) {
 	}
 
 	return &object.EvalResult{
-		Value:  &object.MultiValue{Values: val},
+		Value:  &object.Array{Elements: val},
 		Signal: object.SIGNAL_RETURN,
 	}, nil
 }

@@ -1,0 +1,39 @@
+fun: a(): (bool) {return: true;}
+fun: b(): (bool, bool, bool) {return: (true, false, true);}
+fun: c(): (int) {return: (10);}
+fun: d(): (int, int, bool, bool, int, float) {return: (10, 20, 1 < 2, true != true, 1 + 1, 4.1);}
+fun: e(): (string, char) {return: ("hello", 'a');}
+fun: f(): (int) {if: (10 > 1): { return: 10; } return: 1; }
+fun: g(): (int, bool, string, char, float) {if: (10 > 1): { return: (10, true, "Hello", 'w', 1.1); } return: (1, false, "World", 'h', 10.1); }
+
+fun: main() {
+    print(a());
+
+    var a: bool, var b: bool, var c: bool = b();
+    print(a);
+    print(b);
+    print(c);
+
+    print(c());
+
+    var d: int, var e: int, var f: bool, var g: bool, var h: int, var i: float = d();
+    print(d);
+    print(e);
+    print(f);
+    print(g);
+    print(h);
+    print(i);
+
+    var j: string, var k: char = e();
+    print(j);
+    print(k);
+
+    print(f());
+
+    var l: int, var m: bool, var n: string, var o: char, var p: float = g();
+    print(l);
+    print(m);
+    print(n);
+    print(o);
+    println(p);
+}
