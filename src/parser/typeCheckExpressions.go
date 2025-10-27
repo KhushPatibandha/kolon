@@ -749,7 +749,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 		}
 		if argTypes[0].Kind != ktype.TypeArray &&
 			argTypes[0].Kind != ktype.TypeHashMap &&
-			!(argTypes[0].Kind == ktype.TypeBase && argTypes[0].Name == "string") {
+			(argTypes[0].Kind != ktype.TypeBase || argTypes[0].Name != "string") {
 			return nil,
 				errors.New(
 					"argument for `len` not supported, got: " +
@@ -1205,7 +1205,7 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 				)
 		}
 		if argTypes[0].Kind != ktype.TypeArray &&
-			!(argTypes[0].Kind == ktype.TypeBase && argTypes[0].Name == "string") {
+			(argTypes[0].Kind != ktype.TypeBase || argTypes[0].Name != "string") {
 			return nil,
 				errors.New(
 					"data structure not supported by `slice`, got: " +

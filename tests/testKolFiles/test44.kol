@@ -1,0 +1,16 @@
+fun: main() {
+    var a: int[] = [1, 2, 3];
+    var b: int[] = a;
+    println(a);
+    println(b);
+    push(a, 4);
+    println(a);
+    println(b);
+    println(a == b);
+    println(equals(a, b));
+    var c: int[] = [1, 2, 3, 4];
+    b = c;
+    println(c == b);
+    println(a == b);
+    println(equals(a, b));
+}

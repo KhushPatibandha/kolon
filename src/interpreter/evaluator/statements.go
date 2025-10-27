@@ -142,7 +142,6 @@ func (e *Evaluator) evalMultiAssign(ma *ast.MultiAssignment) (*object.EvalResult
 // Function
 // ------------------------------------------------------------------------------------------------------------------
 func (e *Evaluator) evalFunc(f *ast.Function) (*object.EvalResult, error) {
-	funcLocalEnv := environment.BootstrapFuncEnv(f, e.env)
 	e.env.Set(&environment.Symbol{
 		IdentType: environment.FUNCTION,
 		Ident:     f.Name,
@@ -150,11 +149,13 @@ func (e *Evaluator) evalFunc(f *ast.Function) (*object.EvalResult, error) {
 			Function: f,
 			Builtin:  false,
 		},
-		Env:  funcLocalEnv,
+		Env:  nil,
 		Type: nil,
 	})
 	if f.Name.Value == "main" {
 		if sym, ok := e.env.GetFunc("main"); ok {
+			localEnv := environment.NewEnclosedEnvironment(e.stack.Top())
+			sym.Env = localEnv
 			e.stack.Push(sym.Env)
 			return e.evalStmts(f.Body.Statements)
 		}

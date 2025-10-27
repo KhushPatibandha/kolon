@@ -1,0 +1,11 @@
+fun: main() {
+    var a: int[] = [1, 2, 3];
+    println(typeOf([1, 2, 3]));
+    println(typeOf(a));
+    a = [2, 3, 4];
+    println(typeOf(a));
+
+    var b: int[int[string][]] = {};
+    println(typeOf(b));
+}
+

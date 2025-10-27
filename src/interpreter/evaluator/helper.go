@@ -31,28 +31,3 @@ func deepCopy(o object.Object) object.Object {
 		return &object.HashMap{Pairs: newPairs}
 	}
 }
-
-func getType(o object.Object) string {
-	switch obj := o.(type) {
-	case *object.Integer:
-		return "int"
-	case *object.Float:
-		return "float"
-	case *object.Bool:
-		return "bool"
-	case *object.String:
-		return "string"
-	case *object.Char:
-		return "char"
-	case *object.HashMap:
-		var keyType, valueType string
-		for _, pair := range obj.Pairs {
-			keyType = getType(pair.Key)
-			valueType = getType(pair.Value)
-			break
-		}
-		return keyType + "[" + valueType + "]"
-	default:
-		return getType(obj.(*object.Array).Elements[0]) + "[]"
-	}
-}

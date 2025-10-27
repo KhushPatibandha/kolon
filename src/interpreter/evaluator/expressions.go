@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/KhushPatibandha/Kolon/src/ast"
+	"github.com/KhushPatibandha/Kolon/src/environment"
 	"github.com/KhushPatibandha/Kolon/src/object"
 )
 
@@ -461,11 +462,20 @@ func (e *Evaluator) evalPostfix(p *ast.Postfix) (*object.EvalResult, error) {
 	if err != nil {
 		return nil, err
 	}
+	var r *object.EvalResult
+
 	if left.Value.Type() == object.FLOAT_OBJ {
-		return e.evalPostfixFloat(left.Value, p.Operator)
+		r, err = e.evalPostfixFloat(left.Value, p.Operator)
 	} else {
-		return e.evalPostfixInteger(left.Value, p.Operator)
+		r, err = e.evalPostfixInteger(left.Value, p.Operator)
 	}
+	if err != nil {
+		return nil, err
+	}
+	if i, ok := p.Left.(*ast.Identifier); ok {
+		e.stack.Top().SetValue(i.Value, r.Value)
+	}
+	return r, nil
 }
 
 func (e *Evaluator) evalPostfixFloat(left object.Object, operator string) (*object.EvalResult, error) {
@@ -558,11 +568,14 @@ func (e *Evaluator) evalCall(c *ast.CallExpression) (*object.EvalResult, error) 
 
 	sym, _ := e.env.GetFunc(c.Name.Value)
 	if sym.Func.Builtin {
-		return e.evalBuiltin(c.Name.Value, args)
+		return e.evalBuiltin(c, args)
 	}
 
-	localEnv := sym.Env
+	localEnv := environment.BootstrapFuncEnv(sym.Func.Function, e.stack.Top())
 	e.stack.Push(localEnv)
+	for i, param := range sym.Func.Function.Parameters {
+		localEnv.SetValue(param.ParameterName.Value, args[i])
+	}
 	r, err := e.evalStmts(sym.Func.Function.Body.Statements)
 
 	return r, err
@@ -660,7 +673,8 @@ func (e *Evaluator) evalIndexHashMap(left, index object.Object) (*object.EvalRes
 // ------------------------------------------------------------------------------------------------------------------
 // Builtin
 // ------------------------------------------------------------------------------------------------------------------
-func (e *Evaluator) evalBuiltin(name string, args []object.Object) (*object.EvalResult, error) {
+func (e *Evaluator) evalBuiltin(c *ast.CallExpression, args []object.Object) (*object.EvalResult, error) {
+	name := c.Name.Value
 	switch name {
 	case "len":
 		var r object.Object
@@ -756,7 +770,11 @@ func (e *Evaluator) evalBuiltin(name string, args []object.Object) (*object.Eval
 		case *object.Integer:
 			fmt.Print(strconv.FormatInt(arg.Value, 10))
 		case *object.Float:
-			fmt.Print(strconv.FormatFloat(arg.Value, 'f', -1, 64))
+			s := strconv.FormatFloat(arg.Value, 'f', -1, 64)
+			if !strings.Contains(s, ".") {
+				s += ".0"
+			}
+			fmt.Print(s)
 		case *object.Bool:
 			fmt.Print(strconv.FormatBool(arg.Value))
 		default:
@@ -779,7 +797,11 @@ func (e *Evaluator) evalBuiltin(name string, args []object.Object) (*object.Eval
 		case *object.Integer:
 			fmt.Println(strconv.FormatInt(arg.Value, 10))
 		case *object.Float:
-			fmt.Println(strconv.FormatFloat(arg.Value, 'f', -1, 64))
+			s := strconv.FormatFloat(arg.Value, 'f', -1, 64)
+			if !strings.Contains(s, ".") {
+				s += ".0"
+			}
+			fmt.Println(s)
 		case *object.Bool:
 			fmt.Println(strconv.FormatBool(arg.Value))
 		default:
@@ -888,7 +910,8 @@ func (e *Evaluator) evalBuiltin(name string, args []object.Object) (*object.Eval
 		return FALSE, nil
 	case "typeOf":
 		return &object.EvalResult{
-			Value:  &object.String{Value: "\"" + getType(args[0]) + "\""},
+			Value: &object.String{Value: "\"" +
+				c.Args[0].GetType().Types[0].String() + "\""},
 			Signal: object.SIGNAL_NONE,
 		}, nil
 	case "push":

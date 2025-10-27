@@ -429,18 +429,19 @@ func (p *Parser) parseFunction() (*ast.Function, error) {
 	stmt.Name = &ast.Identifier{Token: p.currToken, Value: p.currToken.Value}
 
 	if existing, ok := p.env.GetFunc(stmt.Name.Value); ok &&
-		(existing.Func.Builtin || existing.Func.Function.Body != nil) && !p.inTesting {
-		return nil,
-			errors.New(
-				"can't declare a function twice, function with the same name `" +
-					stmt.Name.Value + "` already exists",
-			)
-	}
-	if existing, ok := p.env.GetFunc(stmt.Name.Value); ok &&
 		existing.Func.Builtin && !p.inTesting {
 		return nil,
 			errors.New(
 				"can't override a built-in function, function `" +
+					stmt.Name.Value + "` already exists",
+			)
+	}
+
+	if existing, ok := p.env.GetFunc(stmt.Name.Value); ok &&
+		existing.Func.Function.Body != nil && !p.inTesting {
+		return nil,
+			errors.New(
+				"can't declare a function twice, function with the same name `" +
 					stmt.Name.Value + "` already exists",
 			)
 	}
