@@ -10,7 +10,7 @@ Before we start, you should have Kolon installed on your system, if you don't al
 
 ## Hello, World!!
 
-Kolon is a functional language, and hence everything is organized into functions. In Kolon, the entry point of a program is, you guessed it, `main()`. Here’s how you can write your very first program in Kolon:
+Kolon is a functional language (not really, data is stored in objects and it also follows idea of prodedural languages. So call it whatever you want), and hence everything is organized into functions. In Kolon, the entry point of a program is, you guessed it, `main()`. Here’s how you can write your very first program in Kolon:
 
 ```kolon
 fun: main() {
@@ -43,6 +43,8 @@ Kolon is a strongly and statically typed language, and hence the type of a varia
 ### Data Types
 
 Here are the data types supported by Kolon: `int`, `float`, `string`, `char`, `bool`. Note that there is NO concept of `long` or `double`, so both `int` and `float` are `64-bit`.
+
+One thing to note here is the values of these data types is concrete. Hence the value of object won't change but the reference to it could change.
 
 ### Declaring Variables
 
@@ -149,13 +151,17 @@ fun: main() {
 
 You can define a hashmap by adding `[type]` after the type in a variable. All key-value pairs in the hashmap must follow this type rule. Hashmaps are represented with `{}`.
 
+The type of the key is restricted to be `int`, `float`, `string`, `char`, `bool`, while there are no restriction on the type of the value.
+
 Additionally, an empty map must be defined with `{}`.
 
 ```kolon
 fun: main() {
     var a: string[int] = {"kolon": 1, "hello": 2};
     var b: string[int]; // Not valid, will throw an error
-    var c: string[int] = {}; // Won't throw and error
+    var c: string[int] = {}; // Won't throw an error
+    var d: int[int[string][]] = {}; // Won't throw an error
+    var e: int[string][int] = {}; // Not valid, will throw an error
 }
 ```
 
@@ -170,6 +176,31 @@ fun: main() {
     println(a["someKey"]) // Key doesn't exist error!
 }
 ```
+
+Note:
+
+- These Data Structures are mutable in nature. Hence two reference variables pointing to the same object will see the changes done by other reference variable
+
+```kolon
+fun: main() {
+    var a: int[] = [1, 2, 3];
+    var b: int[] = a;
+    println(a); // [1, 2, 3]
+    println(b); // [1, 2, 3]
+    push(a, 4);
+    println(a); // [1, 2, 3, 4]
+    println(b); // [1, 2, 3, 4]
+    println(a == b); // true
+    println(equals(a, b)); // true
+    var c: int[] = [1, 2, 3, 4];
+    b = c;
+    println(c == b); // true
+    println(a == b); // false
+    println(equals(a, b)); // true
+}
+```
+
+More on `==` and `equals()` later.
 
 ## if - else if - else
 
@@ -288,15 +319,44 @@ fun: callMeAgain() {
 }
 ```
 
+Note:
+
+- Kolon expects user to define function before calling them. i.e. all the methods must be declared or defined before main.
+- In case user don't want to define a method before main for readability, he/she must `declare` it's signature before `main` method.
+- In case a method is declared before main, it MUST be defined later of and error will be thrown.
+
+Here are some correct ways to do this,
+
+```kolon
+fun: someMethod(a: int, b: int);
+fun: main() {
+    someMethod(1, 2);
+}
+fun: someMethod(a: int, b: int) {
+    // do something
+}
+```
+
+```kolon
+fun: someMethod(a: int, b: int) {
+    // do something
+}
+fun: main() {
+    someMethod(1, 2);
+}
+```
+
 ### Builtin Functions
 
 Kolon has many built-in functions that you can use without needing to define them. You can simply call them.
 
+Note: `whatever` stands for int, float, bool, char, string, array, hashmap
+
 #### print()
 
-| **Num of Args** | **Type of Args**                         | **Returns** | **Description**                                    |
-| --------------- | ---------------------------------------- | ----------- | -------------------------------------------------- |
-| 1               | int/float/bool/char/string/array/hashmap | -           | Prints to the console without going to a new line. |
+| **Num of Args** | **Type of Args** | **Returns** | **Description**                                    |
+| --------------- | ---------------- | ----------- | -------------------------------------------------- |
+| 1               | whatever         | -           | Prints to the console without going to a new line. |
 
 ```kolon
 fun: main() {
@@ -314,9 +374,10 @@ fun: main() {
 
 #### println()
 
-| **Num of Args** | **Type of Args**                         | **Returns** | **Description**                                  |
-| --------------- | ---------------------------------------- | ----------- | ------------------------------------------------ |
-| 1               | int/float/bool/char/string/array/hashmap | -           | Prints to the console and goes to the next line. |
+| **Num of Args** | **Type of Args** | **Returns** | **Description**                                  |
+| --------------- | ---------------- | ----------- | ------------------------------------------------ |
+| 0               | whatever         | -           | Prints an empty line to the console.             |
+| 1               | whatever         | -           | Prints to the console and goes to the next line. |
 
 ```kolon
 fun: main() {
@@ -360,9 +421,9 @@ fun: main() {
 
 #### toString()
 
-| **Num of Args** | **Type of Args**                         | **Returns** | **Description**                                    |
-| --------------- | ---------------------------------------- | ----------- | -------------------------------------------------- |
-| 1               | int/float/bool/char/string/array/hashmap | string      | Converts the provided argument to its string form. |
+| **Num of Args** | **Type of Args** | **Returns** | **Description**                                    |
+| --------------- | ---------------- | ----------- | -------------------------------------------------- |
+| 1               | whatever         | string      | Converts the provided argument to its string form. |
 
 ```kolon
 fun: main() {
@@ -402,9 +463,9 @@ fun: main() {
 
 #### typeOf()
 
-| **Num of Args** | **Type of Args**                         | **Returns** | **Description**                        |
-| --------------- | ---------------------------------------- | ----------- | -------------------------------------- |
-| 1               | int/float/bool/char/string/array/hashmap | string      | Returns the type of the given argument |
+| **Num of Args** | **Type of Args** | **Returns** | **Description**                        |
+| --------------- | ---------------- | ----------- | -------------------------------------- |
+| 1               | whatever         | string      | Returns the type of the given argument |
 
 ```kolon
 fun: main() {
@@ -443,54 +504,61 @@ fun: main() {
 
 #### push()
 
-| **Data Structure** | **Num of Args** | **Type of Args**                                | **Returns** | **Format**             | **Description**                          |
-| ------------------ | --------------- | ----------------------------------------------- | ----------- | ---------------------- | ---------------------------------------- |
-| Array              | 2               | array, int/float/bool/string/char               | array       | push(array, element);  | Adds an element to the end of the array. |
-| HashMap            | 3               | hashmap, int/float/bool/string/char(key, value) | hashmap     | push(map, key, value); | Adds a key-value pair to the hashmap.    |
+| **Data Structure** | **Num of Args** | **Type of Args**                              | **Returns** | **Format**             | **Description**                                                        |
+| ------------------ | --------------- | --------------------------------------------- | ----------- | ---------------------- | ---------------------------------------------------------------------- |
+| Array              | 2               | array, whatever                               | array       | push(array, element);  | Adds an element to the end of the array and returns the updated array. |
+| HashMap            | 3               | hashmap, int/float/bool/string/char, whatever | hashmap     | push(map, key, value); | Adds a key-value pair to the hashmap and returns the updated hashmap.  |
 
 #### pop()
 
-| **Data Structure** | **Num of Args** | **Type of Args**   | **Returns**                | **Format**           | **Description**                                         |
-| ------------------ | --------------- | ------------------ | -------------------------- | -------------------- | ------------------------------------------------------- |
-| Array              | 1               | array              | int/float/bool/string/char | pop(array);          | Removes the last element from the array and returns it. |
-| Array              | 2               | array, int (index) | int/float/bool/string/char | pop(array, element); | Removes the element at the given index and returns it.  |
+| **Data Structure** | **Num of Args** | **Type of Args**   | **Returns** | **Format**           | **Description**                                         |
+| ------------------ | --------------- | ------------------ | ----------- | -------------------- | ------------------------------------------------------- |
+| Array              | 1               | array              | whatever    | pop(array);          | Removes the last element from the array and returns it. |
+| Array              | 2               | array, int         | whatever    | pop(array, index);   | Removes the element at the given index and returns it.  |
 
 #### insert()
 
-| **Data Structure** | **Num of Args** | **Type of Args**                               | **Returns** | **Format**                     | **Description**                                                               |
-| ------------------ | --------------- | ---------------------------------------------- | ----------- | ------------------------------ | ----------------------------------------------------------------------------- |
-| Array              | 3               | array, int (index), int/float/string/bool/char | array       | insert(array, index, element); | Inserts the given element at the specified index in the array and returns it. |
+| **Data Structure** | **Num of Args** | **Type of Args**     | **Returns** | **Format**                     | **Description**                                                               |
+| ------------------ | --------------- | -------------------- | ----------- | ------------------------------ | ----------------------------------------------------------------------------- |
+| Array              | 3               | array, int, whatever | array       | insert(array, index, element); | Inserts the given element at the specified index in the array and returns it. |
 
 #### remove()
 
-| **Data Structure** | **Num of Args** | **Type of Args**                    | **Returns**                | **Format**              | **Description**                                                                                     |
-| ------------------ | --------------- | ----------------------------------- | -------------------------- | ----------------------- | --------------------------------------------------------------------------------------------------- |
-| Array              | 2               | array, int/float/string/bool/char   | array                      | remove(array, element); | Removes the first occurrence of the specified element from the array and returns the updated array. |
-| HashMap            | 2               | hashmap, int/float/string/bool/char | int/float/string/bool/char | remove(map, key);       | Removes the key-value pair for the specified key from the hashmap and returns the removed value.    |
+| **Data Structure** | **Num of Args** | **Type of Args**  | **Returns** | **Format**              | **Description**                                                                                     |
+| ------------------ | --------------- | ----------------- | ----------- | ----------------------- | --------------------------------------------------------------------------------------------------- |
+| Array              | 2               | array, whatever   | array       | remove(array, element); | Removes the first occurrence of the specified element from the array and returns the updated array. |
+| HashMap            | 2               | hashmap, whatever | hashmap     | remove(map, key);       | Removes the key-value pair for the specified key from the hashmap and returns the updated hashmap.  |
+
+#### delete()
+
+| **Data Structure** | **Num of Args** | **Type of Args**  | **Returns** | **Format**              | **Description**                                                                                         |
+| ------------------ | --------------- | ----------------- | ----------- | ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| Array              | 2               | array, whatever   | whatever    | remove(array, element); | Deletes the first occurrence of the specified element from the array and returns the delete element.    |
+| HashMap            | 2               | hashmap, whatever | whatever    | remove(map, key);       | Deletes the key-value pair for the specified key from the hashmap and returns the value of deleted key. |
 
 #### getIndex()
 
-| **Data Structure** | **Num of Args** | **Type of Args**                  | **Returns** | **Format**                | **Description**                                                                                                          |
-| ------------------ | --------------- | --------------------------------- | ----------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Array              | 2               | array, int/float/string/bool/char | int         | getIndex(array, element); | Returns the index of the first occurrence of the specified element in the array. Returns -1 if the element is not found. |
+| **Data Structure** | **Num of Args** | **Type of Args** | **Returns** | **Format**                | **Description**                                                                                                          |
+| ------------------ | --------------- | ---------------- | ----------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Array              | 2               | array, whatever  | int         | getIndex(array, element); | Returns the index of the first occurrence of the specified element in the array. Returns -1 if the element is not found. |
 
 #### keys()
 
-| **Data Structure** | **Num of Args** | **Type of Args** | **Returns**     | **Format** | **Description**                                                 |
-| ------------------ | --------------- | ---------------- | --------------- | ---------- | --------------------------------------------------------------- |
-| Hash               | 1               | hash             | array (of keys) | keys(map); | Returns an array containing all the keys of the given hash map. |
+| **Data Structure** | **Num of Args** | **Type of Args** | **Returns** | **Format** | **Description**                                                |
+| ------------------ | --------------- | ---------------- | ----------- | ---------- | -------------------------------------------------------------- |
+| HashMap            | 1               | hashmap          | array       | keys(map); | Returns an array containing all the keys of the given hashmap. |
 
 #### values()
 
-| **Data Structure** | **Num of Args** | **Type of Args** | **Returns**       | **Format**   | **Description**                                                   |
-| ------------------ | --------------- | ---------------- | ----------------- | ------------ | ----------------------------------------------------------------- |
-| Hash               | 1               | hash             | array (of values) | values(map); | Returns an array containing all the values of the given hash map. |
+| **Data Structure** | **Num of Args** | **Type of Args** | **Returns** | **Format**   | **Description**                                                  |
+| ------------------ | --------------- | ---------------- | ----------- | ------------ | ---------------------------------------------------------------- |
+| HashMap            | 1               | hashmap          | array       | values(map); | Returns an array containing all the values of the given hashmap. |
 
 #### containsKey()
 
-| **Data Structure** | **Num of Args** | **Type of Args**                       | **Returns** | **Format**             | **Description**                                                            |
-| ------------------ | --------------- | -------------------------------------- | ----------- | ---------------------- | -------------------------------------------------------------------------- |
-| Hash               | 2               | hash, key (int/float/string/bool/char) | bool        | containsKey(map, key); | Returns `true` if the given key exists in the hash map, otherwise `false`. |
+| **Data Structure** | **Num of Args** | **Type of Args**                    | **Returns** | **Format**             | **Description**                                                            |
+| ------------------ | --------------- | ----------------------------------- | ----------- | ---------------------- | -------------------------------------------------------------------------- |
+| HashMap            | 2               | hashmap, int/float/string/bool/char | bool        | containsKey(map, key); | Returns `true` if the given key exists in the hash map, otherwise `false`. |
 
 #### slice()
 
@@ -501,19 +569,17 @@ fun: main() {
 | string             | 3               | string, int, int      | string      | slice(string, start, end);       | Returns a string with characters from start index (inclusive) to end index (exclusive)            |
 | string             | 4               | string, int, int, int | string      | slice(string, start, end, step); | Returns a string with characters from start index (inclusive) to end index (exclusive) with steps |
 
-### Overriding Built-in functions
+#### equals()
 
-You can override built-in functions by simply defining them in your file. If a function with the same name exists both in the file and as a built-in, Kolon will give preference to the version defined in the file.
+| **Num of Args** | **Type of Args**   | **Returns** | **Description**                                       |
+| --------------- | ------------------ | ----------- | ----------------------------------------------------- |
+| 2               | whatever, whatever | bool        | Returns true if the actual value of elements are same |
 
-```kolon
-fun: main() {
-    var a: int = len("hi");
-    println(a); // 100
-}
-fun: len(a: string): (int) {
-    return: 100;
-}
-```
+#### copy()
+
+| **Num of Args** | **Type of Args** | **Returns** | **Description**                    |
+| --------------- | ---------------- | ----------- | ---------------------------------- |
+| 1               | whatever         | whatever    | Returns a deep copy of the element |
 
 ## Return Statements
 
@@ -603,7 +669,7 @@ An infix operation has three inputs:
 - Operator
 - right operand
 
-NOTE: If the left and right operands are call expressions that return a value, their length must be equal to 1.
+Note: If the left and right operands are call expressions that return a value, their length must be equal to 1.
 
 ### Left: `int`, Right: `int`
 
@@ -665,11 +731,11 @@ NOTE: If the left and right operands are call expressions that return a value, t
 
 ### Left: array, Right: array
 
-| Operator | Description   | Example                | Output Type |
-| -------- | ------------- | ---------------------- | ----------- |
-| +        | Concatenation | [1, 2, 3] + [4, 5, 6]  | Array       |
-| ==       | Equal         | [1, 2, 3] == [4, 5, 6] | Boolean     |
-| !=       | Not equal     | [1, 2, 3] != [4, 5, 6] | Boolean     |
+| Operator | Description          | Example                | Output Type |
+| -------- | -------------------- | ---------------------- | ----------- |
+| +        | Concatenation        | [1, 2, 3] + [4, 5, 6]  | Array       |
+| ==       | Object Equal         | [1, 2, 3] == [4, 5, 6] | Boolean     |
+| !=       | Object Not equal     | [1, 2, 3] != [4, 5, 6] | Boolean     |
 
 ### Left: `float`, Right: `int` || Left: `int`, Right: `float`
 
