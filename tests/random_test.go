@@ -56,6 +56,12 @@ func TestRandom(t *testing.T) {
 	run(t, "./testKolFiles/test43.kol", "int[]\nint[]\nint[]\nint[int[string][]]")
 	run(t, "./testKolFiles/test44.kol", "[1, 2, 3]\n[1, 2, 3]\n[1, 2, 3, 4]\n[1, 2, 3, 4]\ntrue\ntrue\ntrue\nfalse\ntrue")
 	run(t, "./testKolFiles/test45.kol", "[1, 2, 3]\n[1, 2, 3]\n[1, 2, 3, 4]\n[1, 2, 3, 4]\ntrue\ntrue\nfalse\ntrue")
+	run(t, "./testKolFiles/test46.kol", "510-5-101032020250603037375001236420")
+	run(t, "./testKolFiles/test47.kol", "truefalsefalsetruetruefalsetruetruefalsefalsefalsefalsetruefalsefalsetruetruetruefalsetruetruefalsetruetruefalsefalsefalsetruetruetruefalsefalsefalsetruetruetruetruefalsefalsetruefalsefalsetruefalsetruefalsetruefalsetruefalsetruefalsetruetruetruetruefalsetruefalsetruefalsefalsetruetruefalsefalsetrue")
+	run(t, "./testKolFiles/test48.kol", "5.010.05.5-5.0-10.0-1.51.512.097.656250.023.7530.5-5.060.038.7552.87552.87547.2578.752.50.5")
+	run(t, "./testKolFiles/test49.kol", "Hello, World!, Hello, World!, ab")
+	run(t, "./testKolFiles/test50.kol", "64-4-6-411.19.1-9.1-11.1")
+	run(t, "./testKolFiles/test51.kol", "10102010302040")
 }
 
 func run(t *testing.T, filePath string, expectedOutput string) {

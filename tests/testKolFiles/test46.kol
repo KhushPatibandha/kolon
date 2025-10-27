@@ -1,0 +1,25 @@
+fun: main() {
+    print(5);
+    print(10);
+    print(-5);
+    print(-10);
+    print(5 + 5 + 5 + 5 - 10);
+    print(2 * 2 * 2 * 2 * 2);
+    print(-50 + 100 + -50);
+    print(5 * 2 + 10);
+    print(5 + 2 * 10);
+    print(20 + 2 * -10);
+    print(50 / 2 * 2 + 10);
+    print(2 * (5 + 10));
+    print(3 * 3 * 3 + 10);
+    print(3 * (3 * 3) + 10);
+    print((5 + 10 * 2 + 15 / 3) * 2 + -10);
+    print(10 % 2);
+    print(10 % 3);
+    print(2 & 3);
+    print(2 | 3);
+    print(5++);
+    print(5--);
+    print(5 / 2);
+    println(1 / 2);
+}

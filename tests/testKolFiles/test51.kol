@@ -1,0 +1,15 @@
+fun: main() {
+    if: (true): { print( 10 ); }
+    if: (false): { print( 10 ); }
+    if: (1 < 2): { print( 10 ); }
+    if: (1 > 2): { print( 10 ); }
+    if: (1 > 2): { print( 10 ); } else: { print( 20 ); }
+    if: (1 < 2): { print( 10 ); } else: { print( 20 ); }
+    if: (1 > 2): { print( 10 ); } else if: (1 == 2): { print( 20 ); } else if: (1 < 2): { print( 30 ); }
+    if: (1 > 2): { print( 10 ); } else if: (1 < 2): { print( 20 ); } else if: (1 == 2): { print( 30 ); }
+    if: (1 > 2): { print( 10 ); } else if: (1 == 2): { print( 20 ); } else if: (1 >= 2): { print( 30 ); } else: { print( 40 ); }
+    println();
+
+    // if: (1 > 2): { print( 10 ); } else if: (1): { print( 20 ); } else if: (1 >= 2): { print( 30 ); } else: { print( 40 ); }
+    // if: (1): { print( 10 ); }
+}

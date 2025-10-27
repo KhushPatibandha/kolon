@@ -1,0 +1,11 @@
+fun: main() {
+    print(5++);
+    print(5--);
+    print(-5--);
+    print(-5++);
+    print((-5)++);
+    print(10.1++);
+    print(10.1--);
+    print(-10.1--);
+    println(-10.1++);
+}
