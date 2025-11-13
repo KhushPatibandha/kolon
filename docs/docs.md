@@ -581,6 +581,25 @@ fun: main() {
 | --------------- | ---------------- | ----------- | ---------------------------------- |
 | 1               | whatever         | whatever    | Returns a deep copy of the element |
 
+#### ceil()
+
+| **Num of Args** | **Type of Args** | **Returns** | **Description**                  |
+| --------------- | ---------------- | ----------- | -------------------------------- |
+| 1               | float            | float       | Returns ceil of the given number |
+
+#### floor()
+
+| **Num of Args** | **Type of Args** | **Returns** | **Description**                   |
+| --------------- | ---------------- | ----------- | --------------------------------- |
+| 1               | float            | float       | Returns floor of the given number |
+
+#### floor()
+
+| **Num of Args** | **Type of Args**      | **Returns** | **Description**                                       |
+| --------------- | --------------------- | ----------- | ----------------------------------------------------- |
+| 1               | float                 | float       | Returns nearest round number with a precision of 1    |
+| 2               | float, int            | float       | Returns nearest round number with the given precision |
+
 ## Return Statements
 
 The return statement is used to exit from a function and return to where it was called. In the case of the main function, the return statement must empty.

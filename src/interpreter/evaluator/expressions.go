@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -1164,6 +1165,41 @@ func (e *Evaluator) evalBuiltin(c *ast.CallExpression, args []object.Object) (*o
 	case "copy":
 		return &object.EvalResult{
 			Value:  deepCopy(args[0]),
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "ceil", "floor":
+		arg := args[0].(*object.Float)
+		var v float64
+		if name == "ceil" {
+			v = math.Ceil(arg.Value)
+		} else {
+			v = math.Floor(arg.Value)
+		}
+		return &object.EvalResult{
+			Value:  &object.Float{Value: v},
+			Signal: object.SIGNAL_NONE,
+		}, nil
+	case "round":
+		arg := args[0].(*object.Float)
+		if len(args) == 1 {
+			v := math.Round(arg.Value)
+			return &object.EvalResult{
+				Value:  &object.Float{Value: v},
+				Signal: object.SIGNAL_NONE,
+			}, nil
+		}
+		precision := args[1].(*object.Integer).Value
+		if precision < 0 {
+			return nil,
+				errors.New("precision must be a non-negative integer for `round`")
+		}
+		if precision > 15 {
+			precision = 15
+		}
+		multiplier := math.Pow(10, float64(precision))
+		v := math.Round(arg.Value*multiplier) / multiplier
+		return &object.EvalResult{
+			Value:  &object.Float{Value: v},
 			Signal: object.SIGNAL_NONE,
 		}, nil
 	default:

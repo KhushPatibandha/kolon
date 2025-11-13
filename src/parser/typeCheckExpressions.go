@@ -1279,6 +1279,56 @@ func typeCheckBuiltin(exp *ast.CallExpression,
 			Types:   []*ktype.Type{ktype.NewBaseType("bool")},
 			TypeLen: 1,
 		}, nil
+	case "ceil", "floor":
+		if exp.Args == nil || len(exp.Args) != 1 {
+			return nil,
+				errors.New(
+					"wrong number of arguments for `" + exp.Name.Value + "`, got: " +
+						strconv.Itoa(len(exp.Args)) + ", want: 1",
+				)
+		}
+		if argTypes[0].Kind != ktype.TypeBase ||
+			argTypes[0].Name != "float" {
+			return nil,
+				errors.New(
+					"type mismatch for argument of `" + exp.Name.Value + "`, got: `" +
+						argTypes[0].String() + "`, want: `float`",
+				)
+		}
+		return &ktype.TypeCheckResult{
+			Types:   []*ktype.Type{ktype.NewBaseType("float")},
+			TypeLen: 1,
+		}, nil
+	case "round":
+		if exp.Args == nil || (len(exp.Args) != 1 && len(exp.Args) != 2) {
+			return nil,
+				errors.New(
+					"wrong number of arguments for `round`, got: " +
+						strconv.Itoa(len(exp.Args)) + ", want: 1 or 2",
+				)
+		}
+		if argTypes[0].Kind != ktype.TypeBase ||
+			argTypes[0].Name != "float" {
+			return nil,
+				errors.New(
+					"type mismatch for 1st argument of `round`, got: `" +
+						argTypes[0].String() + "`, want: `float`",
+				)
+		}
+		if len(exp.Args) == 2 {
+			if argTypes[1].Kind != ktype.TypeBase ||
+				argTypes[1].Name != "int" {
+				return nil,
+					errors.New(
+						"type mismatch for 2nd argument of `round`, got: `" +
+							argTypes[1].String() + "`, want: `int`",
+					)
+			}
+		}
+		return &ktype.TypeCheckResult{
+			Types:   []*ktype.Type{ktype.NewBaseType("float")},
+			TypeLen: 1,
+		}, nil
 	default:
 		return nil,
 			errors.New(

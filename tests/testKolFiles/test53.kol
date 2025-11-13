@@ -1,0 +1,11 @@
+fun: main() {
+    println(ceil(3.4));
+    println(ceil(3.1));
+    println(ceil(3.0));
+    println(floor(3.4));
+    println(floor(3.1));
+    println(floor(3.0));
+
+    println(ceil(-1.5));
+    println(floor(-1.5));
+}
